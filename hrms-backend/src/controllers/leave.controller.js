@@ -33,9 +33,14 @@ exports.apply = async (req, res) => {
   if (!emp_id||!leave_type||!from_date||!to_date||!reason)
     return error(res,'emp_id, leave_type, from_date, to_date, reason required.',400);
   const eid = req.user.role==='employee' ? req.user.emp_id : emp_id;
+  if (!eid) return error(res, 'Employee ID is required.', 400);
   const days = daysBetween(from_date, to_date);
   if (days<=0) return error(res,'Invalid date range.',400);
   try {
+    const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [eid]);
+    if (!empCheck.rows.length) {
+      return error(res, `Employee with ID '${eid}' does not exist.`, 404);
+    }
     const result = await query(
       `INSERT INTO leave_applications(emp_id,leave_type,from_date,to_date,days,reason)
        VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,

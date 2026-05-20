@@ -5,7 +5,7 @@ import Modal from '../components/common/Modal';
 import StatsCard from '../components/common/StatsCard';
 import Loader from '../components/common/Loader';
 import { Calendar, Plus, Check, X } from 'lucide-react';
-import { leaveAPI } from '../api/endpoints';
+import { leaveAPI, empAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
 export default function Attendance() {
@@ -17,6 +17,7 @@ export default function Attendance() {
   const [showForm, setShowForm] = useState(false);
   const [msg, setMsg] = useState('');
   const [form, setForm] = useState({ emp_id:'', leave_type:'CL', from_date:'', to_date:'', reason:'' });
+  const [employees, setEmployees] = useState([]);
   const days = (f,t) => f&&t ? Math.max(0, Math.ceil((new Date(t)-new Date(f))/86400000)+1) : 0;
 
   const load = () => {
@@ -28,7 +29,14 @@ export default function Attendance() {
     .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    if (user && user.role !== 'employee') {
+      empAPI.list({ limit: 100, status: 'Active' })
+        .then(r => setEmployees(r.data.data.employees || []))
+        .catch(e => console.error(e));
+    }
+  }, []);
 
   const review = async (id, status) => {
     try { await leaveAPI.review(id, { status }); setMsg(`Leave ${status.toLowerCase()}`); load(); }
@@ -115,8 +123,23 @@ export default function Attendance() {
         <Modal title="Apply for Leave" onClose={()=>setShowForm(false)}>
           <div className="grid grid-cols-2 gap-3">
             {user.role!=='employee' && (
-              <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Employee ID</label>
-                <input className="input" value={form.emp_id} onChange={e=>setForm({...form,emp_id:e.target.value})} placeholder="EMP00001"/></div>
+              <div className="col-span-2">
+                <label className="text-xs text-gray-500 block mb-1">Employee ID</label>
+                <input
+                  className="input"
+                  list="employee-ids"
+                  value={form.emp_id}
+                  onChange={e=>setForm({...form,emp_id:e.target.value})}
+                  placeholder="EMP00001"
+                />
+                <datalist id="employee-ids">
+                  {employees.map(e => (
+                    <option key={e.emp_id} value={e.emp_id}>
+                      {e.first_name} {e.last_name} ({e.dept_name})
+                    </option>
+                  ))}
+                </datalist>
+              </div>
             )}
             <div><label className="text-xs text-gray-500 block mb-1">Leave Type</label>
               <select className="input" value={form.leave_type} onChange={e=>setForm({...form,leave_type:e.target.value})}>

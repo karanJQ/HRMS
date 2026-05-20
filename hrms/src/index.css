@@ -3,7 +3,7 @@
 @tailwind utilities;
 :root { --sidebar-w: 260px; }
 body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; }
-.sidebar { width: var(--sidebar-w); min-height: 100vh; background: #1e293b; }
+.sidebar { width: var(--sidebar-w); height: 100vh; background: #1e293b; }
 .main-content { margin-left: var(--sidebar-w); min-height: 100vh; }
 .nav-item { display:flex; align-items:center; gap:10px; padding:10px 16px; color:#94a3b8; border-radius:8px; cursor:pointer; transition:all .2s; font-size:14px; }
 .nav-item:hover,.nav-item.active { background:#334155; color:#fff; }
@@ -33,3 +33,26 @@ tr:hover td { background:#f8fafc; }
 select.input { appearance:auto; }
 .page-title { font-size:22px; font-weight:700; color:#1e293b; }
 .section-title { font-size:16px; font-weight:600; color:#1e293b; margin-bottom:16px; }
+
+/* Custom Sleek Scrollbar for Sidebar Navigation */
+.sidebar nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+
+.sidebar nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar nav::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+}
+
+.sidebar nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}

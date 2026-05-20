@@ -57,6 +57,10 @@ exports.process = async (req, res) => {
           professional_tax=200, tds=0, other_deductions=0, payment_mode='Bank Transfer' } = req.body;
   if (!emp_id||!month||!year||!basic_pay) return error(res,'emp_id, month, year, basic_pay required.',400);
   try {
+    const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [emp_id]);
+    if (!empCheck.rows.length) {
+      return error(res, `Employee with ID '${emp_id}' does not exist.`, 404);
+    }
     const da = Math.round(basic_pay * da_percentage / 100);
     const hra = Math.round(basic_pay * hra_percentage / 100);
     const gross = parseFloat(basic_pay)+da+hra+parseFloat(ta_amount)+parseFloat(medical_allowance)+parseFloat(special_allowance)+parseFloat(other_allowances);

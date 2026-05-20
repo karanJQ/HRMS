@@ -26,6 +26,10 @@ exports.create = async (req, res) => {
   const { emp_id, from_district, to_district, from_station, to_station, transfer_type, reason, request_date } = req.body;
   if (!emp_id||!to_district) return error(res,'emp_id and to_district required.',400);
   try {
+    const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [emp_id]);
+    if (!empCheck.rows.length) {
+      return error(res, `Employee with ID '${emp_id}' does not exist.`, 404);
+    }
     const result = await query(
       `INSERT INTO transfers(emp_id,from_district,to_district,from_station,to_station,transfer_type,reason,request_date,initiated_by)
        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,

@@ -52,6 +52,10 @@ exports.enroll = async (req, res) => {
   const { program_id, emp_id } = req.body;
   if (!program_id||!emp_id) return error(res,'program_id and emp_id required.',400);
   try {
+    const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [emp_id]);
+    if (!empCheck.rows.length) {
+      return error(res, `Employee with ID '${emp_id}' does not exist.`, 404);
+    }
     const prog = await query('SELECT * FROM training_programs WHERE id=$1',[program_id]);
     if (!prog.rows.length) return error(res,'Program not found.',404);
     const enrolled = await query('SELECT COUNT(*) FROM training_enrollments WHERE program_id=$1',[program_id]);

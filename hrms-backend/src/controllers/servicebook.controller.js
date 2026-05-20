@@ -21,6 +21,10 @@ exports.addEntry = async (req, res) => {
   const { event_date, event_type, details, order_number } = req.body;
   if (!event_date||!event_type||!details) return error(res,'event_date, event_type, details required.',400);
   try {
+    const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [empId]);
+    if (!empCheck.rows.length) {
+      return error(res, `Employee with ID '${empId}' does not exist.`, 404);
+    }
     const hash = crypto.createHash('sha256')
       .update(`${empId}|${event_date}|${event_type}|${details}|${Date.now()}`)
       .digest('hex');

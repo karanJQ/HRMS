@@ -29,6 +29,10 @@ exports.create = async (req, res) => {
   const eid = req.user.role==='employee' ? req.user.emp_id : emp_id;
   if (!eid||!grievance_type||!subject) return error(res,'emp_id, grievance_type, subject required.',400);
   try {
+    const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [eid]);
+    if (!empCheck.rows.length) {
+      return error(res, `Employee with ID '${eid}' does not exist.`, 404);
+    }
     const result = await query(
       `INSERT INTO grievances(emp_id,grievance_type,subject,description,priority)
        VALUES($1,$2,$3,$4,$5) RETURNING *`,
@@ -85,6 +89,10 @@ exports.createDisc = async (req, res) => {
   if (!emp_id||!charge_description) return error(res,'emp_id and charge_description required.',400);
   const yr = new Date().getFullYear();
   try {
+    const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [emp_id]);
+    if (!empCheck.rows.length) {
+      return error(res, `Employee with ID '${emp_id}' does not exist.`, 404);
+    }
     const countRes = await query('SELECT COUNT(*) FROM disciplinary_cases WHERE EXTRACT(YEAR FROM created_at)=$1',[yr]);
     const csn = `CS/${yr}/${String(parseInt(countRes.rows[0].count)+1).padStart(4,'0')}`;
     const result = await query(
