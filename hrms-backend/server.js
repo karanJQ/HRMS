@@ -31,6 +31,9 @@ app.use(`${prefix}/retirement`,  require('./src/routes/retirement.routes'));
 app.use(`${prefix}/grievances`,  require('./src/routes/grievance.routes'));
 app.use(`${prefix}/onboarding`,  require('./src/routes/onboarding.routes'));
 app.use(`${prefix}/reports`,     require('./src/routes/reports.routes'));
+app.use(`${prefix}/tasks`,       require('./src/routes/task.routes'));
+app.use(`${prefix}/attendance`,  require('./src/routes/attendance.routes'));
+app.use(`${prefix}/notifications`, require('./src/routes/notification.routes'));
 
 // ── 404 ───────────────────────────────────────────────────────────
 app.use((req, res) => res.status(404).json({ success: false, message: `Route ${req.method} ${req.url} not found` }));

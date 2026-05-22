@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Onboarding from './pages/Onboarding';
@@ -17,12 +18,13 @@ import Retirement from './pages/Retirement';
 import Grievance from './pages/Grievance';
 import Reports from './pages/Reports';
 import UserManagement from './pages/UserManagement';
+import Tasks from './pages/Tasks';
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
   if (loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'#64748b'}}>Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  if (roles && !roles.includes(user.role)) return <Navigate to="/dashboard" replace />;
   return children;
 };
 
@@ -35,8 +37,9 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Prot comp={Dashboard} />} />
+          <Route path="/dashboard" element={<Prot comp={Dashboard} />} />
           <Route path="/onboarding" element={<Prot comp={Onboarding} roles={['super_admin','hr_manager','hr_staff']} />} />
           <Route path="/employees" element={<Prot comp={EmployeeMaster} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
           <Route path="/my-profile" element={<Prot comp={EmployeeMaster} roles={['employee']} />} />
@@ -51,6 +54,7 @@ export default function App() {
           <Route path="/grievance" element={<Prot comp={Grievance} />} />
           <Route path="/reports" element={<Prot comp={Reports} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
           <Route path="/users" element={<Prot comp={UserManagement} roles={['super_admin']} />} />
+          <Route path="/tasks" element={<Prot comp={Tasks} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

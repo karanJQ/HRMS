@@ -58,7 +58,7 @@ export default function EmployeeMaster() {
 
   const F = ({k,l,type='text',opts,full,req}) => (
     <div className={full?'col-span-3':''}>
-      <label className="text-xs text-gray-500 block mb-1">{l}{req&&<span className="text-red-400">*</span>}</label>
+      <label className="text-xs text-slate-400 block mb-1">{l}{req&&<span className="text-red-400">*</span>}</label>
       {opts ? <select className="input" value={form[k]||''} onChange={e=>setForm({...form,[k]:e.target.value})}>
         <option value="">Select</option>{opts.map(o=><option key={o.v||o} value={o.v||o}>{o.l||o}</option>)}
       </select> : <input type={type} className="input" value={form[k]||''} onChange={e=>setForm({...form,[k]:e.target.value})} />}
@@ -67,12 +67,12 @@ export default function EmployeeMaster() {
 
   return (
     <Layout title="Employee Master">
-      {msg && <div className={`px-4 py-3 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-50 text-red-700 border border-red-200':'bg-green-50 text-green-700 border border-green-200'}`}>{msg}</div>}
+      {msg && <div className={`px-4 py-3 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
 
       <div className="flex gap-3 mb-4 flex-wrap items-center justify-between">
         <div className="flex gap-3">
-          <div className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg">
-            <Search size={14} className="text-gray-400"/>
+          <div className="flex items-center gap-2 bg-white border border-white/20 px-3 py-2 rounded-lg">
+            <Search size={14} className="text-slate-400"/>
             <input placeholder="Search name/ID/mobile..." className="outline-none text-sm w-44" value={search} onChange={e=>setSearch(e.target.value)} />
           </div>
           <select className="input" style={{width:160}} value={filter.dept} onChange={e=>setFilter({...filter,dept:e.target.value})}>
@@ -96,7 +96,7 @@ export default function EmployeeMaster() {
               <tbody>{emps.map(e=>(
                 <tr key={e.emp_id}>
                   <td className="font-mono text-blue-600 font-medium">{e.emp_id}</td>
-                  <td><div className="font-medium">{e.first_name} {e.last_name}</div><div className="text-xs text-gray-400">{e.official_email}</div></td>
+                  <td><div className="font-medium">{e.first_name} {e.last_name}</div><div className="text-xs text-slate-400">{e.official_email}</div></td>
                   <td>{e.dept_name}</td><td>{e.designation_name||'—'}</td>
                   <td>{e.grade||'—'}</td><td>{e.district||'—'}</td>
                   <td><Badge text={e.category} /></td><td><Badge text={e.status} /></td>
@@ -115,12 +115,12 @@ export default function EmployeeMaster() {
         <Modal title={`${view.first_name} ${view.last_name} — Profile`} onClose={()=>setView(null)} wide>
           <div className="flex gap-4 mb-4 p-4 bg-blue-50 rounded-xl">
             <div className="w-14 h-14 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-bold">{view.first_name?.[0]}</div>
-            <div><p className="font-bold text-lg text-gray-800">{view.first_name} {view.last_name}</p><p className="text-sm text-gray-600">{view.designation_name} • {view.dept_name}</p><p className="text-xs text-gray-400">{view.emp_id} • Level-{view.pay_level}</p></div>
+            <div><p className="font-bold text-lg text-white">{view.first_name} {view.last_name}</p><p className="text-sm text-slate-300">{view.designation_name} • {view.dept_name}</p><p className="text-xs text-slate-400">{view.emp_id} • Level-{view.pay_level}</p></div>
             <div className="ml-auto"><Badge text={view.status} /></div>
           </div>
           <div className="grid grid-cols-3 gap-x-6 gap-y-3">
             {[['DOB',view.dob?.split('T')[0]],['DOJ',view.doj?.split('T')[0]],['Mobile',view.mobile],['Email',view.official_email],['District',view.district],['Posting Station',view.posting_station],['Category',view.category],['Blood Group',view.blood_group],['Qualification',view.qualification],['PF No.',view.pf_number],['PAN',view.pan_number],['Bank',`${view.bank_name||''} / ${view.ifsc_code||''}`],['Account No.',view.account_number],['Nominee',view.nominee_name],['Experience',`${view.experience_years} years`],['Father Name',view.father_name],['Basic Pay',view.basic_pay?`₹${parseFloat(view.basic_pay).toLocaleString()}`:'—']].map(([k,v])=>(
-              <div key={k}><p className="text-xs text-gray-400">{k}</p><p className="text-sm font-medium text-gray-700">{v||'—'}</p></div>
+              <div key={k}><p className="text-xs text-slate-400">{k}</p><p className="text-sm font-medium text-slate-200">{v||'—'}</p></div>
             ))}
           </div>
         </Modal>
@@ -132,7 +132,7 @@ export default function EmployeeMaster() {
             <F k="first_name" l="First Name" req /><F k="last_name" l="Last Name" req /><F k="father_name" l="Father's Name" />
             <F k="gender" l="Gender" opts={['Male','Female','Other']} req />
             <F k="dob" l="Date of Birth" type="date" req /><F k="doj" l="Date of Joining" type="date" req />
-            <div><label className="text-xs text-gray-500 block mb-1">Department<span className="text-red-400">*</span></label>
+            <div><label className="text-xs text-slate-400 block mb-1">Department<span className="text-red-400">*</span></label>
               <select className="input" value={form.dept_id||''} onChange={e=>setForm({...form,dept_id:e.target.value})}>
                 <option value="">Select</option>{depts.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
               </select>

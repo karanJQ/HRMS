@@ -49,7 +49,7 @@ export default function Reports() {
               {headcount.by_status?.map(s=>(
                 <div key={s.status} className="card text-center">
                   <p className="text-3xl font-bold" style={{color:s.status==='Active'?'#22c55e':s.status==='On Leave'?'#f59e0b':'#ef4444'}}>{s.count}</p>
-                  <p className="text-sm text-gray-500">{s.status}</p>
+                  <p className="text-sm text-slate-400">{s.status}</p>
                 </div>
               ))}
             </div>
@@ -87,9 +87,9 @@ export default function Reports() {
             <div className="grid grid-cols-3 gap-4">
               {payroll.monthly?.slice(-1).map(m=>(
                 <React.Fragment key={m.month}>
-                  <div className="card text-center"><p className="text-3xl font-bold text-blue-600">₹{(parseFloat(m.gross)/100000).toFixed(2)}L</p><p className="text-sm text-gray-500">Gross ({monthNames[m.month-1]})</p></div>
-                  <div className="card text-center"><p className="text-3xl font-bold text-green-600">₹{(parseFloat(m.net)/100000).toFixed(2)}L</p><p className="text-sm text-gray-500">Net ({monthNames[m.month-1]})</p></div>
-                  <div className="card text-center"><p className="text-3xl font-bold text-purple-600">{m.emp_count}</p><p className="text-sm text-gray-500">Employees Paid</p></div>
+                  <div className="card text-center"><p className="text-3xl font-bold text-blue-600">₹{(parseFloat(m.gross)/100000).toFixed(2)}L</p><p className="text-sm text-slate-400">Gross ({monthNames[m.month-1]})</p></div>
+                  <div className="card text-center"><p className="text-3xl font-bold text-green-600">₹{(parseFloat(m.net)/100000).toFixed(2)}L</p><p className="text-sm text-slate-400">Net ({monthNames[m.month-1]})</p></div>
+                  <div className="card text-center"><p className="text-3xl font-bold text-purple-600">{m.emp_count}</p><p className="text-sm text-slate-400">Employees Paid</p></div>
                 </React.Fragment>
               ))}
             </div>
@@ -147,8 +147,8 @@ export default function Reports() {
                 <div className="space-y-2 mt-2">
                   {leave.by_dept?.slice(0,8).map((d,i)=>(
                     <div key={d.dept} className="flex items-center gap-3">
-                      <span className="text-xs text-gray-600 w-28 truncate">{d.dept}</span>
-                      <div className="flex-1 bg-gray-100 rounded-full h-3">
+                      <span className="text-xs text-slate-400 w-28 truncate">{d.dept}</span>
+                      <div className="flex-1 bg-white/10 rounded-full h-3">
                         <div className="h-3 rounded-full" style={{width:`${Math.min(100,(d.total_days/(leave.by_dept?.[0]?.total_days||1))*100)}%`,background:COLORS[i%COLORS.length]}}></div>
                       </div>
                       <span className="text-xs font-bold w-8">{d.total_days}</span>
@@ -184,10 +184,10 @@ export default function Reports() {
                     return (
                       <div key={cat}>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="font-medium text-gray-700">{cat} (Mandate: {mandate})</span>
+                          <span className="font-medium text-slate-200">{cat} (Mandate: {mandate})</span>
                           <span className="font-bold">{pct}%</span>
                         </div>
-                        <div className="bg-gray-100 rounded-full h-3">
+                        <div className="bg-white/10 rounded-full h-3">
                           <div className="h-3 rounded-full bg-blue-500 transition-all" style={{width:`${Math.min(100,parseFloat(pct))}%`}}></div>
                         </div>
                       </div>

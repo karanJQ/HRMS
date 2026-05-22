@@ -329,7 +329,6 @@ CREATE TABLE IF NOT EXISTS service_book_entries (
   recorded_by     INT REFERENCES users(id),
   recorded_by_name VARCHAR(150),
   is_verified     BOOLEAN DEFAULT FALSE,
-  blockchain_hash VARCHAR(200),
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 

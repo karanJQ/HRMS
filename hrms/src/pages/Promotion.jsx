@@ -37,7 +37,7 @@ export default function Promotion() {
   };
 
   const F = ({k,l,type='text',opts}) => (
-    <div><label className="text-xs text-gray-500 block mb-1">{l}</label>
+    <div><label className="text-xs text-slate-400 block mb-1">{l}</label>
       {opts ? <select className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})}><option value="">Select</option>{opts.map(o=><option key={o}>{o}</option>)}</select>
       : <input type={type} className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})}/>}
     </div>
@@ -45,7 +45,7 @@ export default function Promotion() {
 
   return (
     <Layout title="Promotion & Seniority Management">
-      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-50 text-red-700':'bg-green-50 text-green-700'}`}>{msg}</div>}
+      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
       <div className="flex gap-3 mb-5">
         {['promotions','seniority'].map(t=>(
           <button key={t} className={`tab ${tab===t?'active':''}`} onClick={()=>setTab(t)}>{t==='promotions'?'Promotion Records':'Seniority List'}</button>
@@ -61,13 +61,13 @@ export default function Promotion() {
               <thead><tr><th>Employee</th><th>Dept</th><th>From Post</th><th>To Post</th><th>Basis</th><th>Eff. Date</th><th>Pay Change</th><th>Order No.</th><th>Status</th><th>Action</th></tr></thead>
               <tbody>{promos.map(p=>(
                 <tr key={p.id}>
-                  <td><div className="font-medium">{p.emp_name}</div><div className="text-xs text-gray-400">{p.emp_id}</div></td>
+                  <td><div className="font-medium">{p.emp_name}</div><div className="text-xs text-slate-400">{p.emp_id}</div></td>
                   <td>{p.dept_name}</td>
-                  <td className="text-gray-500 text-sm">{p.from_designation_name||'—'}</td>
+                  <td className="text-slate-400 text-sm">{p.from_designation_name||'—'}</td>
                   <td className="font-medium text-blue-600">{p.to_designation_name}</td>
                   <td><span className="badge" style={{background:'#f0fdf4',color:'#166534'}}>{p.basis}</span></td>
                   <td className="text-xs">{p.effective_date?.split('T')[0]||'—'}</td>
-                  <td className="text-xs"><span className="text-gray-400">L{p.from_pay_level||'?'}</span> → <span className="text-green-600 font-medium">L{p.to_pay_level||'?'}</span></td>
+                  <td className="text-xs"><span className="text-slate-400">L{p.from_pay_level||'?'}</span> → <span className="text-green-600 font-medium">L{p.to_pay_level||'?'}</span></td>
                   <td className="font-mono text-xs">{p.order_number||'—'}</td>
                   <td><Badge text={p.status}/></td>
                   <td>{p.status?.includes('Pending') && isMin('hr_manager') && (
@@ -87,7 +87,7 @@ export default function Promotion() {
               <tbody>{seniority.map((e,i)=>(
                 <tr key={e.emp_id}>
                   <td className="font-bold text-blue-600">{e.seniority_rank||i+1}</td>
-                  <td><div className="font-medium">{e.name}</div><div className="text-xs text-gray-400">{e.emp_id}</div></td>
+                  <td><div className="font-medium">{e.name}</div><div className="text-xs text-slate-400">{e.emp_id}</div></td>
                   <td>{e.dept_name}</td><td>{e.designation_name||'—'}</td>
                   <td>{e.doj?.split('T')[0]}</td>
                   <td>{e.service_years||0} yrs</td>

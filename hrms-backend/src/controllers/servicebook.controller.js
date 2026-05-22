@@ -25,13 +25,10 @@ exports.addEntry = async (req, res) => {
     if (!empCheck.rows.length) {
       return error(res, `Employee with ID '${empId}' does not exist.`, 404);
     }
-    const hash = crypto.createHash('sha256')
-      .update(`${empId}|${event_date}|${event_type}|${details}|${Date.now()}`)
-      .digest('hex');
     const result = await query(
-      `INSERT INTO service_book_entries(emp_id,event_date,event_type,details,order_number,recorded_by,recorded_by_name,is_verified,blockchain_hash)
-       VALUES($1,$2,$3,$4,$5,$6,$7,true,$8) RETURNING *`,
-      [empId, event_date, event_type, details, order_number||null, req.user.id, req.user.username, hash]
+      `INSERT INTO service_book_entries(emp_id,event_date,event_type,details,order_number,recorded_by,recorded_by_name,is_verified)
+       VALUES($1,$2,$3,$4,$5,$6,$7,true) RETURNING *`,
+      [empId, event_date, event_type, details, order_number||null, req.user.id, req.user.username]
     );
     return success(res, result.rows[0], 'Entry added', 201);
   } catch (err) { return error(res, err.message); }

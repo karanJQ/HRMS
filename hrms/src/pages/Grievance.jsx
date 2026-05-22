@@ -51,7 +51,7 @@ export default function Grievance() {
 
   return (
     <Layout title="Grievance & Disciplinary">
-      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-50 text-red-700':'bg-green-50 text-green-700'}`}>{msg}</div>}
+      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
       <div className="flex gap-3 mb-5">
         <button className={`tab ${tab==='grievance'?'active':''}`} onClick={()=>setTab('grievance')}><AlertTriangle size={13} className="inline mr-1"/>Grievances</button>
         {isMin('hr_staff') && <button className={`tab ${tab==='disciplinary'?'active':''}`} onClick={()=>setTab('disciplinary')}><Shield size={13} className="inline mr-1"/>Disciplinary</button>}
@@ -66,7 +66,7 @@ export default function Grievance() {
             {['Pending','Under Review','Resolved','Escalated'].map(s=>(
               <div key={s} className="card text-center">
                 <p className="text-2xl font-bold" style={{color:s==='Resolved'?'#22c55e':s==='Under Review'?'#3b82f6':s==='Escalated'?'#ef4444':'#f59e0b'}}>{grievances.filter(g=>g.status===s).length}</p>
-                <p className="text-sm text-gray-500">{s}</p>
+                <p className="text-sm text-slate-400">{s}</p>
               </div>
             ))}
           </div>
@@ -78,10 +78,10 @@ export default function Grievance() {
                   const [bg,col]=(pColor[g.priority]||'#f1f5f9:#475569').split(':');
                   return (
                     <tr key={g.id}>
-                      <td><div className="font-medium">{g.emp_name}</div><div className="text-xs text-gray-400">{g.emp_id}</div></td>
+                      <td><div className="font-medium">{g.emp_name}</div><div className="text-xs text-slate-400">{g.emp_id}</div></td>
                       <td>{g.dept_name}</td><td className="text-sm">{g.grievance_type}</td>
-                      <td className="text-sm text-gray-700 max-w-xs truncate">{g.subject}</td>
-                      <td className="text-xs text-gray-500">{g.submission_date?.split('T')[0]}</td>
+                      <td className="text-sm text-slate-200 max-w-xs truncate">{g.subject}</td>
+                      <td className="text-xs text-slate-400">{g.submission_date?.split('T')[0]}</td>
                       <td><span className="badge" style={{background:bg,color:col}}>{g.priority}</span></td>
                       <td><Badge text={g.status}/></td>
                       <td>
@@ -105,13 +105,13 @@ export default function Grievance() {
               <tbody>{disc.map(d=>(
                 <tr key={d.id}>
                   <td className="font-mono text-xs text-red-600">{d.charge_sheet_number||d.id}</td>
-                  <td><div className="font-medium">{d.emp_name}</div><div className="text-xs text-gray-400">{d.emp_id}</div></td>
+                  <td><div className="font-medium">{d.emp_name}</div><div className="text-xs text-slate-400">{d.emp_id}</div></td>
                   <td>{d.dept_name}</td>
                   <td className="text-sm text-red-600 max-w-xs truncate">{d.charge_description}</td>
                   <td className="text-xs">{d.case_start_date?.split('T')[0]||'—'}</td>
                   <td className="text-sm">{d.inquiry_officer_name||'—'}</td>
                   <td><Badge text={d.status}/></td>
-                  <td className="text-sm text-gray-400">{d.penalty_type||'Pending'}</td>
+                  <td className="text-sm text-slate-400">{d.penalty_type||'Pending'}</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -122,19 +122,19 @@ export default function Grievance() {
       {showForm && (
         <Modal title="Register Grievance" onClose={()=>setShowForm(false)}>
           <div className="grid grid-cols-2 gap-3">
-            {user.role!=='employee' && <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Employee ID</label><input className="input" value={form.emp_id} onChange={e=>setForm({...form,emp_id:e.target.value})}/></div>}
-            <div><label className="text-xs text-gray-500 block mb-1">Type</label>
+            {user.role!=='employee' && <div className="col-span-2"><label className="text-xs text-slate-400 block mb-1">Employee ID</label><input className="input" value={form.emp_id} onChange={e=>setForm({...form,emp_id:e.target.value})}/></div>}
+            <div><label className="text-xs text-slate-400 block mb-1">Type</label>
               <select className="input" value={form.grievance_type} onChange={e=>setForm({...form,grievance_type:e.target.value})}>
                 {['Service Matter','Workplace Issue','Transfer','Salary','Promotion','Other'].map(t=><option key={t}>{t}</option>)}
               </select>
             </div>
-            <div><label className="text-xs text-gray-500 block mb-1">Priority</label>
+            <div><label className="text-xs text-slate-400 block mb-1">Priority</label>
               <select className="input" value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}>
                 {['High','Medium','Low'].map(p=><option key={p}>{p}</option>)}
               </select>
             </div>
-            <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Subject</label><input className="input" value={form.subject} onChange={e=>setForm({...form,subject:e.target.value})}/></div>
-            <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Description</label><textarea className="input" rows={3} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></div>
+            <div className="col-span-2"><label className="text-xs text-slate-400 block mb-1">Subject</label><input className="input" value={form.subject} onChange={e=>setForm({...form,subject:e.target.value})}/></div>
+            <div className="col-span-2"><label className="text-xs text-slate-400 block mb-1">Description</label><textarea className="input" rows={3} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></div>
           </div>
           <button className="btn btn-primary w-full mt-4" onClick={submitGrievance}>Submit Grievance</button>
         </Modal>
@@ -142,11 +142,11 @@ export default function Grievance() {
       {showDiscForm && (
         <Modal title="Register Disciplinary Case" onClose={()=>setShowDiscForm(false)}>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="text-xs text-gray-500 block mb-1">Employee ID</label><input className="input" value={discForm.emp_id} onChange={e=>setDiscForm({...discForm,emp_id:e.target.value})}/></div>
-            <div><label className="text-xs text-gray-500 block mb-1">Case Start Date</label><input type="date" className="input" value={discForm.case_start_date} onChange={e=>setDiscForm({...discForm,case_start_date:e.target.value})}/></div>
-            <div><label className="text-xs text-gray-500 block mb-1">Incident Date</label><input type="date" className="input" value={discForm.incident_date} onChange={e=>setDiscForm({...discForm,incident_date:e.target.value})}/></div>
-            <div><label className="text-xs text-gray-500 block mb-1">Inquiry Officer</label><input className="input" value={discForm.inquiry_officer_name} onChange={e=>setDiscForm({...discForm,inquiry_officer_name:e.target.value})}/></div>
-            <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Charge Description</label><textarea className="input" rows={3} value={discForm.charge_description} onChange={e=>setDiscForm({...discForm,charge_description:e.target.value})}/></div>
+            <div><label className="text-xs text-slate-400 block mb-1">Employee ID</label><input className="input" value={discForm.emp_id} onChange={e=>setDiscForm({...discForm,emp_id:e.target.value})}/></div>
+            <div><label className="text-xs text-slate-400 block mb-1">Case Start Date</label><input type="date" className="input" value={discForm.case_start_date} onChange={e=>setDiscForm({...discForm,case_start_date:e.target.value})}/></div>
+            <div><label className="text-xs text-slate-400 block mb-1">Incident Date</label><input type="date" className="input" value={discForm.incident_date} onChange={e=>setDiscForm({...discForm,incident_date:e.target.value})}/></div>
+            <div><label className="text-xs text-slate-400 block mb-1">Inquiry Officer</label><input className="input" value={discForm.inquiry_officer_name} onChange={e=>setDiscForm({...discForm,inquiry_officer_name:e.target.value})}/></div>
+            <div className="col-span-2"><label className="text-xs text-slate-400 block mb-1">Charge Description</label><textarea className="input" rows={3} value={discForm.charge_description} onChange={e=>setDiscForm({...discForm,charge_description:e.target.value})}/></div>
           </div>
           <button className="btn btn-danger w-full mt-4" onClick={submitDisc}>Register Case</button>
         </Modal>

@@ -67,6 +67,7 @@ export const aparAPI = {
   fillSelf: (id, data) => API.put(`/apar/${id}/self`, data),
   fillReporting: (id, data) => API.put(`/apar/${id}/reporting`, data),
   fillReviewing: (id, data) => API.put(`/apar/${id}/reviewing`, data),
+  aiInsights: (id) => API.get(`/apar/${id}/ai-insights`),
 };
 
 // Service Book
@@ -115,4 +116,33 @@ export const reportsAPI = {
   payroll: (params) => API.get('/reports/payroll', { params }),
   leave: (params) => API.get('/reports/leave', { params }),
   retirement: () => API.get('/reports/retirement'),
+};
+
+// Attendance & Biometrics
+export const attendanceAPI = {
+  get: (params) => API.get('/attendance', { params }),
+  sync: (data) => API.post('/attendance/sync', data),
+  getSettings: () => API.get('/attendance/settings'),
+  updateSettings: (data) => API.put('/attendance/settings', data),
+  applyRegularization: (data) => API.post('/attendance/regularize', data),
+  getRegularizations: () => API.get('/attendance/regularize'),
+  reviewRegularization: (id, data) => API.put(`/attendance/regularize/${id}`, data),
+};
+
+// Tasks
+export const taskAPI = {
+  list: () => API.get('/tasks'),
+  stats: () => API.get('/tasks/stats'),
+  create: (data) => API.post('/tasks', data),
+  update: (id, data) => API.put(`/tasks/${id}`, data),
+  updateStatus: (id, data) => API.put(`/tasks/${id}/status`, data),
+  delete: (id) => API.delete(`/tasks/${id}`),
+};
+
+// Notifications
+export const notificationAPI = {
+  list: () => API.get('/notifications'),
+  unreadCount: () => API.get('/notifications/unread'),
+  markRead: (id) => API.put(`/notifications/${id}/read`),
+  markAllRead: () => API.put('/notifications/read-all'),
 };
