@@ -358,7 +358,9 @@ export default function Onboarding() {
                   <option value="Aadhar">Aadhar Card</option>
                   <option value="PAN">PAN Card</option>
                   <option value="Passport">Passport</option>
-                  <option value="Passbook">Cancelled Cheque / Passbook</option>
+                  <option value="Passbook">Bank Passbook</option>
+                  <option value="CancelCheque">Cancelled Cheque</option>
+                  <option value="BirthCertificate">Birth Certificate</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
@@ -380,7 +382,7 @@ export default function Onboarding() {
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge text={doc.ocr_status} />
-                        {doc.ocr_status !== 'Processed' && (
+                        {doc.ocr_status !== 'Processed' && doc.doc_type !== 'Other' && (
                           <button 
                             className="btn btn-secondary text-xs py-1" 
                             onClick={() => handlePerformOCR(doc.id)}

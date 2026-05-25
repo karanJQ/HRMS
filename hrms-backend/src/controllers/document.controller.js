@@ -81,6 +81,8 @@ exports.performOCR = async (req, res) => {
         case 'PAN': endpointPath = 'api/v1/pan'; break;
         case 'Passport': endpointPath = 'api/v1/passport'; break;
         case 'Passbook': endpointPath = 'api/v1/bank_passbook'; break;
+        case 'CancelCheque': endpointPath = 'api/v1/cancel_check'; break;
+        case 'BirthCertificate': endpointPath = 'api/v1/birth_certificate'; break;
         default:
           return error(res, `OCR is not supported for document type: ${document.doc_type}`, 400);
       }
@@ -111,6 +113,24 @@ exports.performOCR = async (req, res) => {
       const responseData = await response.json();
       extractedData = responseData.extractedData || responseData.data || responseData;
       rawText = responseData.text || responseData.rawText || '';
+
+      // Enrich with bank and branch details using IFSC code if applicable
+      if (['CancelCheque', 'Passbook'].includes(document.doc_type) && extractedData) {
+        const ifsc = extractedData.ifsc_code || extractedData.ifsc || extractedData.ifsc_number;
+        if (ifsc) {
+          try {
+            const ifscRes = await fetch(`https://ifsc.razorpay.com/${ifsc.trim().toUpperCase()}`);
+            if (ifscRes.ok) {
+              const ifscData = await ifscRes.json();
+              extractedData.bank_name = ifscData.BANK || '';
+              extractedData.branch_name = ifscData.BRANCH || '';
+              extractedData.bank_address = ifscData.ADDRESS || '';
+            }
+          } catch (ifscErr) {
+            console.error('IFSC Lookup failed during enrichment:', ifscErr.message);
+          }
+        }
+      }
     } catch (apiErr) {
       console.error('OCR API Error:', apiErr.message);
       // Mark as Failed if API request fails

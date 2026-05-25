@@ -175,4 +175,4 @@ exports.updateSettings = async (req, res) => {
   } catch (err) {
     return error(res, err.message, 500);
   }
-};
+};  
