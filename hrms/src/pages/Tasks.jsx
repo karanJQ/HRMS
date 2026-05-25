@@ -463,7 +463,7 @@ export default function Tasks() {
         };
 
         return (
-          <div className="grid grid-cols-5 gap-4 mb-6">
+          <div className="flex flex-col xl:flex-row gap-4 mb-6 w-full">
             {[
               { label: 'Total Tasks',  value: displayStats.total,       color: '#3b82f6', icon: ClipboardList },
               { label: 'In Progress',  value: displayStats.in_progress, color: '#f59e0b', icon: Clock },
@@ -471,14 +471,14 @@ export default function Tasks() {
               { label: 'Overdue',      value: displayStats.overdue,     color: '#ef4444', icon: AlertTriangle },
               { label: 'Completed',    value: displayStats.done,        color: '#22c55e', icon: CheckCircle },
             ].map(s => (
-              <div key={s.label} className="glass-card flex items-center gap-4 py-4">
+              <div key={s.label} className="glass-card flex-1 flex items-center gap-4 py-4 px-5 min-w-[180px]">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: `${s.color}20` }}>
                   <s.icon size={20} style={{ color: s.color }} />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{s.value}</p>
-                  <p className="text-xs text-slate-400">{s.label}</p>
+                <div className="flex-1 truncate">
+                  <p className="text-2xl font-bold text-white leading-tight">{s.value}</p>
+                  <p className="text-xs text-slate-400 font-medium truncate">{s.label}</p>
                 </div>
               </div>
             ))}

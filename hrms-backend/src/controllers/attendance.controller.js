@@ -166,7 +166,7 @@ exports.getSettings = async (req, res) => {
 
 exports.updateSettings = async (req, res) => {
   const { shift_start, shift_end, grace_period_mins } = req.body;
-  try {
+  try {1
     const result = await query(
       `UPDATE attendance_settings SET shift_start = $1, shift_end = $2, grace_period_mins = $3, updated_at = NOW() WHERE id = (SELECT id FROM attendance_settings LIMIT 1) RETURNING *`,
       [shift_start, shift_end, grace_period_mins]

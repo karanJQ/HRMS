@@ -109,6 +109,13 @@ export const onboardingAPI = {
   update: (id, data) => API.put(`/onboarding/${id}`, data),
 };
 
+// Documents
+export const documentAPI = {
+  list: (ownerId) => API.get(`/documents/${ownerId}`),
+  upload: (data) => API.post('/documents/upload', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  performOCR: (id) => API.post(`/documents/${id}/ocr`),
+  delete: (id) => API.delete(`/documents/${id}`),
+};
 // Reports
 export const reportsAPI = {
   dashboard: () => API.get('/reports/dashboard'),

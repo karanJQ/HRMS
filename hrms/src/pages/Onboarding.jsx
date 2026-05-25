@@ -3,8 +3,8 @@ import Layout from '../components/Layout/Layout';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Loader from '../components/common/Loader';
-import { Plus, Eye, CheckCircle, XCircle } from 'lucide-react';
-import { onboardingAPI, deptAPI } from '../api/endpoints';
+import { Plus, Eye, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { onboardingAPI, deptAPI, documentAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
 export default function Onboarding() {
@@ -18,6 +18,12 @@ export default function Onboarding() {
   const [msg, setMsg] = useState('');
   const [form, setForm] = useState({ candidate_ref_id:'', name:'', post:'', dept_id:'', selection_date:'', joining_date:'' });
 
+  // Document states
+  const [documents, setDocuments] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [docType, setDocType] = useState('Aadhar');
+  const [fileToUpload, setFileToUpload] = useState(null);
+  const [ocrLoading, setOcrLoading] = useState(null);
   const load = () => {
     setLoading(true);
     Promise.all([onboardingAPI.list(), deptAPI.list()])
@@ -42,6 +48,66 @@ export default function Onboarding() {
       setData(d=>d.map(x=>x.id===id?r.data.data:x));
       if (selected?.id===id) setSelected(r.data.data);
     } catch(e) { setMsg('Error: '+e.response?.data?.message); }
+  };
+
+  const loadDocuments = async (ownerId) => {
+    setLoadingDocs(true);
+    try {
+      const r = await documentAPI.list(ownerId);
+      setDocuments(r.data.data || []);
+    } catch (e) {
+      setMsg('Error loading documents: ' + e.message);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  const handleSelectCandidate = (candidate) => {
+    setSelected(candidate);
+    loadDocuments(candidate.candidate_ref_id || candidate.id.toString());
+  };
+
+  const handleUploadDocument = async () => {
+    if (!fileToUpload) return setMsg('Error: Please select a file to upload');
+    const formData = new FormData();
+    formData.append('file', fileToUpload);
+    formData.append('doc_type', docType);
+    formData.append('owner_id', selected.candidate_ref_id || selected.id.toString());
+
+    try {
+      setMsg('Uploading document...');
+      await documentAPI.upload(formData);
+      setMsg('Document uploaded successfully');
+      setFileToUpload(null);
+      loadDocuments(selected.candidate_ref_id || selected.id.toString());
+    } catch (e) {
+      setMsg('Error uploading document: ' + (e.response?.data?.message || e.message));
+    }
+  };
+
+  const handlePerformOCR = async (docId) => {
+    try {
+      setOcrLoading(docId);
+      setMsg('Processing document with OCR service...');
+      await documentAPI.performOCR(docId);
+      setMsg('OCR processing completed successfully');
+      loadDocuments(selected.candidate_ref_id || selected.id.toString());
+    } catch (e) {
+      setMsg('Error during OCR: ' + (e.response?.data?.message || e.message));
+    } finally {
+      setOcrLoading(null);
+    }
+  };
+
+  const handleDeleteDocument = async (docId) => {
+    if (!window.confirm('Delete this document? This action cannot be undone.')) return;
+    try {
+      await documentAPI.delete(docId);
+      setMsg('Document deleted');
+      loadDocuments(selected.candidate_ref_id || selected.id.toString());
+    } catch (e) {
+      setMsg('Error deleting document: ' + (e.response?.data?.message || e.message));
+    }
   };
 
   const handleAction = async (field, successMessage) => {
@@ -238,7 +304,7 @@ export default function Onboarding() {
                   <td className="text-slate-300">{o.joining_date?.split('T')[0]||'—'}</td>
                   <td><Badge text={o.police_verification}/></td>
                   <td><Badge text={o.status}/></td>
-                  <td><button className="btn btn-secondary text-xs py-1 px-3" onClick={()=>setSelected(o)}><Eye size={14} className="mr-1"/>View</button></td>
+                  <td><button className="btn btn-secondary text-xs py-1 px-3" onClick={()=>handleSelectCandidate(o)}><Eye size={14} className="mr-1"/>View</button></td>
                 </tr>
               ))}</tbody>
             </table>
@@ -281,6 +347,71 @@ export default function Onboarding() {
               <button className="btn btn-success flex-1" onClick={() => setShowLetter(true)}><Eye size={16} className="mr-2 inline"/>View Appointment Letter</button>
             )}
             <button className="btn btn-primary flex-1" onClick={()=>handleAction('service_book_created', 'Service Book Created Successfully!')}>Create Service Book</button>
+          </div>
+
+          <h4 className="font-semibold text-white mb-3 mt-8">Documents & OCR Verification</h4>
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="flex items-end gap-4 mb-6 pb-6 border-b border-white/10">
+              <div className="flex-1">
+                <label className="text-xs text-slate-400 block mb-1">Document Type</label>
+                <select className="input py-2 text-sm" value={docType} onChange={e=>setDocType(e.target.value)}>
+                  <option value="Aadhar">Aadhar Card</option>
+                  <option value="PAN">PAN Card</option>
+                  <option value="Passport">Passport</option>
+                  <option value="Passbook">Cancelled Cheque / Passbook</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-slate-400 block mb-1">File</label>
+                <input type="file" className="input py-1.5 text-sm" onChange={e=>setFileToUpload(e.target.files[0])} />
+              </div>
+              <button className="btn btn-primary h-[38px]" onClick={handleUploadDocument} disabled={!fileToUpload}>Upload</button>
+            </div>
+            
+            {loadingDocs ? <Loader /> : documents.length > 0 ? (
+              <div className="space-y-4">
+                {documents.map(doc => (
+                  <div key={doc.id} className="bg-slate-800/50 rounded-lg p-4 border border-white/5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <span className="font-medium text-white">{doc.doc_type}</span>
+                        <span className="text-xs text-slate-400 ml-2">Uploaded on {new Date(doc.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge text={doc.ocr_status} />
+                        {doc.ocr_status !== 'Processed' && (
+                          <button 
+                            className="btn btn-secondary text-xs py-1" 
+                            onClick={() => handlePerformOCR(doc.id)}
+                            disabled={ocrLoading === doc.id}
+                          >
+                            {ocrLoading === doc.id ? 'Processing...' : 'Perform OCR'}
+                          </button>
+                        )}
+                        <button
+                          title="Delete document"
+                          onClick={() => handleDeleteDocument(doc.id)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    {doc.extracted_data && (
+                      <div className="mt-3 bg-slate-900 rounded p-3 overflow-x-auto">
+                        <p className="text-xs font-semibold text-emerald-400 mb-2">Extracted Data:</p>
+                        <pre className="text-xs text-slate-300 whitespace-pre-wrap font-mono">
+                          {JSON.stringify(doc.extracted_data?.data || doc.extracted_data, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400 text-center py-4">No documents uploaded yet.</p>
+            )}
           </div>
         </Modal>
       )}
