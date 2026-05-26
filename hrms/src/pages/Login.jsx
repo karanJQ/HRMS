@@ -17,7 +17,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(form.email, form.password);
-      navigate('/');
+      navigate('/dashboard');
     } catch (error) {
       setErr(error.response?.data?.message || 'Login failed. Check credentials.');
     } finally {
@@ -55,7 +55,7 @@ export default function Login() {
               <div style={{ position:'relative' }}>
                 <Mail size={16} style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'#94a3b8' }} />
                 <input type="email" required value={form.email} onChange={e=>setForm({...form,email:e.target.value})}
-                  style={{ width:'100%', padding:'10px 12px 10px 38px', border:'1px solid #e2e8f0', borderRadius:10, fontSize:14, outline:'none', boxSizing:'border-box' }}
+                  style={{ width:'100%', padding:'10px 12px 10px 38px', border:'1px solid #e2e8f0', borderRadius:10, fontSize:14, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}
                   placeholder="admin@hrms.gov.in" />
               </div>
             </div>
@@ -64,7 +64,7 @@ export default function Login() {
               <div style={{ position:'relative' }}>
                 <Lock size={16} style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'#94a3b8' }} />
                 <input type={showPw?'text':'password'} required value={form.password} onChange={e=>setForm({...form,password:e.target.value})}
-                  style={{ width:'100%', padding:'10px 40px 10px 38px', border:'1px solid #e2e8f0', borderRadius:10, fontSize:14, outline:'none', boxSizing:'border-box' }}
+                  style={{ width:'100%', padding:'10px 40px 10px 38px', border:'1px solid #e2e8f0', borderRadius:10, fontSize:14, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}
                   placeholder="••••••••" />
                 <button type="button" onClick={()=>setShowPw(!showPw)}
                   style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#94a3b8' }}>

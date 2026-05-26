@@ -116,9 +116,9 @@ exports.markPaid = async (req, res) => {
   try {
     const result = await query(
       `UPDATE payroll_records SET status='Paid', payment_date=CURRENT_DATE, updated_at=NOW()
-       WHERE month=$1 AND year=$2 AND status='Processed' RETURNING COUNT(*)`,
+       WHERE month=$1 AND year=$2 AND status='Processed'`,
       [month, year]
     );
-    return success(res, null, 'Marked as Paid');
+    return success(res, null, `Marked ${result.rowCount || 0} payroll records as Paid`);
   } catch (err) { return error(res, err.message); }
 };

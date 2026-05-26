@@ -34,7 +34,7 @@ export default function UserManagement() {
   );
 
   const F = ({k,l,type='text',opts}) => (
-    <div><label className="text-xs text-gray-500 block mb-1">{l}</label>
+    <div><label className="text-xs text-slate-400 block mb-1">{l}</label>
       {opts ? <select className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})}>
         <option value="">Select</option>{opts.map(o=><option key={o.v||o} value={o.v||o}>{o.l||o}</option>)}
       </select> : <input type={type} className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})} />}
@@ -44,7 +44,7 @@ export default function UserManagement() {
   return (
     <Layout title="User Management">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-500">{(users||[]).length} system users</p>
+        <p className="text-sm text-slate-400">{(users||[]).length} system users</p>
         <button className="btn btn-primary" onClick={()=>setShowForm(true)}><Plus size={16}/>Create User</button>
       </div>
       {msg && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-4">{msg}</div>}
@@ -57,10 +57,10 @@ export default function UserManagement() {
               <tbody>{(users||[]).map(u=>(
                 <tr key={u.id}>
                   <td><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold">{u.username?.[0]?.toUpperCase()}</div><span className="font-medium">{u.username}</span></div></td>
-                  <td className="text-gray-500">{u.email}</td>
+                  <td className="text-slate-400">{u.email}</td>
                   <td>{roleBadge(u.role)}</td>
                   <td>{u.dept_name||'—'}</td>
-                  <td className="text-gray-400 text-xs">{u.last_login ? new Date(u.last_login).toLocaleString() : 'Never'}</td>
+                  <td className="text-slate-400 text-xs">{u.last_login ? new Date(u.last_login).toLocaleString() : 'Never'}</td>
                   <td><Badge text={u.is_active?'Active':'Inactive'} /></td>
                   <td><button className="btn btn-outline" style={{padding:'4px 10px',fontSize:12}} onClick={()=>handleToggle(u.id)}>{u.is_active?<ToggleRight size={14}/>:<ToggleLeft size={14}/>}{u.is_active?'Deactivate':'Activate'}</button></td>
                 </tr>
@@ -80,7 +80,7 @@ export default function UserManagement() {
               {v:'hr_manager',l:'HR Manager'},{v:'dept_head',l:'Department Head'},
               {v:'hr_staff',l:'HR Staff'},{v:'employee',l:'Employee'}
             ]} />
-            <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Department</label>
+            <div className="col-span-2"><label className="text-xs text-slate-400 block mb-1">Department</label>
               <select className="input" value={form.dept_id} onChange={e=>setForm({...form,dept_id:e.target.value})}>
                 <option value="">Select Department</option>
                 {(depts||[]).map(d=><option key={d.id} value={d.id}>{d.name}</option>)}

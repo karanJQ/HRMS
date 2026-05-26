@@ -45,11 +45,11 @@ export default function Retirement() {
 
   return (
     <Layout title="Retirement & Superannuation">
-      {msg && <div className="bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm mb-4">{msg}</div>}
+      {msg && <div className="bg-red-900/50 text-red-200 border border-red-500/30 px-4 py-2 rounded-lg text-sm mb-4">{msg}</div>}
       <div className="grid grid-cols-3 gap-4 mb-5">
-        <div className="card text-center"><p className="text-2xl font-bold text-blue-600">{data.length}</p><p className="text-sm text-gray-500">Total Tracked</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-yellow-500">{data.filter(r=>parseFloat(yrsLeft(r.retirement_date))<=2).length}</p><p className="text-sm text-gray-500">Retiring ≤ 2 Years</p></div>
-        <div className="card text-center"><p className="text-2xl font-bold text-green-600">₹{(data.reduce((s,r)=>s+parseFloat(r.gratuity_amount||0),0)/100000).toFixed(1)}L</p><p className="text-sm text-gray-500">Total Gratuity Liability</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-blue-600">{data.length}</p><p className="text-sm text-slate-400">Total Tracked</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-yellow-500">{data.filter(r=>parseFloat(yrsLeft(r.retirement_date))<=2).length}</p><p className="text-sm text-slate-400">Retiring ≤ 2 Years</p></div>
+        <div className="card text-center"><p className="text-2xl font-bold text-green-600">₹{(data.reduce((s,r)=>s+parseFloat(r.gratuity_amount||0),0)/100000).toFixed(1)}L</p><p className="text-sm text-slate-400">Total Gratuity Liability</p></div>
       </div>
       {loading ? <Loader/> : (
         <div className="card">
@@ -62,7 +62,7 @@ export default function Retirement() {
                 const done = CHECKS.filter(c=>r[c.key]).length;
                 return (
                   <tr key={r.emp_id}>
-                    <td><div className="font-medium">{r.emp_name}</div><div className="text-xs text-gray-400">{r.emp_id}</div></td>
+                    <td><div className="font-medium">{r.emp_name}</div><div className="text-xs text-slate-400">{r.emp_id}</div></td>
                     <td>{r.dept_name}</td>
                     <td>{r.dob?.split('T')[0]}</td>
                     <td className="font-medium text-blue-600">{r.retirement_date?.split('T')[0]}</td>
@@ -71,8 +71,8 @@ export default function Retirement() {
                     <td>{r.gpf_final_amount?`₹${parseFloat(r.gpf_final_amount).toLocaleString()}`:'—'}</td>
                     <td>
                       <div className="flex items-center gap-2">
-                        <div className="w-20 bg-gray-100 rounded-full h-2"><div className="h-2 rounded-full bg-green-500" style={{width:`${(done/CHECKS.length)*100}%`}}></div></div>
-                        <span className="text-xs text-gray-500">{done}/{CHECKS.length}</span>
+                        <div className="w-20 bg-white/10 rounded-full h-2"><div className="h-2 rounded-full bg-green-500" style={{width:`${(done/CHECKS.length)*100}%`}}></div></div>
+                        <span className="text-xs text-slate-400">{done}/{CHECKS.length}</span>
                       </div>
                     </td>
                     <td><button className="btn btn-outline" style={{padding:'4px 10px',fontSize:12}} onClick={()=>setSelected(r)}>Manage</button></td>
@@ -90,7 +90,7 @@ export default function Retirement() {
             <div>
               <h4 className="font-semibold text-sm mb-3">Employee Details</h4>
               {[['Department',selected.dept_name],['DOB',selected.dob?.split('T')[0]],['Retirement Date',selected.retirement_date?.split('T')[0]],['Years Remaining',`${yrsLeft(selected.retirement_date)} years`],['Designation',selected.designation_name]].map(([k,v])=>(
-                <div key={k} className="flex justify-between py-2 border-b border-gray-50 text-sm"><span className="text-gray-500">{k}</span><span className="font-medium">{v||'—'}</span></div>
+                <div key={k} className="flex justify-between py-2 border-b border-white/5 text-sm"><span className="text-slate-400">{k}</span><span className="font-medium">{v||'—'}</span></div>
               ))}
               <div className="mt-3 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">Pension Scheme: {selected.pension_type||'NPS'}</div>
             </div>
@@ -98,9 +98,9 @@ export default function Retirement() {
               <h4 className="font-semibold text-sm mb-3">Pre-Retirement Checklist</h4>
               <div className="space-y-2">
                 {CHECKS.map(c=>(
-                  <div key={c.key} className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${selected[c.key]?'bg-green-50 border-green-200':'bg-gray-50 border-gray-100'}`}
+                  <div key={c.key} className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${selected[c.key]?'bg-green-50 border-green-200':'bg-white/5 border-white/10'}`}
                     onClick={()=>isMin('hr_staff') && toggle(c.key)}>
-                    <span className="text-sm text-gray-700">{c.label}</span>
+                    <span className="text-sm text-slate-200">{c.label}</span>
                     {selected[c.key] ? <CheckCircle size={18} color="#22c55e"/> : <XCircle size={18} color="#cbd5e1"/>}
                   </div>
                 ))}

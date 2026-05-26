@@ -45,6 +45,336 @@ export default function Payroll() {
     catch(e) { setMsg('Error: '+e.response?.data?.message); }
   };
 
+  const handleDownloadSlip = () => {
+    if (!slip) return;
+    const printWindow = window.open('', '_blank', 'width=800,height=950');
+    if (!printWindow) {
+      setMsg('Error: Popup blocker blocked PDF generation. Please allow popups.');
+      return;
+    }
+
+    const monthName = months[slip.month - 1];
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Salary_Slip_${slip.emp_id}_${monthName}_${slip.year}</title>
+          <style>
+            body {
+              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              color: #1e293b;
+              padding: 40px;
+              line-height: 1.5;
+              background-color: #ffffff;
+            }
+            .container {
+              max-width: 750px;
+              margin: 0 auto;
+              border: 1px solid #cbd5e1;
+              padding: 30px;
+              border-radius: 8px;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #3b82f6;
+              padding-bottom: 16px;
+              margin-bottom: 24px;
+            }
+            .header h2 {
+              font-size: 22px;
+              font-weight: bold;
+              margin: 0 0 4px 0;
+              text-transform: uppercase;
+              color: #1e3a8a;
+            }
+            .header h3 {
+              font-size: 15px;
+              font-weight: 600;
+              color: #475569;
+              margin: 0 0 8px 0;
+            }
+            .header p {
+              font-size: 13px;
+              margin: 2px 0;
+              color: #64748b;
+              font-weight: bold;
+            }
+            .info-grid {
+              display: grid;
+              grid-template-cols: 1fr 1fr;
+              gap: 12px;
+              margin-bottom: 24px;
+              font-size: 13px;
+              background-color: #f8fafc;
+              padding: 16px;
+              border-radius: 6px;
+              border: 1px solid #e2e8f0;
+            }
+            .info-item {
+              display: flex;
+              justify-content: space-between;
+              padding: 2px 0;
+            }
+            .info-label {
+              color: #64748b;
+              font-weight: 500;
+            }
+            .info-value {
+              font-weight: 600;
+              color: #0f172a;
+            }
+            .details-table {
+              display: flex;
+              gap: 24px;
+              margin-bottom: 24px;
+            }
+            .table-column {
+              flex: 1;
+              border: 1px solid #e2e8f0;
+              border-radius: 6px;
+              overflow: hidden;
+            }
+            .table-column-header {
+              background-color: #f1f5f9;
+              font-weight: bold;
+              font-size: 13px;
+              padding: 10px 12px;
+              border-bottom: 1px solid #e2e8f0;
+              color: #1e293b;
+            }
+            .table-column-header.earnings {
+              border-top: 3px solid #10b981;
+            }
+            .table-column-header.deductions {
+              border-top: 3px solid #ef4444;
+            }
+            .row {
+              display: flex;
+              justify-content: space-between;
+              font-size: 13px;
+              padding: 8px 12px;
+              border-bottom: 1px solid #f1f5f9;
+            }
+            .row:last-child {
+              border-bottom: none;
+            }
+            .total-row {
+              display: flex;
+              justify-content: space-between;
+              font-size: 13px;
+              font-weight: bold;
+              padding: 10px 12px;
+              background-color: #f8fafc;
+              border-top: 1px solid #e2e8f0;
+            }
+            .total-row.earnings {
+              color: #047857;
+            }
+            .total-row.deductions {
+              color: #b91c1c;
+            }
+            .net-pay-box {
+              background-color: #ecfdf5;
+              border: 1px solid #a7f3d0;
+              border-radius: 6px;
+              padding: 16px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-weight: bold;
+              margin-bottom: 30px;
+            }
+            .net-pay-label {
+              font-size: 15px;
+              color: #065f46;
+            }
+            .net-pay-value {
+              font-size: 20px;
+              color: #047857;
+            }
+            .footer-sig {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              margin-top: 40px;
+              font-size: 12px;
+            }
+            .sig-item {
+              text-align: center;
+            }
+            .sig-line {
+              border-top: 1px solid #94a3b8;
+              width: 150px;
+              margin-bottom: 6px;
+            }
+            @media print {
+              body {
+                padding: 0;
+              }
+              .container {
+                border: none;
+                padding: 0;
+              }
+              @page {
+                size: A4;
+                margin: 15mm;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h2>GOVERNMENT OF GUJARAT</h2>
+              <h3>Human Resources Department</h3>
+              <p>Salary Slip for ${monthName} ${slip.year}</p>
+            </div>
+            
+            <div class="info-grid">
+              <div>
+                <div class="info-item">
+                  <span class="info-label">Employee Name:</span>
+                  <span class="info-value">${slip.emp_name}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Employee ID:</span>
+                  <span class="info-value">${slip.emp_id}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Department:</span>
+                  <span class="info-value">${slip.dept_name || '—'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Designation:</span>
+                  <span class="info-value">${slip.designation_name || '—'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Pay Level / Grade:</span>
+                  <span class="info-value">${slip.pay_level ? `Level ${slip.pay_level} (Grade ${slip.grade || '—'})` : '—'}</span>
+                </div>
+              </div>
+              <div>
+                <div class="info-item">
+                  <span class="info-label">PF Number:</span>
+                  <span class="info-value">${slip.pf_number || '—'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Bank Name:</span>
+                  <span class="info-value">${slip.bank_name || '—'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Account Number:</span>
+                  <span class="info-value">${slip.account_number || '—'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Payment Mode:</span>
+                  <span class="info-value">${slip.payment_mode || 'Bank Transfer'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Status:</span>
+                  <span class="info-value" style="color: ${slip.status === 'Paid' ? '#047857' : '#d97706'}">${slip.status}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="details-table">
+              <!-- Earnings -->
+              <div class="table-column">
+                <div class="table-column-header earnings">Earnings</div>
+                <div class="row">
+                  <span>Basic Pay</span>
+                  <span>₹${parseFloat(slip.basic_pay || 0).toLocaleString()}</span>
+                </div>
+                <div class="row">
+                  <span>Dearness Allowance (DA)</span>
+                  <span>₹${parseFloat(slip.da_amount || 0).toLocaleString()}</span>
+                </div>
+                <div class="row">
+                  <span>HRA</span>
+                  <span>₹${parseFloat(slip.hra_amount || 0).toLocaleString()}</span>
+                </div>
+                <div class="row">
+                  <span>Transport Allowance (TA)</span>
+                  <span>₹${parseFloat(slip.ta_amount || 0).toLocaleString()}</span>
+                </div>
+                ${parseFloat(slip.medical_allowance || 0) > 0 ? `
+                <div class="row">
+                  <span>Medical Allowance</span>
+                  <span>₹${parseFloat(slip.medical_allowance || 0).toLocaleString()}</span>
+                </div>` : ''}
+                ${parseFloat(slip.special_allowance || 0) > 0 ? `
+                <div class="row">
+                  <span>Special Allowance</span>
+                  <span>₹${parseFloat(slip.special_allowance || 0).toLocaleString()}</span>
+                </div>` : ''}
+                ${parseFloat(slip.other_allowances || 0) > 0 ? `
+                <div class="row">
+                  <span>Other Allowances</span>
+                  <span>₹${parseFloat(slip.other_allowances || 0).toLocaleString()}</span>
+                </div>` : ''}
+                <div class="total-row earnings">
+                  <span>Gross Pay</span>
+                  <span>₹${parseFloat(slip.gross_pay || 0).toLocaleString()}</span>
+                </div>
+              </div>
+              
+              <!-- Deductions -->
+              <div class="table-column">
+                <div class="table-column-header deductions">Deductions</div>
+                <div class="row">
+                  <span>Provident Fund (PF)</span>
+                  <span>₹${parseFloat(slip.pf_employee || 0).toLocaleString()}</span>
+                </div>
+                <div class="row">
+                  <span>Professional Tax</span>
+                  <span>₹${parseFloat(slip.professional_tax || 0).toLocaleString()}</span>
+                </div>
+                <div class="row">
+                  <span>Income Tax (TDS)</span>
+                  <span>₹${parseFloat(slip.tds || 0).toLocaleString()}</span>
+                </div>
+                ${parseFloat(slip.other_deductions || 0) > 0 ? `
+                <div class="row">
+                  <span>Other Deductions</span>
+                  <span>₹${parseFloat(slip.other_deductions || 0).toLocaleString()}</span>
+                </div>` : ''}
+                <div class="total-row deductions">
+                  <span>Total Deductions</span>
+                  <span>₹${parseFloat(slip.total_deductions || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="net-pay-box">
+              <span class="net-pay-label">Net Take-Home Salary:</span>
+              <span class="net-pay-value">₹${parseFloat(slip.net_pay || 0).toLocaleString()}</span>
+            </div>
+            
+            <div class="footer-sig">
+              <div class="sig-item">
+                <div class="sig-line"></div>
+                <p>Employee Signature</p>
+              </div>
+              <div class="sig-item">
+                <p style="font-style: italic; color: #64748b; margin-bottom: 8px;">Digitally Approved Payslip</p>
+                <div class="sig-line" style="margin: 0 auto 6px auto;"></div>
+                <p>Drawing & Disbursing Officer</p>
+              </div>
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    setSlip(null);
+    setMsg('Salary Slip PDF download triggered successfully!');
+  };
+
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   return (
@@ -65,7 +395,7 @@ export default function Payroll() {
         <button className="btn btn-secondary"><Download size={15}/>Export</button>
       </div>
 
-      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-50 text-red-700':'bg-green-50 text-green-700'}`}>{msg}</div>}
+      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
 
       <div className="grid grid-cols-4 gap-4 mb-5">
         <StatsCard title="Gross Payroll" value={`₹${((summary.gross||0)/100000).toFixed(2)}L`} icon={DollarSign} color="#3b82f6"/>
@@ -79,7 +409,7 @@ export default function Payroll() {
           <h3 className="section-title">Salary Register — {months[month-1]} {year}</h3>
           {records.length===0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-400 mb-3">No payroll records for this month.</p>
+              <p className="text-slate-400 mb-3">No payroll records for this month.</p>
               {isMin('hr_manager') && <button className="btn btn-primary" onClick={processAll} disabled={processing}><RefreshCw size={15}/>{processing?'Processing...':'Generate Payroll'}</button>}
             </div>
           ) : (
@@ -89,8 +419,8 @@ export default function Payroll() {
                 <tbody>{records.map(p=>(
                   <tr key={p.id}>
                     <td className="font-mono text-blue-600 text-xs">{p.emp_id}</td>
-                    <td><div className="font-medium text-sm">{p.emp_name}</div><div className="text-xs text-gray-400">{p.dept_name}</div></td>
-                    <td className="text-xs text-gray-500">{p.dept_name}</td>
+                    <td><div className="font-medium text-sm">{p.emp_name}</div><div className="text-xs text-slate-400">{p.dept_name}</div></td>
+                    <td className="text-xs text-slate-400">{p.dept_name}</td>
                     <td>₹{parseFloat(p.basic_pay).toLocaleString()}</td>
                     <td>₹{parseFloat(p.da_amount).toLocaleString()}</td>
                     <td>₹{parseFloat(p.hra_amount).toLocaleString()}</td>
@@ -100,15 +430,19 @@ export default function Payroll() {
                     <td className="text-red-500">-₹{parseFloat(p.tds).toLocaleString()}</td>
                     <td className="font-bold text-green-600">₹{parseFloat(p.net_pay).toLocaleString()}</td>
                     <td><Badge text={p.status}/></td>
-                    <td><button className="btn btn-outline" style={{padding:'3px 8px',fontSize:11}} onClick={()=>setSlip(p)}><FileText size={12}/>Slip</button></td>
+                    <td><button className="btn btn-outline" style={{padding:'3px 8px',fontSize:11}} onClick={()=>{
+                      payrollAPI.getSlip(p.emp_id, p.month, p.year)
+                        .then(r => setSlip(r.data.data))
+                        .catch(e => { console.error(e); setSlip(p); });
+                    }}><FileText size={12}/>Slip</button></td>
                   </tr>
                 ))}</tbody>
-                <tfoot><tr style={{background:'#f8fafc'}}>
-                  <td colSpan={7} className="font-bold px-4 py-3 text-sm">TOTALS</td>
-                  <td className="font-bold px-4 py-3">₹{Math.round(summary.gross||0).toLocaleString()}</td>
-                  <td className="font-bold text-red-500 px-4 py-3">-₹{Math.round(summary.pf||0).toLocaleString()}</td>
-                  <td className="font-bold text-red-500 px-4 py-3">-₹{Math.round(summary.tds||0).toLocaleString()}</td>
-                  <td className="font-bold text-green-600 px-4 py-3">₹{Math.round(summary.net||0).toLocaleString()}</td>
+                <tfoot><tr style={{background:'rgba(255, 255, 255, 0.1)'}}>
+                  <td colSpan={7} className="font-bold px-4 py-3 text-sm text-white">TOTALS</td>
+                  <td className="font-bold px-4 py-3 text-white">₹{Math.round(summary.gross||0).toLocaleString()}</td>
+                  <td className="font-bold text-red-400 px-4 py-3">-₹{Math.round(summary.pf||0).toLocaleString()}</td>
+                  <td className="font-bold text-red-400 px-4 py-3">-₹{Math.round(summary.tds||0).toLocaleString()}</td>
+                  <td className="font-bold text-green-400 px-4 py-3">₹{Math.round(summary.net||0).toLocaleString()}</td>
                   <td colSpan={2}></td>
                 </tr></tfoot>
               </table>
@@ -125,9 +459,9 @@ export default function Payroll() {
               <p className="text-sm opacity-80">HRMS — Salary Slip</p>
               <p className="text-sm mt-1">Month: {months[slip.month-1]} {slip.year}</p>
             </div>
-            <div className="p-4 bg-blue-50 grid grid-cols-2 text-sm gap-2">
+            <div className="p-4 bg-slate-800/50 grid grid-cols-2 text-sm gap-2 border-b border-white/10">
               {[['Employee',slip.emp_name],['Emp ID',slip.emp_id],['Department',slip.dept_name],['Status',slip.status]].map(([k,v])=>(
-                <div key={k}><p className="text-gray-500 text-xs">{k}</p><p className="font-bold">{v}</p></div>
+                <div key={k}><p className="text-slate-400 text-xs">{k}</p><p className="font-bold">{v}</p></div>
               ))}
             </div>
             <div className="p-4">
@@ -135,7 +469,7 @@ export default function Payroll() {
                 <div className="flex-1">
                   <p className="font-semibold text-sm mb-2 text-green-700">Earnings</p>
                   {[['Basic Pay',slip.basic_pay],['Dearness Allowance',slip.da_amount],['HRA',slip.hra_amount],['Transport Allowance',slip.ta_amount]].map(([k,v])=>(
-                    <div key={k} className="flex justify-between text-sm py-1 border-b border-gray-100">
+                    <div key={k} className="flex justify-between text-sm py-1 border-b border-white/10">
                       <span>{k}</span><span className="font-medium">₹{parseFloat(v||0).toLocaleString()}</span>
                     </div>
                   ))}
@@ -144,7 +478,7 @@ export default function Payroll() {
                 <div className="flex-1">
                   <p className="font-semibold text-sm mb-2 text-red-600">Deductions</p>
                   {[['Provident Fund',slip.pf_employee],['Professional Tax',slip.professional_tax],['Income Tax (TDS)',slip.tds]].map(([k,v])=>(
-                    <div key={k} className="flex justify-between text-sm py-1 border-b border-gray-100">
+                    <div key={k} className="flex justify-between text-sm py-1 border-b border-white/10">
                       <span>{k}</span><span className="font-medium text-red-500">₹{parseFloat(v||0).toLocaleString()}</span>
                     </div>
                   ))}
@@ -157,7 +491,7 @@ export default function Payroll() {
               </div>
             </div>
           </div>
-          <button className="btn btn-primary w-full mt-3"><Download size={15}/>Download Slip</button>
+          <button className="btn btn-primary w-full mt-3" onClick={handleDownloadSlip}><Download size={15}/>Download Slip</button>
         </Modal>
       )}
     </Layout>

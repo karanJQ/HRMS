@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, UserPlus, Users, DollarSign, Calendar, ArrowLeftRight, TrendingUp, Star, BookOpen, GraduationCap, Clock, AlertTriangle, BarChart3, Building2, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Users, DollarSign, Calendar, ArrowLeftRight, TrendingUp, Star, BookOpen, GraduationCap, Clock, AlertTriangle, BarChart3, Building2, LogOut, Shield, Workflow } from 'lucide-react';
 
 const allNav = [
-  { label:'Dashboard', icon:LayoutDashboard, path:'/', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
+  { label:'Dashboard', icon:LayoutDashboard, path:'/dashboard', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'Onboarding', icon:UserPlus, path:'/onboarding', roles:['super_admin','hr_manager','hr_staff'] },
   { label:'Employee Master', icon:Users, path:'/employees', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
   { label:'My Profile', icon:Users, path:'/my-profile', roles:['employee'] },
@@ -18,6 +18,7 @@ const allNav = [
   { label:'Retirement', icon:Clock, path:'/retirement', roles:['super_admin','hr_manager','hr_staff'] },
   { label:'Grievance & Discipline', icon:AlertTriangle, path:'/grievance', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'Reports', icon:BarChart3, path:'/reports', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
+  { label:'Workflow Tasks', icon:Workflow, path:'/tasks', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'User Management', icon:Shield, path:'/users', roles:['super_admin'] },
 ];
 

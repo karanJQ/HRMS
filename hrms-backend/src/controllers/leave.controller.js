@@ -1,9 +1,27 @@
 const { query } = require('../config/database');
 const { success, error } = require('../utils/response');
 
-const daysBetween = (from, to) => {
-  const d = Math.ceil((new Date(to) - new Date(from)) / 86400000) + 1;
-  return d > 0 ? d : 0;
+const getWorkingDays = async (from_date, to_date) => {
+  const holidaysRes = await query(`SELECT date, type FROM holidays WHERE date >= $1 AND date <= $2`, [from_date, to_date]);
+  const holidayStrings = holidaysRes.rows.map(r => {
+    const d = new Date(r.date);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().split('T')[0];
+  });
+  
+  let days = 0;
+  let curr = new Date(from_date);
+  const end = new Date(to_date);
+  while (curr <= end) {
+    const dayOfWeek = curr.getDay(); // 0=Sun, 6=Sat
+    const dateStr = curr.toISOString().split('T')[0];
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isHoliday = holidayStrings.includes(dateStr);
+    
+    if (!isWeekend && !isHoliday) days++;
+    curr.setDate(curr.getDate() + 1);
+  }
+  return days;
 };
 
 exports.listApplications = async (req, res) => {
@@ -34,9 +52,12 @@ exports.apply = async (req, res) => {
     return error(res,'emp_id, leave_type, from_date, to_date, reason required.',400);
   const eid = req.user.role==='employee' ? req.user.emp_id : emp_id;
   if (!eid) return error(res, 'Employee ID is required.', 400);
-  const days = daysBetween(from_date, to_date);
-  if (days<=0) return error(res,'Invalid date range.',400);
+  
+  if (new Date(from_date) > new Date(to_date)) return error(res,'Invalid date range.',400);
   try {
+    const days = await getWorkingDays(from_date, to_date);
+    if (days<=0) return error(res,'0 working days in selected range (weekends/holidays).',400);
+    
     const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [eid]);
     if (!empCheck.rows.length) {
       return error(res, `Employee with ID '${eid}' does not exist.`, 404);
@@ -64,15 +85,17 @@ exports.review = async (req, res) => {
     );
     // Update leave balance if approved
     if (status==='Approved') {
-      const yr = new Date(app.from_date).getFullYear();
-      const col = app.leave_type==='CL'?'cl_used':app.leave_type==='EL'?'el_used':app.leave_type==='ML'?'ml_used':'cl_used';
-      await query(
-        `INSERT INTO leave_balances(emp_id,year) VALUES($1,$2) ON CONFLICT DO NOTHING`, [app.emp_id, yr]
-      );
-      await query(
-        `UPDATE leave_balances SET ${col}=${col}+$1, updated_at=NOW() WHERE emp_id=$2 AND year=$3`,
-        [app.days, app.emp_id, yr]
-      );
+      if (!['WFH', 'Outdoor Duty'].includes(app.leave_type)) {
+        const yr = new Date(app.from_date).getFullYear();
+        const col = app.leave_type==='CL'?'cl_used':app.leave_type==='EL'?'el_used':app.leave_type==='ML'?'ml_used':'cl_used';
+        await query(
+          `INSERT INTO leave_balances(emp_id,year,cl_entitled,ml_entitled) VALUES($1,$2,12,6) ON CONFLICT DO NOTHING`, [app.emp_id, yr]
+        );
+        await query(
+          `UPDATE leave_balances SET ${col}=${col}+$1, updated_at=NOW() WHERE emp_id=$2 AND year=$3`,
+          [app.days, app.emp_id, yr]
+        );
+      }
     }
     return success(res, null, `Leave ${status.toLowerCase()}`);
   } catch (err) { return error(res, err.message); }

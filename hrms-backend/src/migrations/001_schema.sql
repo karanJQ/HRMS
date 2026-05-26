@@ -329,7 +329,6 @@ CREATE TABLE IF NOT EXISTS service_book_entries (
   recorded_by     INT REFERENCES users(id),
   recorded_by_name VARCHAR(150),
   is_verified     BOOLEAN DEFAULT FALSE,
-  blockchain_hash VARCHAR(200),
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -490,3 +489,20 @@ CREATE INDEX IF NOT EXISTS idx_transfers_emp ON transfers(emp_id);
 CREATE INDEX IF NOT EXISTS idx_apar_emp ON apar_records(emp_id);
 CREATE INDEX IF NOT EXISTS idx_sb_emp ON service_book_entries(emp_id);
 CREATE INDEX IF NOT EXISTS idx_grievances_status ON grievances(status);
+
+-- ────────────────────────────────────────────────────────
+-- EMPLOYEE DOCUMENTS
+-- ────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS employee_documents (
+  id              SERIAL PRIMARY KEY,
+  owner_id        VARCHAR(60) NOT NULL, -- Links to candidate_ref_id or emp_id
+  doc_type        VARCHAR(100) NOT NULL, -- e.g., 'Aadhar', 'PAN', 'Passport'
+  file_path       TEXT NOT NULL,
+  ocr_status      VARCHAR(30) DEFAULT 'Pending',
+  extracted_data  JSONB,
+  uploaded_by     INT REFERENCES users(id),
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_employee_documents_owner ON employee_documents(owner_id);

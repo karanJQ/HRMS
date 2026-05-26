@@ -44,17 +44,16 @@ export default function ServiceBook() {
 
   return (
     <Layout title="Digital Service Book">
-      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-50 text-red-700':'bg-green-50 text-green-700'}`}>{msg}</div>}
+      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
       {!selected ? (
         <div className="card">
           <div className="flex items-center gap-2 mb-4"><Shield size={20} className="text-blue-500"/><h3 className="section-title mb-0">Select Employee to View Service Book</h3></div>
-          <p className="text-sm text-gray-500 mb-4">Permanent tamper-proof record of every event in an employee's career — blockchain verified.</p>
           {empsLoading ? <Loader/> : (
             <div className="grid grid-cols-2 gap-3">
               {emps.map(e=>(
-                <div key={e.emp_id} className="flex items-center gap-3 p-4 border border-gray-100 rounded-xl hover:border-blue-200 hover:bg-blue-50 cursor-pointer transition-all" onClick={()=>loadEntries(e)}>
+                <div key={e.emp_id} className="flex items-center gap-3 p-4 border border-white/10 rounded-xl hover:border-blue-200 hover:bg-blue-50 cursor-pointer transition-all" onClick={()=>loadEntries(e)}>
                   <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">{e.first_name?.[0]}</div>
-                  <div className="flex-1"><p className="font-medium text-gray-800">{e.first_name} {e.last_name}</p><p className="text-xs text-gray-500">{e.emp_id} • {e.designation_name||e.dept_name}</p></div>
+                  <div className="flex-1"><p className="font-medium text-white">{e.first_name} {e.last_name}</p><p className="text-xs text-slate-400">{e.emp_id} • {e.designation_name||e.dept_name}</p></div>
                   <BookOpen size={16} className="text-blue-400"/>
                 </div>
               ))}
@@ -69,10 +68,9 @@ export default function ServiceBook() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">{selected.first_name?.[0]}</div>
-                  <div><p className="font-bold text-gray-800">{selected.first_name} {selected.last_name}</p><p className="text-xs text-gray-500">{selected.emp_id} • {selected.dept_name} • DOJ: {selected.doj?.split('T')[0]}</p></div>
+                  <div><p className="font-bold text-white">{selected.first_name} {selected.last_name}</p><p className="text-xs text-slate-400">{selected.emp_id} • {selected.dept_name} • DOJ: {selected.doj?.split('T')[0]}</p></div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">🔗 Blockchain Verified</span>
                   {isMin('hr_staff') && <button className="btn btn-primary" onClick={()=>setShowAdd(true)}><Plus size={16}/>Add Entry</button>}
                 </div>
               </div>
@@ -80,21 +78,20 @@ export default function ServiceBook() {
           </div>
           <div className="card">
             <h3 className="section-title">Service Book Entries ({entries.length})</h3>
-            {loading ? <Loader/> : entries.length===0 ? <p className="text-gray-400 text-sm py-8 text-center">No entries found.</p> : (
+            {loading ? <Loader/> : entries.length===0 ? <p className="text-slate-400 text-sm py-8 text-center">No entries found.</p> : (
               <div className="relative">
-                <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-100"></div>
+                <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-white/10"></div>
                 {entries.map((e,i)=>(
                   <div key={i} className="flex gap-4 mb-5 relative">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold z-10 flex-shrink-0" style={{background:EVT_COLORS[e.event_type]||'#64748b'}}>{e.event_type?.[0]}</div>
-                    <div className="flex-1 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <div className="flex-1 bg-white/5 rounded-xl p-4 border border-white/10">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-semibold text-sm" style={{color:EVT_COLORS[e.event_type]||'#64748b'}}>{e.event_type}</span>
-                        <span className="text-xs text-gray-400 font-mono">{e.event_date?.split('T')[0]}</span>
+                        <span className="text-xs text-slate-400 font-mono">{e.event_date?.split('T')[0]}</span>
                       </div>
-                      <p className="text-sm text-gray-700">{e.details}</p>
+                      <p className="text-sm text-slate-200">{e.details}</p>
                       {e.order_number && <p className="text-xs text-blue-500 mt-1">Order: {e.order_number}</p>}
-                      <p className="text-xs text-gray-400 mt-1">Recorded by: {e.recorded_by_name||e.recorder_username}</p>
-                      {e.blockchain_hash && <p className="text-xs text-green-500 mt-0.5 font-mono truncate">Hash: {e.blockchain_hash.substring(0,24)}...</p>}
+                      <p className="text-xs text-slate-400 mt-1">Recorded by: {e.recorded_by_name||e.recorder_username}</p>
                     </div>
                   </div>
                 ))}
@@ -104,17 +101,17 @@ export default function ServiceBook() {
           {showAdd && (
             <Modal title="Add Service Book Entry" onClose={()=>setShowAdd(false)}>
               <div className="space-y-3">
-                <div><label className="text-xs text-gray-500 block mb-1">Date</label><input type="date" className="input" value={form.event_date} onChange={e=>setForm({...form,event_date:e.target.value})}/></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Event Type</label>
+                <div><label className="text-xs text-slate-400 block mb-1">Date</label><input type="date" className="input" value={form.event_date} onChange={e=>setForm({...form,event_date:e.target.value})}/></div>
+                <div><label className="text-xs text-slate-400 block mb-1">Event Type</label>
                   <select className="input" value={form.event_type} onChange={e=>setForm({...form,event_type:e.target.value})}>
                     {Object.keys(EVT_COLORS).map(ev=><option key={ev}>{ev}</option>)}
                     <option>Other</option>
                   </select>
                 </div>
-                <div><label className="text-xs text-gray-500 block mb-1">Order Number (optional)</label><input className="input" value={form.order_number} onChange={e=>setForm({...form,order_number:e.target.value})}/></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Details</label><textarea className="input" rows={3} value={form.details} onChange={e=>setForm({...form,details:e.target.value})}/></div>
+                <div><label className="text-xs text-slate-400 block mb-1">Order Number (optional)</label><input className="input" value={form.order_number} onChange={e=>setForm({...form,order_number:e.target.value})}/></div>
+                <div><label className="text-xs text-slate-400 block mb-1">Details</label><textarea className="input" rows={3} value={form.details} onChange={e=>setForm({...form,details:e.target.value})}/></div>
               </div>
-              <button className="btn btn-primary w-full mt-4" onClick={addEntry}>Add Entry</button>
+              <button className="btn btn-primary w-full mt-4" onClick={addEntry} disabled={!form.event_date || !form.event_type || !form.details}>Add Entry</button>
             </Modal>
           )}
         </>

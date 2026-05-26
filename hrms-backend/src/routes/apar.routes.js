@@ -8,5 +8,6 @@ router.post('/initiate', auth, allow('super_admin','hr_manager','hr_staff'), ctr
 router.put('/:id/self', auth, ctrl.fillSelf);
 router.put('/:id/reporting', auth, allow('super_admin','hr_manager','dept_head'), ctrl.fillReporting);
 router.put('/:id/reviewing', auth, allow('super_admin','hr_manager'), ctrl.fillReviewing);
+router.get('/:id/ai-insights', auth, allow('super_admin','hr_manager','dept_head'), ctrl.generateAIInsights);
 
 module.exports = router;
