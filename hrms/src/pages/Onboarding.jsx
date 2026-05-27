@@ -17,6 +17,7 @@ export default function Onboarding() {
   const [showLetter, setShowLetter] = useState(false);
   const [msg, setMsg] = useState('');
   const [form, setForm] = useState({ candidate_ref_id:'', name:'', post:'', dept_id:'', selection_date:'', joining_date:'' });
+  const [showCompleted, setShowCompleted] = useState(false);
 
   // Document states
   const [documents, setDocuments] = useState([]);
@@ -280,7 +281,28 @@ export default function Onboarding() {
     <Layout title="Employee Onboarding" theme="light">
       {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm font-medium" style={{ color: 'rgba(22, 38, 96, 0.7)' }}>{data.length} candidates in pipeline</p>
+        <div className="flex items-center gap-4">
+          <p className="text-sm font-medium" style={{ color: 'rgba(22, 38, 96, 0.7)' }}>
+            {data.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled').length} candidates in active pipeline
+          </p>
+          <label className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-colors"
+            style={{
+              color: '#162660',
+              borderColor: 'rgba(22, 38, 96, 0.15)',
+              background: 'rgba(22, 38, 96, 0.03)'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(22, 38, 96, 0.07)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)'}
+          >
+            <input 
+              type="checkbox" 
+              checked={showCompleted} 
+              onChange={e => setShowCompleted(e.target.checked)} 
+              className="accent-[#162660] rounded border-slate-300"
+            />
+            <span>Include Completed & Cancelled</span>
+          </label>
+        </div>
         {isMin('hr_staff') && <button className="btn btn-primary" onClick={()=>setShowAdd(true)}><Plus size={16}/>Add Candidate</button>}
       </div>
       <div className="grid grid-cols-4 gap-4 mb-6">
@@ -323,7 +345,7 @@ export default function Onboarding() {
                   ))}
                 </tr>
               </thead>
-              <tbody>{data.map(o=>(
+              <tbody>{data.filter(o => showCompleted || (o.status !== 'Completed' && o.status !== 'Cancelled')).map(o=>(
                 <tr key={o.id} style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.05)' }}>
                   <td>
                     <div className="font-medium" style={{ color: '#162660' }}>{o.name}</div>

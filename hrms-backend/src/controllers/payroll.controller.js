@@ -60,7 +60,7 @@ exports.getSlip = async (req, res) => {
 exports.process = async (req, res) => {
   const { emp_id, month, year, basic_pay, da_percentage=42, hra_percentage=20, ta_amount=1500,
           medical_allowance=0, special_allowance=0, other_allowances=0,
-          professional_tax=200, tds=0, other_deductions=0, payment_mode='Bank Transfer' } = req.body;
+          professional_tax=200, tds=0, other_deductions=0, payment_mode='Bank Transfer', status='Processed' } = req.body;
   if (!emp_id||!month||!year||!basic_pay) return error(res,'emp_id, month, year, basic_pay required.',400);
   try {
     const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [emp_id]);
@@ -78,14 +78,20 @@ exports.process = async (req, res) => {
       `INSERT INTO payroll_records(emp_id,month,year,basic_pay,da_percentage,da_amount,hra_percentage,hra_amount,
         ta_amount,medical_allowance,special_allowance,other_allowances,gross_pay,pf_employee,pf_employer,
         professional_tax,tds,other_deductions,total_deductions,net_pay,payment_mode,status,processed_by)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,'Processed',$22)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
        ON CONFLICT(emp_id,month,year) DO UPDATE SET
-         basic_pay=EXCLUDED.basic_pay, da_amount=EXCLUDED.da_amount, hra_amount=EXCLUDED.hra_amount,
-         gross_pay=EXCLUDED.gross_pay, net_pay=EXCLUDED.net_pay, status='Processed',
+         basic_pay=EXCLUDED.basic_pay, da_percentage=EXCLUDED.da_percentage, da_amount=EXCLUDED.da_amount,
+         hra_percentage=EXCLUDED.hra_percentage, hra_amount=EXCLUDED.hra_amount, ta_amount=EXCLUDED.ta_amount,
+         medical_allowance=EXCLUDED.medical_allowance, special_allowance=EXCLUDED.special_allowance,
+         other_allowances=EXCLUDED.other_allowances, pf_employee=EXCLUDED.pf_employee,
+         pf_employer=EXCLUDED.pf_employer, professional_tax=EXCLUDED.professional_tax,
+         tds=EXCLUDED.tds, other_deductions=EXCLUDED.other_deductions,
+         total_deductions=EXCLUDED.total_deductions, gross_pay=EXCLUDED.gross_pay,
+         net_pay=EXCLUDED.net_pay, payment_mode=EXCLUDED.payment_mode, status=EXCLUDED.status,
          processed_by=EXCLUDED.processed_by, updated_at=NOW()
        RETURNING *`,
       [emp_id,month,year,basic_pay,da_percentage,da,hra_percentage,hra,ta_amount,medical_allowance,
-       special_allowance,other_allowances,gross,pf_emp,pf_er,professional_tax,tds,other_deductions,total_ded,net,payment_mode,req.user.id]
+       special_allowance,other_allowances,gross,pf_emp,pf_er,professional_tax,tds,other_deductions,total_ded,net,payment_mode,status,req.user.id]
     );
     return success(res, result.rows[0], 'Payroll processed');
   } catch (err) { return error(res, err.message); }

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, CheckCheck, Clock, ClipboardList, AlertCircle } from 'lucide-react';
+import { Bell, CheckCheck, Clock, ClipboardList, AlertCircle, Menu } from 'lucide-react';
 import { notificationAPI } from '../../api/endpoints';
 import { useNavigate } from 'react-router-dom';
 
-export default function Header({ title, theme, bg }) {
+export default function Header({ title, theme, bg, collapsed, onToggleSidebar }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -87,15 +87,31 @@ export default function Header({ title, theme, bg }) {
         borderBottom: isLight ? '1px solid rgba(22, 38, 96, 0.1)' : '1px solid rgba(255, 255, 255, 0.05)',
       }}
     >
-      <h1 
-        className="text-3xl font-bold text-glow transition-all duration-300"
-        style={{
-          color: isLight ? '#162660' : '#fff',
-          textShadow: isLight ? '0 0 20px rgba(22, 38, 96, 0.1)' : '0 0 20px rgba(129, 140, 248, 0.5)'
-        }}
-      >
-        {title}
-      </h1>
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={onToggleSidebar}
+          className="p-2 rounded-xl transition-colors border"
+          style={{
+            borderColor: isLight ? 'rgba(22, 38, 96, 0.1)' : 'rgba(255,255,255,0.1)',
+            color: isLight ? '#162660' : '#cbd5e1',
+            background: 'transparent'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = isLight ? 'rgba(22, 38, 96, 0.05)' : 'rgba(255,255,255,0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          title={collapsed ? "Open Sidebar" : "Close Sidebar"}
+        >
+          <Menu size={20} />
+        </button>
+        <h1 
+          className="text-3xl font-bold text-glow transition-all duration-300 m-0 leading-none"
+          style={{
+            color: isLight ? '#162660' : '#fff',
+            textShadow: isLight ? '0 0 20px rgba(22, 38, 96, 0.1)' : '0 0 20px rgba(129, 140, 248, 0.5)'
+          }}
+        >
+          {title}
+        </h1>
+      </div>
 
       {/* Notification Bell */}
       <div className="relative" ref={dropdownRef}>

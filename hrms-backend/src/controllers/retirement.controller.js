@@ -3,6 +3,20 @@ const { success, error } = require('../utils/response');
 
 exports.list = async (req, res) => {
   try {
+    // Auto-sync: Find any active employees missing from retirement_tracking and insert them
+    const missingRes = await query(
+      `SELECT e.emp_id, e.dor FROM employees e
+       LEFT JOIN retirement_tracking rt ON rt.emp_id = e.emp_id
+       WHERE e.status = 'Active' AND rt.emp_id IS NULL`
+    );
+    for (const row of missingRes.rows) {
+      const dor = row.dor || new Date(new Date().setFullYear(new Date().getFullYear() + 30)).toISOString().split('T')[0];
+      await query(
+        `INSERT INTO retirement_tracking(emp_id, retirement_date) VALUES($1, $2) ON CONFLICT DO NOTHING`,
+        [row.emp_id, dor]
+      );
+    }
+
     const result = await query(
       `SELECT rt.*, e.first_name||' '||e.last_name as emp_name, e.dob, e.doj,
               d.name as dept_name, des.name as designation_name, e.basic_pay,

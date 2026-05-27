@@ -28,7 +28,7 @@ const allNav = [
   { label:'User Management', icon:Shield, path:'/users', roles:['super_admin'] },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -85,32 +85,36 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="sidebar fixed top-0 left-0 flex flex-col shadow-[4px_0_24px_rgba(22,38,96,0.1)]" style={{ zIndex: 40, borderRight: '1px solid rgba(22, 38, 96, 0.1)', background: '#c8bcea' }}>
+    <div className="sidebar fixed top-0 left-0 flex flex-col shadow-[4px_0_24px_rgba(22,38,96,0.1)] transition-all duration-300" style={{ zIndex: 40, borderRight: '1px solid rgba(22, 38, 96, 0.1)', background: '#c8bcea', width: collapsed ? '80px' : '280px' }}>
       
       {/* Header Info */}
       <div className="px-6 pt-7 pb-5 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#162660] flex items-center justify-center shadow-[0_4px_12px_rgba(22,38,96,0.2)]">
+          <div className="w-8 h-8 rounded-xl bg-[#162660] flex items-center justify-center shadow-[0_4px_12px_rgba(22,38,96,0.2)] flex-shrink-0">
             <TrendingUp size={16} color="#fff" />
           </div>
-          <div>
-            <p className="font-extrabold text-base leading-tight tracking-tight" style={{ color: '#162660' }}>Gujarat HRMS</p>
-          </div>
+          {!collapsed && (
+            <div>
+              <p className="font-extrabold text-base leading-tight tracking-tight" style={{ color: '#162660' }}>Gujarat HRMS</p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Search Input Box */}
-      <div className="px-4 mb-4 flex-shrink-0">
-        <div className="relative">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'rgba(22, 38, 96, 0.6)' }} />
-          <input 
-            type="text" 
-            placeholder="Search..." 
-            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs placeholder-[rgba(22,38,96,0.4)] border-none outline-none transition-all duration-200 focus:ring-1 focus:ring-[#162660]/30" 
-            style={{ background: '#ffffff', color: '#162660', border: '1px solid rgba(22, 38, 96, 0.08)' }}
-          />
+      {!collapsed && (
+        <div className="px-4 mb-4 flex-shrink-0">
+          <div className="relative">
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'rgba(22, 38, 96, 0.6)' }} />
+            <input 
+              type="text" 
+              placeholder="Search..." 
+              className="w-full pl-9 pr-4 py-2 rounded-xl text-xs placeholder-[rgba(22,38,96,0.4)] border-none outline-none transition-all duration-200 focus:ring-1 focus:ring-[#162660]/30" 
+              style={{ background: '#ffffff', color: '#162660', border: '1px solid rgba(22, 38, 96, 0.08)' }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Navigation Area */}
       <nav className="flex-1 px-2 py-2 overflow-y-auto no-scrollbar space-y-0.5">
@@ -121,11 +125,17 @@ export default function Sidebar() {
             key={item.path} 
             className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
             onClick={() => navigate(item.path)}
+            title={collapsed ? item.label : ''}
+            style={{ 
+              padding: collapsed ? '12px 0' : undefined, 
+              justifyContent: collapsed ? 'center' : undefined,
+              margin: collapsed ? '4px 8px' : undefined
+            }}
           >
-            <item.icon size={16} />
-            <span>{item.label}</span>
-            {getBadge(item.path)}
-            {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
+            <item.icon size={16} className="flex-shrink-0" />
+            {!collapsed && <span>{item.label}</span>}
+            {!collapsed && getBadge(item.path)}
+            {!collapsed && hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
           </div>
         ))}
 
@@ -168,16 +178,18 @@ export default function Sidebar() {
 
       {/* Profile Box at the Bottom */}
       <div className="p-4 border-t flex-shrink-0" style={{ backgroundColor: 'rgba(22, 38, 96, 0.03)', borderColor: 'rgba(22, 38, 96, 0.08)' }}>
-        <div className="flex items-center gap-3 p-3 rounded-2xl border bg-white/60 hover:bg-white/80 transition-all duration-200" style={{ borderColor: 'rgba(22, 38, 96, 0.08)' }}>
+        <div className="flex items-center gap-3 p-3 rounded-2xl border bg-white/60 hover:bg-white/80 transition-all duration-200" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', justifyContent: collapsed ? 'center' : 'flex-start' }}>
           {/* Avatar circle */}
           <div className="w-10 h-10 rounded-full bg-[#162660] text-white flex items-center justify-center text-xs font-extrabold shadow-sm flex-shrink-0">
             {initials}
           </div>
           {/* Name & Role details */}
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold truncate" style={{ color: '#162660' }}>{user?.first_name || user?.username}</p>
-            <p className="text-[10px] truncate mt-0.5" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{roleLabel[user?.role] || user?.role}</p>
-          </div>
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold truncate" style={{ color: '#162660' }}>{user?.first_name || user?.username}</p>
+              <p className="text-[10px] truncate mt-0.5" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{roleLabel[user?.role] || user?.role}</p>
+            </div>
+          )}
           {/* Sign out action option */}
           <button 
             onClick={logout} 

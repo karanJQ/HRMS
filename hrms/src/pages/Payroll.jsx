@@ -4,7 +4,7 @@ import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import StatsCard from '../components/common/StatsCard';
 import Loader from '../components/common/Loader';
-import { IndianRupee, Download, FileText, Check, RefreshCw } from 'lucide-react';
+import { IndianRupee, Download, FileText, Check, RefreshCw, Plus, Edit2, CreditCard } from 'lucide-react';
 import { payrollAPI, empAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
@@ -161,6 +161,73 @@ export default function Payroll() {
   const [annualSummary, setAnnualSummary] = useState(null);
   const [annualLoading, setAnnualLoading] = useState(false);
   const [showAnnualModal, setShowAnnualModal] = useState(false);
+
+  // New Payroll Modal States
+  const [employees, setEmployees] = useState([]);
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [savingForm, setSavingForm] = useState(false);
+  const [formObj, setFormObj] = useState({
+    emp_id: '',
+    month: '',
+    year: '',
+    basic_pay: '',
+    da_percentage: 42,
+    hra_percentage: 20,
+    ta_amount: 1500,
+    medical_allowance: 0,
+    special_allowance: 0,
+    other_allowances: 0,
+    professional_tax: 200,
+    tds: 0,
+    other_deductions: 0,
+    payment_mode: 'Bank Transfer',
+    status: 'Processed'
+  });
+
+  useEffect(() => {
+    if (isMin('hr_staff')) {
+      empAPI.list({ limit: 300 })
+        .then(r => setEmployees(r.data.data.employees || []))
+        .catch(e => console.error(e));
+    }
+  }, []);
+
+  const handleSelectEmployee = (empId) => {
+    const emp = employees.find(e => e.emp_id === empId);
+    setFormObj(prev => ({
+      ...prev,
+      emp_id: empId,
+      basic_pay: emp ? emp.basic_pay || '' : ''
+    }));
+  };
+
+  const savePayrollEntry = async () => {
+    setSavingForm(true);
+    try {
+      await payrollAPI.process(formObj);
+      setMsg(formObj.id ? 'Payroll entry updated!' : 'Payroll entry created successfully!');
+      setShowFormModal(false);
+      load();
+    } catch(e) {
+      setMsg('Error: ' + (e.response?.data?.message || e.message));
+    } finally {
+      setSavingForm(false);
+    }
+  };
+
+  const payIndividualEmployee = async (record) => {
+    try {
+      await payrollAPI.process({
+        ...record,
+        status: 'Paid',
+        basic_pay: parseFloat(record.basic_pay)
+      });
+      setMsg(`Successfully processed payment to ${record.emp_name}!`);
+      load();
+    } catch(e) {
+      setMsg('Error: ' + (e.response?.data?.message || e.message));
+    }
+  };
 
   const fetchAnnualSummary = () => {
     setAnnualLoading(true);
@@ -592,6 +659,48 @@ export default function Payroll() {
             <Check size={15}/>Mark All Paid
           </button>
         </>}
+        {isMin('hr_staff') && (
+          <button 
+            className="btn font-semibold transition-all duration-200 mr-2" 
+            style={{ 
+              background: '#162660', 
+              color: '#FEFEFA',
+              boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
+            }}
+            onClick={() => {
+              setFormObj({
+                emp_id: '',
+                month: month,
+                year: year,
+                basic_pay: '',
+                da_percentage: 42,
+                hra_percentage: 20,
+                ta_amount: 1500,
+                medical_allowance: 0,
+                special_allowance: 0,
+                other_allowances: 0,
+                professional_tax: 200,
+                tds: 0,
+                other_deductions: 0,
+                payment_mode: 'Bank Transfer',
+                status: 'Processed'
+              });
+              setShowFormModal(true);
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#68aae8';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#162660';
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
+            }}
+          >
+            <Plus size={15}/>New Entry
+          </button>
+        )}
         <button 
           className="btn font-semibold transition-all duration-200 mr-2" 
           style={{ 
@@ -708,7 +817,7 @@ export default function Payroll() {
               <table>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
-                    {['Emp ID', 'Name', 'Dept', 'Basic', 'DA', 'HRA', 'TA', 'Gross', 'PF', 'TDS', 'Net Pay', 'Status', 'Slip'].map(h => (
+                    {['Emp ID', 'Name', 'Dept', 'Basic', 'DA', 'HRA', 'TA', 'Gross', 'PF', 'TDS', 'Net Pay', 'Status', 'Actions'].map(h => (
                       <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
                     ))}
                   </tr>
@@ -744,33 +853,103 @@ export default function Payroll() {
                     <td className="font-bold text-emerald-600">₹{parseFloat(p.net_pay).toLocaleString()}</td>
                     <td><Badge text={p.status}/></td>
                     <td>
-                      <button 
-                        className="btn font-semibold transition-all duration-300" 
-                        style={{ 
-                          padding: '6px 10px', 
-                          borderRadius: '8px', 
-                          fontSize: 11, 
-                          border: '1px solid rgba(22, 38, 96, 0.2)',
-                          background: '#fff',
-                          color: '#162660',
-                          boxShadow: '0 2px 6px rgba(22, 38, 96, 0.03)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
-                          e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#fff';
-                          e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
-                        }}
-                        onClick={()=>{
-                          payrollAPI.getSlip(p.emp_id, p.month, p.year)
-                            .then(r => setSlip(r.data.data))
-                            .catch(e => { console.error(e); setSlip(p); });
-                        }}
-                      >
-                        <FileText size={12}/>Slip
-                      </button>
+                      <div className="flex gap-1.5 justify-center">
+                        <button 
+                          className="btn font-semibold transition-all duration-300" 
+                          style={{ 
+                            padding: '6px 10px', 
+                            borderRadius: '8px', 
+                            fontSize: 11, 
+                            border: '1px solid rgba(22, 38, 96, 0.2)',
+                            background: '#fff',
+                            color: '#162660',
+                            boxShadow: '0 2px 6px rgba(22, 38, 96, 0.03)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+                            e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#fff';
+                            e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
+                          }}
+                          onClick={()=>{
+                            payrollAPI.getSlip(p.emp_id, p.month, p.year)
+                              .then(r => setSlip(r.data.data))
+                              .catch(e => { console.error(e); setSlip(p); });
+                          }}
+                          title="View & Print Slip"
+                        >
+                          <FileText size={12}/>Slip
+                        </button>
+                        {isMin('hr_staff') && (
+                          <button 
+                            className="btn font-semibold transition-all duration-300" 
+                            style={{ 
+                              padding: '6px 10px', 
+                              borderRadius: '8px', 
+                              fontSize: 11, 
+                              border: '1px solid rgba(59, 130, 246, 0.2)',
+                              background: 'rgba(59, 130, 246, 0.05)',
+                              color: '#2563eb',
+                              boxShadow: '0 2px 6px rgba(59, 130, 246, 0.03)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.05)';
+                              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+                            }}
+                            title="Adjust Salary Components"
+                            onClick={() => {
+                              setFormObj({
+                                ...p,
+                                basic_pay: parseFloat(p.basic_pay),
+                                da_percentage: parseFloat(p.da_percentage || 42),
+                                hra_percentage: parseFloat(p.hra_percentage || 20),
+                                ta_amount: parseFloat(p.ta_amount || 1500),
+                                medical_allowance: parseFloat(p.medical_allowance || 0),
+                                special_allowance: parseFloat(p.special_allowance || 0),
+                                other_allowances: parseFloat(p.other_allowances || 0),
+                                professional_tax: parseFloat(p.professional_tax || 200),
+                                tds: parseFloat(p.tds || 0),
+                                other_deductions: parseFloat(p.other_deductions || 0),
+                              });
+                              setShowFormModal(true);
+                            }}
+                          >
+                            <Edit2 size={12}/>Edit
+                          </button>
+                        )}
+                        {isMin('hr_manager') && p.status === 'Processed' && (
+                          <button 
+                            className="btn font-semibold transition-all duration-300" 
+                            style={{ 
+                              padding: '6px 10px', 
+                              borderRadius: '8px', 
+                              fontSize: 11, 
+                              border: '1px solid rgba(16, 185, 129, 0.2)', 
+                              background: 'rgba(16, 185, 129, 0.08)', 
+                              color: '#059669',
+                              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.03)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
+                              e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'rgba(16, 185, 129, 0.08)';
+                              e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                            }}
+                            title="Process Individual Payment"
+                            onClick={() => payIndividualEmployee(p)}
+                          >
+                            <CreditCard size={12}/>Pay
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}</tbody>
@@ -967,6 +1146,114 @@ export default function Payroll() {
               </div>
             </div>
           )}
+        </Modal>
+      )}
+
+      {showFormModal && (
+        <Modal title={formObj.id ? `Adjust Salary Components — ${formObj.emp_name}` : 'New Payroll Entry'} onClose={()=>setShowFormModal(false)}>
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Employee<span className="text-red-400">*</span></label>
+                {formObj.id ? (
+                  <input className="input" value={`${formObj.emp_name} (${formObj.emp_id})`} disabled />
+                ) : (
+                  <select className="input" value={formObj.emp_id} onChange={e => handleSelectEmployee(e.target.value)}>
+                    <option value="">Select Employee</option>
+                    {employees.map(e => (
+                      <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name} ({e.emp_id})</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Payment Mode</label>
+                <select className="input" value={formObj.payment_mode} onChange={e=>setFormObj({...formObj, payment_mode: e.target.value})}>
+                  {['Bank Transfer', 'Cash', 'Cheque'].map(m=><option key={m}>{m}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+              <div className="col-span-3 pb-1 border-b border-white/5"><span className="text-xs font-bold text-white uppercase">Salary Period & Status</span></div>
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Month</label>
+                <select className="input text-xs" value={formObj.month} onChange={e=>setFormObj({...formObj, month: parseInt(e.target.value)})}>
+                  {months.map((m,i)=><option key={i} value={i+1}>{m}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Year</label>
+                <input type="number" className="input text-xs" value={formObj.year} onChange={e=>setFormObj({...formObj, year: parseInt(e.target.value)})}/>
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Status</label>
+                <select className="input text-xs" value={formObj.status} onChange={e=>setFormObj({...formObj, status: e.target.value})}>
+                  {['Draft', 'Processed', 'Paid'].map(s=><option key={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Earnings Column */}
+              <div className="space-y-3 bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10">
+                <p className="text-xs font-bold text-emerald-400 uppercase border-b border-emerald-500/10 pb-1.5 mb-2">Earnings</p>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Basic Pay (₹)<span className="text-red-400">*</span></label>
+                  <input type="number" className="input text-xs" value={formObj.basic_pay} onChange={e=>setFormObj({...formObj, basic_pay: parseFloat(e.target.value)||''})}/>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">DA (%)</label>
+                    <input type="number" className="input text-xs" value={formObj.da_percentage} onChange={e=>setFormObj({...formObj, da_percentage: parseFloat(e.target.value)||0})}/>
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">HRA (%)</label>
+                    <input type="number" className="input text-xs" value={formObj.hra_percentage} onChange={e=>setFormObj({...formObj, hra_percentage: parseFloat(e.target.value)||0})}/>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">TA Amount (₹)</label>
+                  <input type="number" className="input text-xs" value={formObj.ta_amount} onChange={e=>setFormObj({...formObj, ta_amount: parseFloat(e.target.value)||0})}/>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Medical Allowance (₹)</label>
+                  <input type="number" className="input text-xs" value={formObj.medical_allowance} onChange={e=>setFormObj({...formObj, medical_allowance: parseFloat(e.target.value)||0})}/>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Special Allowance (₹)</label>
+                  <input type="number" className="input text-xs" value={formObj.special_allowance} onChange={e=>setFormObj({...formObj, special_allowance: parseFloat(e.target.value)||0})}/>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Other Allowances (₹)</label>
+                  <input type="number" className="input text-xs" value={formObj.other_allowances} onChange={e=>setFormObj({...formObj, other_allowances: parseFloat(e.target.value)||0})}/>
+                </div>
+              </div>
+
+              {/* Deductions Column */}
+              <div className="space-y-3 bg-red-500/5 p-4 rounded-xl border border-red-500/10">
+                <p className="text-xs font-bold text-red-400 uppercase border-b border-red-500/10 pb-1.5 mb-2">Deductions</p>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Professional Tax (₹)</label>
+                  <input type="number" className="input text-xs" value={formObj.professional_tax} onChange={e=>setFormObj({...formObj, professional_tax: parseFloat(e.target.value)||0})}/>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Income Tax / TDS (₹)</label>
+                  <input type="number" className="input text-xs" value={formObj.tds} onChange={e=>setFormObj({...formObj, tds: parseFloat(e.target.value)||0})}/>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Other Deductions (₹)</label>
+                  <input type="number" className="input text-xs" value={formObj.other_deductions} onChange={e=>setFormObj({...formObj, other_deductions: parseFloat(e.target.value)||0})}/>
+                </div>
+                <div className="pt-2 text-xs text-slate-500">
+                  <p>* PF will be auto-calculated at 12% of Basic Pay upon save.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button className="btn btn-primary w-full mt-4" disabled={savingForm || !formObj.emp_id || !formObj.basic_pay} onClick={savePayrollEntry}>
+            {savingForm ? 'Saving...' : formObj.id ? 'Update & Recalculate' : 'Create Entry'}
+          </button>
         </Modal>
       )}
     </Layout>
