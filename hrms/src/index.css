@@ -30,8 +30,8 @@ body {
   width: var(--sidebar-w);
   height: 100vh;
   position: fixed;
-  background: #021430;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: #c8bcea;
+  border-right: 1px solid rgba(22, 38, 96, 0.1);
   display: flex;
   flex-direction: column;
   z-index: 40;
@@ -69,7 +69,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  color: #6e82a5;
+  color: rgba(22, 38, 96, 0.7);
   border-radius: 12px;
   margin: 2px 14px;
   cursor: pointer;
@@ -78,16 +78,29 @@ body {
   font-weight: 500;
 }
 
+.nav-item svg {
+  color: rgba(22, 38, 96, 0.65);
+  transition: color 0.2s ease-in-out;
+}
+
 .nav-item:hover {
-  background: #0d234a;
-  color: #ffffff;
+  background: rgba(22, 38, 96, 0.05);
+  color: #162660;
+}
+
+.nav-item:hover svg {
+  color: #162660;
 }
 
 .nav-item.active {
-  background: #c8bcea;
+  background: #162660;
   color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(200, 188, 234, 0.25);
+  box-shadow: 0 4px 12px rgba(22, 38, 96, 0.2);
+}
+
+.nav-item.active svg {
+  color: #ffffff !important;
 }
 
 

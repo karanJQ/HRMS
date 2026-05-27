@@ -85,16 +85,16 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="sidebar fixed top-0 left-0 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.3)]" style={{ zIndex: 40, borderRight: '1px solid rgba(255, 255, 255, 0.05)' }}>
+    <div className="sidebar fixed top-0 left-0 flex flex-col shadow-[4px_0_24px_rgba(22,38,96,0.1)]" style={{ zIndex: 40, borderRight: '1px solid rgba(22, 38, 96, 0.1)', background: '#c8bcea' }}>
       
       {/* Header Info */}
       <div className="px-6 pt-7 pb-5 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#c8bcea] flex items-center justify-center shadow-[0_4px_12px_rgba(200,188,234,0.3)]">
+          <div className="w-8 h-8 rounded-xl bg-[#162660] flex items-center justify-center shadow-[0_4px_12px_rgba(22,38,96,0.2)]">
             <TrendingUp size={16} color="#fff" />
           </div>
           <div>
-            <p className="text-white font-extrabold text-base leading-tight tracking-tight">Gujarat HRMS</p>
+            <p className="font-extrabold text-base leading-tight tracking-tight" style={{ color: '#162660' }}>Gujarat HRMS</p>
           </div>
         </div>
       </div>
@@ -102,12 +102,12 @@ export default function Sidebar() {
       {/* Search Input Box */}
       <div className="px-4 mb-4 flex-shrink-0">
         <div className="relative">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6e82a5]" />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'rgba(22, 38, 96, 0.6)' }} />
           <input 
             type="text" 
             placeholder="Search..." 
-            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs text-white placeholder-[#6e82a5] border-none outline-none transition-all duration-200 focus:ring-1 focus:ring-[#c8bcea]/50" 
-            style={{ background: '#0d234a' }}
+            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs placeholder-[rgba(22,38,96,0.4)] border-none outline-none transition-all duration-200 focus:ring-1 focus:ring-[#162660]/30" 
+            style={{ background: '#ffffff', color: '#162660', border: '1px solid rgba(22, 38, 96, 0.08)' }}
           />
         </div>
       </div>
@@ -122,26 +122,26 @@ export default function Sidebar() {
             className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
             onClick={() => navigate(item.path)}
           >
-            <item.icon size={16} className={`${location.pathname === item.path ? 'text-white' : 'text-[#6e82a5]'}`} />
+            <item.icon size={16} />
             <span>{item.label}</span>
             {getBadge(item.path)}
-            {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto text-[#6e82a5]" />}
+            {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
           </div>
         ))}
 
         {group2.length > 0 && (
           <>
-            <hr style={{ borderColor: 'rgba(255, 255, 255, 0.05)' }} className="my-3 mx-4" />
+            <hr style={{ borderColor: 'rgba(22, 38, 96, 0.1)' }} className="my-3 mx-4" />
             {group2.map(item => (
               <div 
                 key={item.path} 
                 className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
                 onClick={() => navigate(item.path)}
               >
-                <item.icon size={16} className={`${location.pathname === item.path ? 'text-white' : 'text-[#6e82a5]'}`} />
+                <item.icon size={16} />
                 <span>{item.label}</span>
                 {getBadge(item.path)}
-                {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto text-[#6e82a5]" />}
+                {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
               </div>
             ))}
           </>
@@ -149,17 +149,17 @@ export default function Sidebar() {
 
         {group3.length > 0 && (
           <>
-            <hr style={{ borderColor: 'rgba(255, 255, 255, 0.05)' }} className="my-3 mx-4" />
+            <hr style={{ borderColor: 'rgba(22, 38, 96, 0.1)' }} className="my-3 mx-4" />
             {group3.map(item => (
               <div 
                 key={item.path} 
                 className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
                 onClick={() => navigate(item.path)}
               >
-                <item.icon size={16} className={`${location.pathname === item.path ? 'text-white' : 'text-[#6e82a5]'}`} />
+                <item.icon size={16} />
                 <span>{item.label}</span>
                 {getBadge(item.path)}
-                {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto text-[#6e82a5]" />}
+                {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
               </div>
             ))}
           </>
@@ -167,21 +167,22 @@ export default function Sidebar() {
       </nav>
 
       {/* Profile Box at the Bottom */}
-      <div className="p-4 border-t border-white/5 bg-[#021430] flex-shrink-0">
-        <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all duration-200">
+      <div className="p-4 border-t flex-shrink-0" style={{ backgroundColor: 'rgba(22, 38, 96, 0.03)', borderColor: 'rgba(22, 38, 96, 0.08)' }}>
+        <div className="flex items-center gap-3 p-3 rounded-2xl border bg-white/60 hover:bg-white/80 transition-all duration-200" style={{ borderColor: 'rgba(22, 38, 96, 0.08)' }}>
           {/* Avatar circle */}
-          <div className="w-10 h-10 rounded-full bg-white text-[#021430] flex items-center justify-center text-xs font-extrabold shadow-sm flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-[#162660] text-white flex items-center justify-center text-xs font-extrabold shadow-sm flex-shrink-0">
             {initials}
           </div>
           {/* Name & Role details */}
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-white truncate">{user?.first_name || user?.username}</p>
-            <p className="text-[10px] text-[#6e82a5] truncate mt-0.5">{roleLabel[user?.role] || user?.role}</p>
+            <p className="text-xs font-bold truncate" style={{ color: '#162660' }}>{user?.first_name || user?.username}</p>
+            <p className="text-[10px] truncate mt-0.5" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{roleLabel[user?.role] || user?.role}</p>
           </div>
           {/* Sign out action option */}
           <button 
             onClick={logout} 
-            className="p-1.5 text-[#6e82a5] hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors cursor-pointer" 
+            className="p-1.5 hover:text-red-600 hover:bg-black/5 rounded-lg transition-colors cursor-pointer" 
+            style={{ color: 'rgba(22, 38, 96, 0.6)' }}
             title="Sign Out"
           >
             <LogOut size={15} />
