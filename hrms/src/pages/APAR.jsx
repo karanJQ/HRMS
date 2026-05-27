@@ -198,7 +198,7 @@ export default function APAR() {
   const GradeTag = ({val}) => val ? <span style={{color:COLOR[val],fontWeight:600}}>{val}</span> : <span style={{ color: 'rgba(22, 38, 96, 0.25)' }}>—</span>;
 
   return (
-    <Layout title="APAR / Performance Appraisal" theme="light">
+    <Layout title="APAR / Performance Appraisal" theme="light" bg="#F8F8FF">
       {msg && (
         <div 
           className={`px-4 py-3 rounded-xl text-sm mb-4 border transition-all duration-300 ${
