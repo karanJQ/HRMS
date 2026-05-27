@@ -32,7 +32,7 @@ export default function MyProfile() {
 
   if (loading) {
     return (
-      <Layout title="My Profile">
+      <Layout title="My Profile" theme="light">
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader />
         </div>
@@ -42,7 +42,7 @@ export default function MyProfile() {
 
   if (error) {
     return (
-      <Layout title="My Profile">
+      <Layout title="My Profile" theme="light">
         <ErrorMsg message={error} onRetry={loadProfile} />
       </Layout>
     );
@@ -116,38 +116,68 @@ export default function MyProfile() {
   ];
 
   return (
-    <Layout title="My Profile">
+    <Layout title="My Profile" theme="light">
       <div className="space-y-6">
         {/* Profile Card Header */}
-        <div className="card flex flex-col md:flex-row items-center gap-6 p-6">
-          <div className="w-24 h-24 rounded-full bg-blue-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-blue-500/10">
-            {profile?.first_name?.[0]}
+        <div 
+          className="flex flex-col md:flex-row items-center gap-6 p-6 hover-card animate-slide-up"
+          style={{
+            background: '#fff',
+            border: '1px solid rgba(22, 38, 96, 0.08)',
+            borderRadius: '16px',
+            boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
+          }}
+        >
+          <div className="w-24 h-24 rounded-full bg-[#68aae8] flex items-center justify-center text-white text-3xl font-extrabold shadow-lg shadow-[#68aae8]/20 flex-shrink-0">
+            {profile?.first_name?.[0]?.toUpperCase()}
           </div>
           <div className="text-center md:text-left flex-1">
             <div className="flex flex-col md:flex-row md:items-center gap-2 mb-1 justify-center md:justify-start">
-              <h2 className="text-2xl font-bold text-white">{profile?.first_name} {profile?.last_name}</h2>
+              <h2 className="text-2xl font-bold" style={{ color: '#162660' }}>{profile?.first_name} {profile?.last_name}</h2>
               <div className="inline-flex justify-center md:justify-start">
                 <Badge text={profile?.status} />
               </div>
             </div>
-            <p className="text-slate-300 font-medium">{profile?.designation_name || 'Employee'} • {profile?.dept_name}</p>
-            <p className="text-xs text-slate-400 mt-1">ID: <span className="font-mono text-blue-400 font-semibold">{profile?.emp_id}</span></p>
+            <p className="font-semibold text-sm" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>
+              {profile?.designation_name || 'Employee'} • {profile?.dept_name}
+            </p>
+            <p className="text-xs mt-1" style={{ color: 'rgba(22, 38, 96, 0.4)' }}>
+              ID: <span className="font-mono font-semibold" style={{ color: '#68aae8' }}>{profile?.emp_id}</span>
+            </p>
           </div>
         </div>
 
         {/* Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {sections.map((section, idx) => (
-            <div key={idx} className="card p-6">
-              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-white/10">
-                <section.icon className="text-blue-500" size={18} />
-                <h3 className="text-md font-bold text-white mb-0">{section.title}</h3>
+            <div 
+              key={idx} 
+              className="hover-card animate-slide-up"
+              style={{
+                background: '#fff',
+                border: '1px solid rgba(22, 38, 96, 0.08)',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
+                animationDelay: `${idx * 40}ms`
+              }}
+            >
+              <div className="flex items-center gap-2 mb-4 pb-2" style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.08)' }}>
+                <section.icon style={{ color: '#68aae8' }} size={18} />
+                <h3 className="text-sm font-bold mb-0" style={{ color: '#162660' }}>{section.title}</h3>
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                 {section.fields.map((f, fIdx) => (
                   <div key={fIdx} className="space-y-1">
-                    <span className="text-xs text-slate-400 block">{f.label}</span>
-                    <span className={`text-sm font-medium block ${f.highlight ? 'font-mono text-blue-400' : 'text-slate-200'}`}>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider block" style={{ color: 'rgba(22, 38, 96, 0.4)' }}>{f.label}</span>
+                    <span 
+                      className={`text-sm font-medium block truncate`}
+                      style={{ 
+                        color: f.highlight ? '#68aae8' : '#162660',
+                        fontFamily: f.highlight ? 'monospace' : 'inherit'
+                      }}
+                      title={f.value || '—'}
+                    >
                       {f.value || '—'}
                     </span>
                   </div>
