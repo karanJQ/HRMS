@@ -79,7 +79,7 @@ export default function Sidebar({ collapsed }) {
   };
 
   const hasDropdown = (path) => {
-    return ['/employees', '/attendance', '/grievance'].includes(path);
+    return false;
   };
 
   return (
