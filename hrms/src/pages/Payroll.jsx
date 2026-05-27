@@ -4,7 +4,7 @@ import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import StatsCard from '../components/common/StatsCard';
 import Loader from '../components/common/Loader';
-import { DollarSign, Download, FileText, Check, RefreshCw } from 'lucide-react';
+import { IndianRupee, Download, FileText, Check, RefreshCw } from 'lucide-react';
 import { payrollAPI, empAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
@@ -19,6 +19,21 @@ export default function Payroll() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [msg, setMsg] = useState('');
+
+  const [annualSummary, setAnnualSummary] = useState(null);
+  const [annualLoading, setAnnualLoading] = useState(false);
+  const [showAnnualModal, setShowAnnualModal] = useState(false);
+
+  const fetchAnnualSummary = () => {
+    setAnnualLoading(true);
+    payrollAPI.list({ month: 'all', year })
+      .then(r => {
+        setAnnualSummary(r.data.data);
+        setShowAnnualModal(true);
+      })
+      .catch(e => setMsg('Error: ' + (e.response?.data?.message || e.message)))
+      .finally(() => setAnnualLoading(false));
+  };
 
   const load = () => {
     setLoading(true);
@@ -392,16 +407,19 @@ export default function Payroll() {
           </button>
           <button className="btn btn-success" onClick={markPaid}><Check size={15}/>Mark All Paid</button>
         </>}
+        <button className="btn btn-secondary" onClick={fetchAnnualSummary} disabled={annualLoading}>
+          <IndianRupee size={15}/>{annualLoading ? 'Loading...' : 'Annual Summary'}
+        </button>
         <button className="btn btn-secondary"><Download size={15}/>Export</button>
       </div>
 
       {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
 
       <div className="grid grid-cols-4 gap-4 mb-5">
-        <StatsCard title="Gross Payroll" value={`₹${((summary.gross||0)/100000).toFixed(2)}L`} icon={DollarSign} color="#3b82f6"/>
-        <StatsCard title="Net Payroll" value={`₹${((summary.net||0)/100000).toFixed(2)}L`} icon={DollarSign} color="#22c55e"/>
-        <StatsCard title="Total PF" value={`₹${Math.round(summary.pf||0).toLocaleString()}`} icon={DollarSign} color="#8b5cf6"/>
-        <StatsCard title="Total TDS" value={`₹${Math.round(summary.tds||0).toLocaleString()}`} icon={DollarSign} color="#f59e0b"/>
+        <StatsCard title="Gross Payroll" value={`₹${((summary.gross||0)/100000).toFixed(2)}L`} icon={IndianRupee} color="#3b82f6"/>
+        <StatsCard title="Net Payroll" value={`₹${((summary.net||0)/100000).toFixed(2)}L`} icon={IndianRupee} color="#22c55e"/>
+        <StatsCard title="Total PF" value={`₹${Math.round(summary.pf||0).toLocaleString()}`} icon={IndianRupee} color="#8b5cf6"/>
+        <StatsCard title="Total TDS" value={`₹${Math.round(summary.tds||0).toLocaleString()}`} icon={IndianRupee} color="#f59e0b"/>
       </div>
 
       {loading ? <Loader /> : (
@@ -492,6 +510,119 @@ export default function Payroll() {
             </div>
           </div>
           <button className="btn btn-primary w-full mt-3" onClick={handleDownloadSlip}><Download size={15}/>Download Slip</button>
+        </Modal>
+      )}
+
+      {showAnnualModal && annualSummary && (
+        <Modal title={`Annual Salary Summary — ${year}`} onClose={()=>setShowAnnualModal(false)} wide>
+          {user.role === 'employee' ? (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Basic Pay</th>
+                    <th>DA</th>
+                    <th>HRA</th>
+                    <th>TA</th>
+                    <th>Gross Pay</th>
+                    <th>PF</th>
+                    <th>TDS</th>
+                    <th>Net Pay</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {annualSummary.records.map(r => (
+                    <tr key={r.month}>
+                      <td className="font-bold">{months[r.month-1]}</td>
+                      <td>₹{parseFloat(r.basic_pay).toLocaleString()}</td>
+                      <td>₹{parseFloat(r.da_amount).toLocaleString()}</td>
+                      <td>₹{parseFloat(r.hra_amount).toLocaleString()}</td>
+                      <td>₹{parseFloat(r.ta_amount).toLocaleString()}</td>
+                      <td className="font-semibold text-slate-200">₹{parseFloat(r.gross_pay).toLocaleString()}</td>
+                      <td className="text-red-400">-₹{parseFloat(r.pf_employee).toLocaleString()}</td>
+                      <td className="text-red-400">-₹{parseFloat(r.tds).toLocaleString()}</td>
+                      <td className="font-bold text-green-400">₹{parseFloat(r.net_pay).toLocaleString()}</td>
+                      <td><Badge text={r.status}/></td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{background:'rgba(255, 255, 255, 0.1)'}}>
+                    <td className="font-bold text-white">TOTALS</td>
+                    <td colSpan={4}></td>
+                    <td className="font-bold text-white">₹{Math.round(annualSummary.summary.gross||0).toLocaleString()}</td>
+                    <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.pf||0).toLocaleString()}</td>
+                    <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.tds||0).toLocaleString()}</td>
+                    <td className="font-bold text-green-400">₹{Math.round(annualSummary.summary.net||0).toLocaleString()}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          ) : (
+            <div>
+              {/* For HR / Admin, show employee-wise annual summary */}
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Emp ID</th>
+                      <th>Employee Name</th>
+                      <th>Department</th>
+                      <th>Annual Gross</th>
+                      <th>Annual PF</th>
+                      <th>Annual TDS</th>
+                      <th>Annual Net Pay</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const employeeSalaries = {};
+                      annualSummary.records.forEach(rec => {
+                        if (!employeeSalaries[rec.emp_id]) {
+                          employeeSalaries[rec.emp_id] = {
+                            emp_id: rec.emp_id,
+                            emp_name: rec.emp_name,
+                            dept_name: rec.dept_name,
+                            gross: 0,
+                            net: 0,
+                            pf: 0,
+                            tds: 0,
+                          };
+                        }
+                        employeeSalaries[rec.emp_id].gross += parseFloat(rec.gross_pay || 0);
+                        employeeSalaries[rec.emp_id].net += parseFloat(rec.net_pay || 0);
+                        employeeSalaries[rec.emp_id].pf += parseFloat(rec.pf_employee || 0);
+                        employeeSalaries[rec.emp_id].tds += parseFloat(rec.tds || 0);
+                      });
+                      return Object.values(employeeSalaries).map(emp => (
+                        <tr key={emp.emp_id}>
+                          <td className="font-mono text-blue-600 text-xs">{emp.emp_id}</td>
+                          <td><div className="font-medium">{emp.emp_name}</div></td>
+                          <td><span className="text-xs text-slate-400">{emp.dept_name}</span></td>
+                          <td className="font-semibold text-slate-200">₹{Math.round(emp.gross).toLocaleString()}</td>
+                          <td className="text-red-400">-₹{Math.round(emp.pf).toLocaleString()}</td>
+                          <td className="text-red-400">-₹{Math.round(emp.tds).toLocaleString()}</td>
+                          <td className="font-bold text-green-400">₹{Math.round(emp.net).toLocaleString()}</td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{background:'rgba(255, 255, 255, 0.1)'}}>
+                      <td colSpan={3} className="font-bold text-white text-sm">TOTALS</td>
+                      <td className="font-bold text-white">₹{Math.round(annualSummary.summary.gross||0).toLocaleString()}</td>
+                      <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.pf||0).toLocaleString()}</td>
+                      <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.tds||0).toLocaleString()}</td>
+                      <td className="font-bold text-green-400">₹{Math.round(annualSummary.summary.net||0).toLocaleString()}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
         </Modal>
       )}
     </Layout>

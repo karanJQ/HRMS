@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Onboarding from './pages/Onboarding';
 import EmployeeMaster from './pages/EmployeeMaster';
+import MyProfile from './pages/MyProfile';
 import Payroll from './pages/Payroll';
 import Attendance from './pages/Attendance';
 import Transfer from './pages/Transfer';
@@ -42,7 +43,7 @@ export default function App() {
           <Route path="/dashboard" element={<Prot comp={Dashboard} />} />
           <Route path="/onboarding" element={<Prot comp={Onboarding} roles={['super_admin','hr_manager','hr_staff']} />} />
           <Route path="/employees" element={<Prot comp={EmployeeMaster} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
-          <Route path="/my-profile" element={<Prot comp={EmployeeMaster} roles={['employee']} />} />
+          <Route path="/my-profile" element={<Prot comp={MyProfile} roles={['employee']} />} />
           <Route path="/payroll" element={<Prot comp={Payroll} />} />
           <Route path="/attendance" element={<Prot comp={Attendance} />} />
           <Route path="/transfer" element={<Prot comp={Transfer} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
