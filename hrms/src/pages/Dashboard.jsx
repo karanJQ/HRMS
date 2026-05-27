@@ -3,7 +3,7 @@ import Layout from '../components/Layout/Layout';
 import StatsCard from '../components/common/StatsCard';
 import Badge from '../components/common/Badge';
 import Loader from '../components/common/Loader';
-import { Users, DollarSign, Clock, AlertTriangle, UserPlus, TrendingUp, Calendar, Star, Fingerprint } from 'lucide-react';
+import { Users, IndianRupee, Calendar, AlertTriangle, UserPlus, TrendingUp, Calendar as CalendarIcon, Star, Fingerprint } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { reportsAPI, leaveAPI, onboardingAPI, attendanceAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [headcount, setHeadcount] = useState(null);
   const [leaves, setLeaves] = useState([]);
-  const [onboarding, setOnboarding] = useState([]);
+  const [onboarding, setOnboarding] = useState([]);   
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [punchLoading, setPunchLoading] = useState(false);
@@ -67,8 +67,8 @@ export default function Dashboard() {
       )}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <StatsCard title="Total Employees" value={stats?.total_employees||0} icon={Users} color="#3b82f6" sub={`${stats?.active_employees||0} Active`} />
-        <StatsCard title="Monthly Payroll" value={`₹${((stats?.monthly_payroll||0)/100000).toFixed(1)}L`} icon={DollarSign} color="#22c55e" sub="Current month" />
-        <StatsCard title="Pending Leaves" value={stats?.pending_leaves||0} icon={Calendar} color="#f59e0b" sub="Awaiting approval" />
+        <StatsCard title="Monthly Payroll" value={`₹${((stats?.monthly_payroll||0)/100000).toFixed(1)}L`} icon={IndianRupee} color="#22c55e" sub="Current month" />
+        <StatsCard title="Pending Leaves" value={stats?.pending_leaves||0} icon={CalendarIcon} color="#f59e0b" sub="Awaiting approval" />
         <StatsCard title="Open Grievances" value={stats?.open_grievances||0} icon={AlertTriangle} color="#ef4444" sub="Needs attention" />
       </div>
       <div className="grid grid-cols-4 gap-4 mb-6">

@@ -3,11 +3,17 @@ const { success, error } = require('../utils/response');
 
 exports.list = async (req, res) => {
   const { month, year, dept, status } = req.query;
-  const m = parseInt(month) || new Date().getMonth() + 1;
   const y = parseInt(year) || new Date().getFullYear();
-  const conditions = ['pr.month=$1','pr.year=$2'];
-  const params = [m, y];
-  let idx = 3;
+  const conditions = ['pr.year=$1'];
+  const params = [y];
+  let idx = 2;
+  let m = month === 'all' ? 'all' : (parseInt(month) || new Date().getMonth() + 1);
+
+  if (month !== 'all') {
+    conditions.push(`pr.month=$${idx++}`);
+    params.push(m);
+  }
+
   if (dept) { conditions.push(`e.dept_id=$${idx++}`); params.push(dept); }
   if (status) { conditions.push(`pr.status=$${idx++}`); params.push(status); }
   if (req.user.role === 'dept_head') { conditions.push(`e.dept_id=$${idx++}`); params.push(req.user.dept_id); }

@@ -41,12 +41,30 @@ app.use((req, res) => res.status(404).json({ success: false, message: `Route ${r
 // ── Error handler ─────────────────────────────────────────────────
 app.use(errorHandler);
 
+const os = require('os');
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+
+// Dynamically discover local network IP
+const getLocalIP = () => {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const net of interfaces[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return 'localhost';
+};
+
+const LOCAL_IP = getLocalIP();
+
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 HRMS API running on port ${PORT}`);
   console.log(`   Environment : ${process.env.NODE_ENV || 'development'}`);
-  console.log(`   Health check: http://localhost:${PORT}/health`);
-  console.log(`   API base    : http://localhost:${PORT}/api/v1\n`);
+  console.log(`   Local host  : http://localhost:${PORT}/health`);
+  console.log(`   Network     : http://${LOCAL_IP}:${PORT}/health`);
+  console.log(`   API Base URL: http://${LOCAL_IP}:${PORT}/api/v1\n`);
 });
 
 module.exports = app;

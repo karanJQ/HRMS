@@ -1,14 +1,14 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, UserPlus, Users, DollarSign, Calendar, ArrowLeftRight, TrendingUp, Star, BookOpen, GraduationCap, Clock, AlertTriangle, BarChart3, Building2, LogOut, Shield, Workflow } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Users, IndianRupee, Calendar, ArrowLeftRight, TrendingUp, Star, BookOpen, GraduationCap, Clock, AlertTriangle, BarChart3, Building2, LogOut, Shield, Workflow } from 'lucide-react';
 
 const allNav = [
   { label:'Dashboard', icon:LayoutDashboard, path:'/dashboard', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'Onboarding', icon:UserPlus, path:'/onboarding', roles:['super_admin','hr_manager','hr_staff'] },
   { label:'Employee Master', icon:Users, path:'/employees', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
   { label:'My Profile', icon:Users, path:'/my-profile', roles:['employee'] },
-  { label:'Payroll', icon:DollarSign, path:'/payroll', roles:['super_admin','hr_manager','hr_staff','employee'] },
+  { label:'Payroll', icon:IndianRupee, path:'/payroll', roles:['super_admin','hr_manager','hr_staff','employee'] },
   { label:'Attendance & Leave', icon:Calendar, path:'/attendance', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'Transfer & Posting', icon:ArrowLeftRight, path:'/transfer', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
   { label:'Promotion & Seniority', icon:TrendingUp, path:'/promotion', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
