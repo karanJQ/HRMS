@@ -49,13 +49,13 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <Layout title="Dashboard"><Loader /></Layout>;
+  if (loading) return <Layout title="Dashboard" theme="light" bg="#F8F8FF"><Loader /></Layout>;
 
   const deptData = headcount?.by_dept?.slice(0, 6) || [];
   const catData = headcount?.by_category || [];
 
   return (
-    <Layout title="HRMS Dashboard" theme="light">
+    <Layout title="HRMS Dashboard" theme="light" bg="#F8F8FF">
       {msg && (
         <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')
           ? 'bg-red-900/50 text-red-200 border border-red-500/30'

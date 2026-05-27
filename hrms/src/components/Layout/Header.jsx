@@ -3,7 +3,7 @@ import { Bell, CheckCheck, Clock, ClipboardList, AlertCircle } from 'lucide-reac
 import { notificationAPI } from '../../api/endpoints';
 import { useNavigate } from 'react-router-dom';
 
-export default function Header({ title, theme }) {
+export default function Header({ title, theme, bg }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -83,7 +83,7 @@ export default function Header({ title, theme }) {
     <div 
       className="sticky top-0 z-30 backdrop-blur-xl px-6 py-4 flex items-center justify-between transition-all duration-300"
       style={{
-        background: isLight ? '#FEFEFA' : 'rgba(15, 23, 42, 0.5)',
+        background: bg || (isLight ? '#FEFEFA' : 'rgba(15, 23, 42, 0.5)'),
         borderBottom: isLight ? '1px solid rgba(22, 38, 96, 0.1)' : '1px solid rgba(255, 255, 255, 0.05)',
       }}
     >
