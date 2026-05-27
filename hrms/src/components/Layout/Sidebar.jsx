@@ -145,11 +145,17 @@ export default function Sidebar({ collapsed }) {
                 key={item.path} 
                 className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
                 onClick={() => navigate(item.path)}
+                title={collapsed ? item.label : ''}
+                style={{ 
+                  padding: collapsed ? '12px 0' : undefined, 
+                  justifyContent: collapsed ? 'center' : undefined,
+                  margin: collapsed ? '4px 8px' : undefined
+                }}
               >
-                <item.icon size={16} />
-                <span>{item.label}</span>
-                {getBadge(item.path)}
-                {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
+                <item.icon size={16} className="flex-shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && getBadge(item.path)}
+                {!collapsed && hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
               </div>
             ))}
           </>
@@ -163,11 +169,17 @@ export default function Sidebar({ collapsed }) {
                 key={item.path} 
                 className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
                 onClick={() => navigate(item.path)}
+                title={collapsed ? item.label : ''}
+                style={{ 
+                  padding: collapsed ? '12px 0' : undefined, 
+                  justifyContent: collapsed ? 'center' : undefined,
+                  margin: collapsed ? '4px 8px' : undefined
+                }}
               >
-                <item.icon size={16} />
-                <span>{item.label}</span>
-                {getBadge(item.path)}
-                {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
+                <item.icon size={16} className="flex-shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && getBadge(item.path)}
+                {!collapsed && hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
               </div>
             ))}
           </>
@@ -175,8 +187,8 @@ export default function Sidebar({ collapsed }) {
       </nav>
 
       {/* Profile Box at the Bottom */}
-      <div className="p-4 border-t flex-shrink-0" style={{ backgroundColor: 'rgba(22, 38, 96, 0.03)', borderColor: 'rgba(22, 38, 96, 0.08)' }}>
-        <div className="flex items-center gap-3 p-3 rounded-2xl border bg-white/60 hover:bg-white/80 transition-all duration-200" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', justifyContent: collapsed ? 'center' : 'flex-start' }}>
+      <div className="p-4 border-t flex-shrink-0" style={{ backgroundColor: 'rgba(22, 38, 96, 0.03)', borderColor: 'rgba(22, 38, 96, 0.08)', padding: collapsed ? '12px 8px' : '16px' }}>
+        <div className="flex items-center gap-3 p-3 rounded-2xl border bg-white/60 hover:bg-white/80 transition-all duration-200" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', padding: collapsed ? '4px' : '12px', background: collapsed ? 'transparent' : undefined, border: collapsed ? 'none' : undefined, justifyContent: collapsed ? 'center' : 'flex-start' }}>
           {/* Avatar circle */}
           <div className="w-10 h-10 rounded-full bg-[#162660] text-white flex items-center justify-center text-xs font-extrabold shadow-sm flex-shrink-0">
             {initials}
@@ -189,14 +201,16 @@ export default function Sidebar({ collapsed }) {
             </div>
           )}
           {/* Sign out action option */}
-          <button 
-            onClick={logout} 
-            className="p-1.5 hover:text-red-600 hover:bg-black/5 rounded-lg transition-colors cursor-pointer" 
-            style={{ color: 'rgba(22, 38, 96, 0.6)' }}
-            title="Sign Out"
-          >
-            <LogOut size={15} />
-          </button>
+          {!collapsed && (
+            <button 
+              onClick={logout} 
+              className="p-1.5 hover:text-red-600 hover:bg-black/5 rounded-lg transition-colors cursor-pointer" 
+              style={{ color: 'rgba(22, 38, 96, 0.6)' }}
+              title="Sign Out"
+            >
+              <LogOut size={15} />
+            </button>
+          )}
         </div>
       </div>
     </div>
