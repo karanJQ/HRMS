@@ -471,7 +471,7 @@ export default function Tasks() {
     });
 
   return (
-    <Layout title="Task Management" theme="light">
+    <Layout title="Task Management" theme="light" bg="#F8F8FF">
       {/* Message banner */}
       {msg && (
         <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${
