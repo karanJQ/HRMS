@@ -36,8 +36,8 @@ export default function Promotion() {
     catch(e) { setMsg('Error: '+e.response?.data?.message); }
   };
 
-  const F = ({k,l,type='text',opts}) => (
-    <div><label className="text-xs text-slate-400 block mb-1">{l}</label>
+  const renderField = (k, l, type='text', opts) => (
+    <div key={k}><label className="text-xs text-slate-400 block mb-1">{l}</label>
       {opts ? <select className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})}><option value="">Select</option>{opts.map(o=><option key={o}>{o}</option>)}</select>
       : <input type={type} className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})}/>}
     </div>
@@ -103,13 +103,14 @@ export default function Promotion() {
       {showForm && (
         <Modal title="Initiate Promotion" onClose={()=>setShowForm(false)}>
           <div className="grid grid-cols-2 gap-3">
-            <F k="emp_id" l="Employee ID"/><F k="basis" l="Basis" opts={['DPC','Seniority','Merit','Seniority+DPC']}/>
-            <F k="from_designation_name" l="Current Designation" opts={DESIGS}/>
-            <F k="to_designation_name" l="Promoted To" opts={DESIGS}/>
-            <F k="from_pay_level" l="Current Pay Level" type="number"/>
-            <F k="to_pay_level" l="New Pay Level" type="number"/>
-            <F k="dpc_meeting_date" l="DPC Meeting Date" type="date"/>
-            <F k="effective_date" l="Effective Date" type="date"/>
+            {renderField("emp_id", "Employee ID")}
+            {renderField("basis", "Basis", "text", ['DPC','Seniority','Merit','Seniority+DPC'])}
+            {renderField("from_designation_name", "Current Designation", "text", DESIGS)}
+            {renderField("to_designation_name", "Promoted To", "text", DESIGS)}
+            {renderField("from_pay_level", "Current Pay Level", "number")}
+            {renderField("to_pay_level", "New Pay Level", "number")}
+            {renderField("dpc_meeting_date", "DPC Meeting Date", "date")}
+            {renderField("effective_date", "Effective Date", "date")}
           </div>
           <button className="btn btn-primary w-full mt-4" onClick={submit}>Submit for DPC</button>
         </Modal>
