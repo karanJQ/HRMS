@@ -110,6 +110,12 @@ exports.update = async (req, res) => {
         [username, email, defaultPasswordHash, candidate.dept_id, empId]
       );
 
+      // h. Create retirement tracking record
+      await query(
+        `INSERT INTO retirement_tracking(emp_id, retirement_date) VALUES($1, $2) ON CONFLICT DO NOTHING`,
+        [empId, dor]
+      );
+
       // h. Update candidate with the newly assigned emp_id and service_book_created=true
       const finalCandRes = await query(
         `UPDATE onboarding_candidates 
