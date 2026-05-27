@@ -75,7 +75,6 @@ export default function Sidebar({ collapsed }) {
   const initials = user ? `${user.first_name?.[0]||''}${user.last_name?.[0]||user.username?.[0]||''}`.toUpperCase() : 'SA';
 
   const getBadge = (path) => {
-    if (path === '/grievance') return <span className="ml-auto bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{grievanceCount}</span>;
     return null;
   };
 
