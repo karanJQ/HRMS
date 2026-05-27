@@ -508,22 +508,22 @@ export default function Tasks() {
           <button onClick={() => setView('board')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
               view === 'board' 
-                ? 'bg-[#162660] text-[#FEFEFA] shadow-[0_4px_12px_rgba(22,38,96,0.15)] hover:bg-[#68aae8]' 
-                : 'text-slate-400 hover:text-[#68aae8] hover:bg-[#68aae8]/5'
+                ? 'bg-[#F5FFFA] text-[#162660] border border-[rgba(22,38,96,0.15)] shadow-sm' 
+                : 'text-slate-400 hover:text-[#162660] hover:bg-[#FFE5B4]'
             }`}>
             <Columns size={13} /> Board
           </button>
           <button onClick={() => setView('archive')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
               view === 'archive' 
-                ? 'bg-emerald-600 text-white shadow-[0_4px_12px_rgba(16,185,129,0.15)] hover:bg-emerald-700' 
-                : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
+                ? 'bg-[#FFE5B4] text-[#162660] border border-[rgba(22,38,96,0.15)] shadow-sm' 
+                : 'text-slate-400 hover:text-[#162660] hover:bg-[#F5FFFA]'
             }`}>
             <Archive size={13} />
             Archive
             {stats?.done > 0 && (
               <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                view === 'archive' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'
+                view === 'archive' ? 'bg-[#162660] text-white' : 'bg-emerald-50 text-emerald-600'
               }`}>{stats.done}</span>
             )}
           </button>
@@ -545,8 +545,8 @@ export default function Tasks() {
                     onClick={() => setFilter(f.key)}
                     className={`px-4 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 cursor-pointer ${
                       isActive 
-                        ? 'bg-[#162660] text-[#FEFEFA] border-[#162660] shadow-[0_4px_12px_rgba(22,38,96,0.12)] hover:bg-[#68aae8] hover:border-[#68aae8]'
-                        : 'bg-white text-[#162660]/60 border-[#162660]/15 hover:bg-[#68aae8]/5 hover:text-[#68aae8] hover:border-[#68aae8]'
+                        ? 'bg-[#F5FFFA] text-[#162660] border-[rgba(22,38,96,0.2)] shadow-sm'
+                        : 'bg-white text-[#162660]/60 border-[#162660]/15 hover:bg-[#FFE5B4] hover:text-[#162660] hover:border-[rgba(22,38,96,0.2)]'
                     }`}
                   >
                     {f.key === 'overdue' && stats?.overdue > 0 && <AlertTriangle size={10} className="inline mr-1 text-red-500" />}
@@ -570,7 +570,7 @@ export default function Tasks() {
           {canManage && view === 'board' && (
             <button 
               onClick={() => setModal('create')} 
-              className="btn font-semibold transition-all duration-200 bg-[#162660] text-[#FEFEFA] border border-[#162660] shadow-[0_4px_15px_rgba(22,38,96,0.2)] hover:bg-[#68aae8] hover:border-[#68aae8] hover:shadow-[0_6px_20px_rgba(104,170,232,0.4)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+              className="btn font-semibold transition-all duration-200 bg-[#F5FFFA] text-[#162660] border border-[rgba(22,38,96,0.2)] shadow-sm hover:bg-[#FFE5B4] hover:shadow-[0_6px_20px_rgba(22,38,96,0.08)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
             >
               <Plus size={16} /> Assign Task
             </button>
