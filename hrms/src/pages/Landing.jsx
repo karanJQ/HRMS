@@ -183,7 +183,9 @@ export default function Landing() {
                 Fully operational demo platform — not just a presentation
               </div>
               <div style={{display:'flex',gap:12,alignItems:'center',fontSize:14,color:'var(--muted)'}}>
-                <span style={{width:28,height:28,borderRadius:8,background:'rgba(124,58,237,.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>🤖</span>
+                <span style={{width:28,height:28,borderRadius:8,background:'rgba(124,58,237,.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#a78bfa',flexShrink:0}}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6" rx="1" ry="1"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="15" x2="23" y2="15"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="15" x2="4" y2="15"></line></svg>
+                </span>
                 AI/ML models production-ready and actively integrated
               </div>
               <div style={{display:'flex',gap:12,alignItems:'center',fontSize:14,color:'var(--muted)'}}>
@@ -246,7 +248,9 @@ export default function Landing() {
                 </div>
               </div>
               <div className="dash-ai-chip">
-                <div className="ai-icon">🤖</div>
+                <div className="ai-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
+                </div>
                 <div style={{fontSize:12}}>
                   <div style={{color:'#a78bfa',fontWeight:600,marginBottom:2}}>AI Insight</div>
                   <div style={{color:'var(--muted)'}}>3 employees flagged for retirement planning within 90 days</div>
@@ -369,7 +373,10 @@ export default function Landing() {
                   <div>
                     <h4>Document OCR & Data Extraction</h4>
                     <p>Transformer-based OCR pipeline with NLP post-processing extracts structured data from scanned government documents, forms, and certificates with 95%+ field accuracy.</p>
-                    <div className="ai-badge">🤖 ML Active</div>
+                    <div className="ai-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#a78bfa' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
+                      ML Active
+                    </div>
                   </div>
                 </div>
                 <div className="ai-cap reveal" id="ai-cap-perf">
@@ -377,7 +384,10 @@ export default function Landing() {
                   <div>
                     <h4>Performance Anomaly & Bias Detection</h4>
                     <p>ML classifiers flag statistically anomalous APAR ratings and potential reviewer bias patterns using historical appraisal data across departments.</p>
-                    <div className="ai-badge">🤖 ML Active</div>
+                    <div className="ai-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#a78bfa' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
+                      ML Active
+                    </div>
                   </div>
                 </div>
                 <div className="ai-cap reveal" id="ai-cap-retire">
@@ -385,7 +395,10 @@ export default function Landing() {
                   <div>
                     <h4>Predictive Retirement & Succession Planning</h4>
                     <p>Automated identification of employees approaching retirement with intelligent succession gap analysis and proactive HR alerts.</p>
-                    <div className="ai-badge">🤖 ML Active</div>
+                    <div className="ai-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#a78bfa' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
+                      ML Active
+                    </div>
                   </div>
                 </div>
                 <div className="ai-cap reveal" id="ai-cap-attrition">
@@ -393,7 +406,10 @@ export default function Landing() {
                   <div>
                     <h4>Attrition Risk & Workforce Forecasting</h4>
                     <p>Regression models predict department-level attrition risk and headcount needs based on transfer patterns, leave history, and role tenure.</p>
-                    <div className="ai-badge">🤖 ML Active</div>
+                    <div className="ai-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#a78bfa' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
+                      ML Active
+                    </div>
                   </div>
                 </div>
               </div>
