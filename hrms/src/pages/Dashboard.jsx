@@ -28,7 +28,8 @@ export default function Dashboard() {
       setStats(s.data.data);
       setHeadcount(h?.data?.data || null);
       setLeaves(l.data.data.slice(0,4));
-      setOnboarding(o.data.data.slice(0,4));
+      const activeOnboarding = (o.data.data || []).filter(cand => cand.status !== 'Completed' && cand.status !== 'Cancelled');
+      setOnboarding(activeOnboarding.slice(0,4));
     }).finally(() => setLoading(false));
   }, []);
 

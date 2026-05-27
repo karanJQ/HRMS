@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, CheckCheck, Clock, ClipboardList, AlertCircle } from 'lucide-react';
+import { Bell, CheckCheck, Clock, ClipboardList, AlertCircle, Menu } from 'lucide-react';
 import { notificationAPI } from '../../api/endpoints';
 import { useNavigate } from 'react-router-dom';
 
-export default function Header({ title }) {
+export default function Header({ title, collapsed, onToggleSidebar }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -80,7 +80,16 @@ export default function Header({ title }) {
 
   return (
     <div className="sticky top-0 z-30 bg-slate-900/50 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
-      <h1 className="text-3xl font-bold text-white text-glow">{title}</h1>
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={onToggleSidebar}
+          className="p-2 hover:bg-white/10 rounded-xl transition-colors border border-white/10 text-slate-300"
+          title={collapsed ? "Open Sidebar" : "Close Sidebar"}
+        >
+          <Menu size={20} />
+        </button>
+        <h1 className="text-3xl font-bold text-white text-glow m-0 leading-none">{title}</h1>
+      </div>
 
       {/* Notification Bell */}
       <div className="relative" ref={dropdownRef}>
