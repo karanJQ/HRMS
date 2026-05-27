@@ -3,7 +3,7 @@ import { Bell, CheckCheck, Clock, ClipboardList, AlertCircle, Menu } from 'lucid
 import { notificationAPI } from '../../api/endpoints';
 import { useNavigate } from 'react-router-dom';
 
-export default function Header({ title, collapsed, onToggleSidebar }) {
+export default function Header({ title, theme, bg, collapsed, onToggleSidebar }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -78,26 +78,54 @@ export default function Header({ title, collapsed, onToggleSidebar }) {
     return `${Math.floor(diff / 86400)}d ago`;
   };
 
+  const isLight = theme === 'light';
   return (
-    <div className="sticky top-0 z-30 bg-slate-900/50 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
+    <div 
+      className="sticky top-0 z-30 backdrop-blur-xl px-6 py-4 flex items-center justify-between transition-all duration-300"
+      style={{
+        background: bg || (isLight ? '#FEFEFA' : 'rgba(15, 23, 42, 0.5)'),
+        borderBottom: isLight ? '1px solid rgba(22, 38, 96, 0.1)' : '1px solid rgba(255, 255, 255, 0.05)',
+      }}
+    >
       <div className="flex items-center gap-4">
         <button 
           onClick={onToggleSidebar}
-          className="p-2 hover:bg-white/10 rounded-xl transition-colors border border-white/10 text-slate-300"
+          className="p-2 rounded-xl transition-colors border"
+          style={{
+            borderColor: isLight ? 'rgba(22, 38, 96, 0.1)' : 'rgba(255,255,255,0.1)',
+            color: isLight ? '#162660' : '#cbd5e1',
+            background: 'transparent'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = isLight ? 'rgba(22, 38, 96, 0.05)' : 'rgba(255,255,255,0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           title={collapsed ? "Open Sidebar" : "Close Sidebar"}
         >
           <Menu size={20} />
         </button>
-        <h1 className="text-3xl font-bold text-white text-glow m-0 leading-none">{title}</h1>
+        <h1 
+          className="text-3xl font-bold text-glow transition-all duration-300 m-0 leading-none"
+          style={{
+            color: isLight ? '#162660' : '#fff',
+            textShadow: isLight ? '0 0 20px rgba(22, 38, 96, 0.1)' : '0 0 20px rgba(129, 140, 248, 0.5)'
+          }}
+        >
+          {title}
+        </h1>
       </div>
 
       {/* Notification Bell */}
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setOpen(o => !o)}
-          className="relative p-2.5 hover:bg-white/10 rounded-xl transition-colors border border-transparent hover:border-white/10"
+          className="relative p-2.5 rounded-xl transition-colors border border-transparent"
+          style={{
+            background: 'transparent',
+            color: isLight ? '#162660' : '#cbd5e1'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = isLight ? 'rgba(22, 38, 96, 0.05)' : 'rgba(255, 255, 255, 0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
         >
-          <Bell size={20} className="text-slate-300" />
+          <Bell size={20} />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 border-2 border-slate-900 rounded-full text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
               {unreadCount > 9 ? '9+' : unreadCount}

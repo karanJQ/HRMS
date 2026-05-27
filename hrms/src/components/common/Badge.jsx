@@ -1,54 +1,78 @@
 import React from 'react';
 
-// Dark-theme glassmorphism badge colors: rgba background + bright vivid text
-const colors = {
-  // Green — success states
-  Active:                     'rgba(16,185,129,0.18):#34d399',
-  Paid:                       'rgba(16,185,129,0.18):#34d399',
-  Completed:                  'rgba(16,185,129,0.18):#34d399',
-  Approved:                   'rgba(16,185,129,0.18):#34d399',
-  Cleared:                    'rgba(16,185,129,0.18):#34d399',
-  Resolved:                   'rgba(16,185,129,0.18):#34d399',
-  Outstanding:                'rgba(16,185,129,0.18):#34d399',
-  'Documents Verified':       'rgba(16,185,129,0.18):#34d399',
+// Premium high-contrast badge styles with matching background, text, and indicator dot colors
+const statusStyles = {
+  // Success states (Green)
+  Active:                     { bg: 'rgba(16, 185, 129, 0.08)', text: '#065f46', dot: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
+  Paid:                       { bg: 'rgba(16, 185, 129, 0.08)', text: '#065f46', dot: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
+  Completed:                  { bg: 'rgba(16, 185, 129, 0.08)', text: '#065f46', dot: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
+  Approved:                   { bg: 'rgba(16, 185, 129, 0.08)', text: '#065f46', dot: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
+  Cleared:                    { bg: 'rgba(16, 185, 129, 0.08)', text: '#065f46', dot: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
+  Resolved:                   { bg: 'rgba(16, 185, 129, 0.08)', text: '#065f46', dot: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
+  Outstanding:                { bg: 'rgba(16, 185, 129, 0.08)', text: '#065f46', dot: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
+  'Documents Verified':       { bg: 'rgba(16, 185, 129, 0.08)', text: '#065f46', dot: '#10b981', border: 'rgba(16, 185, 129, 0.2)' },
 
-  // Blue — info states
-  'Very Good':                'rgba(59,130,246,0.18):#60a5fa',
-  Upcoming:                   'rgba(59,130,246,0.18):#60a5fa',
-  'On Leave':                 'rgba(59,130,246,0.18):#60a5fa',
+  // Info states (Blue)
+  'Very Good':                { bg: 'rgba(59, 130, 246, 0.08)', text: '#1e40af', dot: '#3b82f6', border: 'rgba(59, 130, 246, 0.2)' },
+  Upcoming:                   { bg: 'rgba(59, 130, 246, 0.08)', text: '#1e40af', dot: '#3b82f6', border: 'rgba(59, 130, 246, 0.2)' },
+  'On Leave':                 { bg: 'rgba(59, 130, 246, 0.08)', text: '#1e40af', dot: '#3b82f6', border: 'rgba(59, 130, 246, 0.2)' },
 
-  // Indigo — moderate positive
-  Good:                       'rgba(99,102,241,0.18):#818cf8',
+  // Indigo / Moderate states
+  Good:                       { bg: 'rgba(99, 102, 241, 0.08)', text: '#3730a3', dot: '#6366f1', border: 'rgba(99, 102, 241, 0.2)' },
 
-  // Amber — pending states
-  Pending:                    'rgba(245,158,11,0.18):#fbbf24',
-  'Pending DPC':              'rgba(245,158,11,0.18):#fbbf24',
-  'Pending Approval':         'rgba(245,158,11,0.18):#fbbf24',
-  'Under Review':             'rgba(245,158,11,0.18):#fbbf24',
-  'Pending Self-Assessment':  'rgba(245,158,11,0.18):#fbbf24',
-  'Pending Reporting Officer':'rgba(245,158,11,0.18):#fbbf24',
-  'Pending Reviewing Officer':'rgba(245,158,11,0.18):#fbbf24',
-  'Joining Formalities':      'rgba(245,158,11,0.18):#fbbf24',
-  Medium:                     'rgba(245,158,11,0.18):#fbbf24',
-  Average:                    'rgba(245,158,11,0.18):#fbbf24',
+  // Warning / Pending states (Amber)
+  Pending:                    { bg: 'rgba(245, 158, 11, 0.08)', text: '#92400e', dot: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' },
+  'Pending DPC':              { bg: 'rgba(245, 158, 11, 0.08)', text: '#92400e', dot: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' },
+  'Pending Approval':         { bg: 'rgba(245, 158, 11, 0.08)', text: '#92400e', dot: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' },
+  'Under Review':             { bg: 'rgba(245, 158, 11, 0.08)', text: '#92400e', dot: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' },
+  'Pending Self-Assessment':  { bg: 'rgba(245, 158, 11, 0.08)', text: '#92400e', dot: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' },
+  'Pending Reporting Officer':{ bg: 'rgba(245, 158, 11, 0.08)', text: '#92400e', dot: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' },
+  'Pending Reviewing Officer':{ bg: 'rgba(245, 158, 11, 0.08)', text: '#92400e', dot: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' },
+  'Joining Formalities':      { bg: 'rgba(245, 158, 11, 0.08)', text: '#92400e', dot: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' },
+  Medium:                     { bg: 'rgba(245, 158, 11, 0.08)', text: '#92400e', dot: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' },
+  Average:                    { bg: 'rgba(245, 158, 11, 0.08)', text: '#92400e', dot: '#f59e0b', border: 'rgba(245, 158, 11, 0.2)' },
 
-  // Red — danger states
-  'Inquiry Ongoing':          'rgba(239,68,68,0.18):#f87171',
-  'Pending Documents':        'rgba(239,68,68,0.18):#f87171',
-  High:                       'rgba(239,68,68,0.18):#f87171',
-  Poor:                       'rgba(239,68,68,0.18):#f87171',
-
-  // Slate — low priority
-  Low:                        'rgba(148,163,184,0.18):#94a3b8',
+  // Danger / Inquiry states (Red)
+  'Inquiry Ongoing':          { bg: 'rgba(239, 68, 68, 0.08)', text: '#991b1b', dot: '#ef4444', border: 'rgba(239, 68, 68, 0.2)' },
+  'Pending Documents':        { bg: 'rgba(239, 68, 68, 0.08)', text: '#991b1b', dot: '#ef4444', border: 'rgba(239, 68, 68, 0.2)' },
+  High:                       { bg: 'rgba(239, 68, 68, 0.08)', text: '#991b1b', dot: '#ef4444', border: 'rgba(239, 68, 68, 0.2)' },
+  Poor:                       { bg: 'rgba(239, 68, 68, 0.08)', text: '#991b1b', dot: '#ef4444', border: 'rgba(239, 68, 68, 0.2)' },
+  Suspended:                  { bg: 'rgba(239, 68, 68, 0.08)', text: '#991b1b', dot: '#ef4444', border: 'rgba(239, 68, 68, 0.2)' },
+  Resigned:                   { bg: 'rgba(148, 163, 184, 0.08)', text: '#475569', dot: '#94a3b8', border: 'rgba(148, 163, 184, 0.2)' },
+  Retired:                    { bg: 'rgba(148, 163, 184, 0.08)', text: '#475569', dot: '#94a3b8', border: 'rgba(148, 163, 184, 0.2)' },
 };
 
 export default function Badge({ text }) {
-  const [bg, color] = (colors[text] || 'rgba(148,163,184,0.18):#94a3b8').split(':');
+  const style = statusStyles[text] || { bg: 'rgba(148, 163, 184, 0.08)', text: '#475569', dot: '#94a3b8', border: 'rgba(148, 163, 184, 0.2)' };
+
   return (
     <span
-      className="badge"
-      style={{ background: bg, color, border: `1px solid ${color}40` }}
+      className="badge transition-all duration-300"
+      style={{
+        background: style.bg,
+        color: style.text,
+        border: `1px solid ${style.border}`,
+        padding: '4px 10px',
+        borderRadius: '6px',
+        fontSize: '12.5px',
+        fontWeight: '600',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        userSelect: 'none',
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)'
+      }}
     >
+      <span 
+        style={{ 
+          width: '6px', 
+          height: '6px', 
+          borderRadius: '50%', 
+          background: style.dot,
+          display: 'inline-block',
+          boxShadow: `0 0 4px ${style.dot}`
+        }} 
+      />
       {text}
     </span>
   );
