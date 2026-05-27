@@ -531,7 +531,7 @@ export default function Payroll() {
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   return (
-    <Layout title="Payroll Management" theme="light">
+    <Layout title="Payroll Management" theme="light" bg="#F8F8FF">
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <CustomDropdown
           value={month}
