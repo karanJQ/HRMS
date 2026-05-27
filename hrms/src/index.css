@@ -84,10 +84,10 @@ body {
 }
 
 .nav-item.active {
-  background: #68aae8;
+  background: #c8bcea;
   color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(104, 170, 232, 0.25);
+  box-shadow: 0 4px 12px rgba(200, 188, 234, 0.25);
 }
 
 

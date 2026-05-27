@@ -90,7 +90,7 @@ export default function Sidebar() {
       {/* Header Info */}
       <div className="px-6 pt-7 pb-5 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#68aae8] flex items-center justify-center shadow-[0_4px_12px_rgba(104,170,232,0.3)]">
+          <div className="w-8 h-8 rounded-xl bg-[#c8bcea] flex items-center justify-center shadow-[0_4px_12px_rgba(200,188,234,0.3)]">
             <TrendingUp size={16} color="#fff" />
           </div>
           <div>
@@ -106,7 +106,7 @@ export default function Sidebar() {
           <input 
             type="text" 
             placeholder="Search..." 
-            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs text-white placeholder-[#6e82a5] border-none outline-none transition-all duration-200 focus:ring-1 focus:ring-[#68aae8]/50" 
+            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs text-white placeholder-[#6e82a5] border-none outline-none transition-all duration-200 focus:ring-1 focus:ring-[#c8bcea]/50" 
             style={{ background: '#0d234a' }}
           />
         </div>
