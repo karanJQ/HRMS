@@ -51,7 +51,7 @@ export default function Grievance() {
   const pColor = { High:'#fee2e2:#991b1b', Medium:'#fef9c3:#854d0e', Low:'#f1f5f9:#475569' };
 
   return (
-    <Layout title="Grievance & Disciplinary" theme="light">
+    <Layout title="Grievance & Disciplinary" theme="light" bg="#F8F8FF">
       {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-50 text-red-800 border border-red-200':'bg-emerald-50 text-emerald-800 border border-emerald-200'}`}>{msg}</div>}
       <div className="flex gap-3 mb-5">
         <button className={`tab ${tab==='grievance'?'active':''}`} onClick={()=>setTab('grievance')}><AlertTriangle size={13} className="inline mr-1"/>Grievances</button>

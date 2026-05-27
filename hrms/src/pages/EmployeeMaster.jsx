@@ -204,7 +204,7 @@ export default function EmployeeMaster() {
   );
 
   return (
-    <Layout title="Employee Master" theme="light">
+    <Layout title="Employee Master" theme="light" bg="#F8F8FF">
         {msg && <div className={`px-4 py-3 rounded-lg text-sm mb-4 ${msg.startsWith('Error') ? 'bg-red-900/50 text-red-200 border border-red-500/30' : 'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
 
         <div className="flex gap-3 mb-4 flex-wrap items-center justify-between">

@@ -31,7 +31,7 @@ export default function Reports() {
   }));
 
   return (
-    <Layout title="Reports & Analytics" theme="light">
+    <Layout title="Reports & Analytics" theme="light" bg="#F8F8FF">
       <div className="flex gap-2 mb-5 flex-wrap items-center justify-between">
         <div className="flex gap-2">
           {['headcount','payroll','leave','categories'].map(t=>(

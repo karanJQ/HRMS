@@ -45,7 +45,7 @@ export default function Retirement() {
   };
 
   return (
-    <Layout title="Retirement & Superannuation" theme="light">
+    <Layout title="Retirement & Superannuation" theme="light" bg="#F8F8FF">
       {msg && <div className="bg-red-900/50 text-red-200 border border-red-500/30 px-4 py-2 rounded-lg text-sm mb-4">{msg}</div>}
       <div className="grid grid-cols-3 gap-4 mb-5">
         <StatsCard title="Total Tracked" value={data.length} icon={ClipboardList} color="#3b82f6" theme="light" delay={0} />

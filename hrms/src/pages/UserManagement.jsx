@@ -42,7 +42,7 @@ export default function UserManagement() {
   );
 
   return (
-    <Layout title="User Management" theme="light">
+    <Layout title="User Management" theme="light" bg="#F8F8FF">
       <div className="flex items-center justify-between mb-4">
         <p style={{ fontSize: '14px', color: 'rgba(22, 38, 96, 0.6)' }}>{(users || []).length} system users</p>
         <button className="btn btn-primary" onClick={() => setShowForm(true)}><Plus size={16} />Create User</button>

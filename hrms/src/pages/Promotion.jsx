@@ -70,7 +70,7 @@ export default function Promotion() {
   );
 
   return (
-    <Layout title="Promotion & Seniority Management" theme="light">
+    <Layout title="Promotion & Seniority Management" theme="light" bg="#F8F8FF">
       {msg && (
         <div 
           className={`px-4 py-3 rounded-xl text-sm mb-4 border transition-all duration-300 ${
