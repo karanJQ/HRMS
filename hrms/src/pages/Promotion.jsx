@@ -37,41 +37,178 @@ export default function Promotion() {
   };
 
   const F = ({k,l,type='text',opts}) => (
-    <div><label className="text-xs text-slate-400 block mb-1">{l}</label>
-      {opts ? <select className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})}><option value="">Select</option>{opts.map(o=><option key={o}>{o}</option>)}</select>
-      : <input type={type} className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})}/>}
+    <div>
+      <label className="text-xs block mb-1 font-semibold" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{l}</label>
+      {opts ? (
+        <select 
+          className="input" 
+          value={form[k]} 
+          onChange={e=>setForm({...form,[k]:e.target.value})}
+          style={{
+            background: '#fff',
+            border: '1px solid rgba(22, 38, 96, 0.15)',
+            color: '#162660'
+          }}
+        >
+          <option value="" style={{ color: '#162660', background: '#fff' }}>Select</option>
+          {opts.map(o=><option key={o} style={{ color: '#162660', background: '#fff' }}>{o}</option>)}
+        </select>
+      ) : (
+        <input 
+          type={type} 
+          className="input" 
+          value={form[k]} 
+          onChange={e=>setForm({...form,[k]:e.target.value})}
+          style={{
+            background: '#fff',
+            border: '1px solid rgba(22, 38, 96, 0.15)',
+            color: '#162660'
+          }}
+        />
+      )}
     </div>
   );
 
   return (
-    <Layout title="Promotion & Seniority Management">
-      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
-      <div className="flex gap-3 mb-5">
+    <Layout title="Promotion & Seniority Management" theme="light">
+      {msg && (
+        <div 
+          className={`px-4 py-3 rounded-xl text-sm mb-4 border transition-all duration-300 ${
+            msg.startsWith('Error') 
+              ? 'bg-red-50 text-red-800 border-red-200' 
+              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+          }`}
+          style={{
+            boxShadow: '0 4px 12px rgba(22, 38, 96, 0.03)'
+          }}
+        >
+          {msg}
+        </div>
+      )}
+      <div className="flex flex-wrap gap-3 mb-5 pb-4 items-center" style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.08)' }}>
         {['promotions','seniority'].map(t=>(
-          <button key={t} className={`tab ${tab===t?'active':''}`} onClick={()=>setTab(t)}>{t==='promotions'?'Promotion Records':'Seniority List'}</button>
+          <button 
+            key={t} 
+            className="font-semibold transition-all duration-300"
+            style={{
+              padding: '8px 20px',
+              borderRadius: '30px',
+              fontSize: '14px',
+              background: tab === t ? '#162660' : 'transparent',
+              color: tab === t ? '#FEFEFA' : 'rgba(22, 38, 96, 0.6)',
+              boxShadow: tab === t ? '0 4px 12px rgba(22, 38, 96, 0.15)' : 'none',
+              border: tab === t ? '1px solid #162660' : '1px solid transparent',
+            }}
+            onMouseEnter={(e) => {
+              if (tab !== t) {
+                e.currentTarget.style.color = '#162660';
+                e.currentTarget.style.background = 'rgba(22, 38, 96, 0.04)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (tab !== t) {
+                e.currentTarget.style.color = 'rgba(22, 38, 96, 0.6)';
+                e.currentTarget.style.background = 'transparent';
+              }
+            }}
+            onClick={()=>setTab(t)}
+          >
+            {t==='promotions'?'Promotion Records':'Seniority List'}
+          </button>
         ))}
-        {isMin('hr_staff') && <button className="btn btn-primary ml-auto" onClick={()=>setShowForm(true)}><Plus size={16}/>Initiate Promotion</button>}
+        {isMin('hr_staff') && (
+          <button 
+            className="btn font-semibold transition-all duration-200 ml-auto" 
+            style={{ 
+              background: '#162660', 
+              color: '#FEFEFA',
+              boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
+            }}
+            onClick={()=>setShowForm(true)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#68aae8';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#162660';
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
+            }}
+          >
+            <Plus size={16}/>Initiate Promotion
+          </button>
+        )}
       </div>
 
       {loading ? <Loader /> : tab==='promotions' ? (
-        <div className="card">
-          <h3 className="section-title">Promotion Records</h3>
-          <div className="table-wrap">
+        <div 
+          className="hover-card animate-slide-up"
+          style={{ 
+            background: '#fff', 
+            borderRadius: '16px', 
+            padding: '24px', 
+            border: '1px solid rgba(22, 38, 96, 0.1)', 
+            boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)',
+            animationDelay: '100ms'
+          }}
+        >
+          <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Promotion Records</h3>
+          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
             <table>
-              <thead><tr><th>Employee</th><th>Dept</th><th>From Post</th><th>To Post</th><th>Basis</th><th>Eff. Date</th><th>Pay Change</th><th>Order No.</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody>{promos.map(p=>(
-                <tr key={p.id}>
-                  <td><div className="font-medium">{p.emp_name}</div><div className="text-xs text-slate-400">{p.emp_id}</div></td>
-                  <td>{p.dept_name}</td>
-                  <td className="text-slate-400 text-sm">{p.from_designation_name||'—'}</td>
-                  <td className="font-medium text-blue-600">{p.to_designation_name}</td>
-                  <td><span className="badge" style={{background:'#f0fdf4',color:'#166534'}}>{p.basis}</span></td>
-                  <td className="text-xs">{p.effective_date?.split('T')[0]||'—'}</td>
-                  <td className="text-xs"><span className="text-slate-400">L{p.from_pay_level||'?'}</span> → <span className="text-green-600 font-medium">L{p.to_pay_level||'?'}</span></td>
-                  <td className="font-mono text-xs">{p.order_number||'—'}</td>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
+                  {['Employee', 'Dept', 'From Post', 'To Post', 'Basis', 'Eff. Date', 'Pay Change', 'Order No.', 'Status', 'Action'].map(h => (
+                    <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>{promos.map((p, idx)=>(
+                <tr 
+                  key={p.id}
+                  className="transition-all duration-300"
+                  style={{ 
+                    borderBottom: '1px solid rgba(22, 38, 96, 0.05)',
+                    animationDelay: `${idx * 20}ms`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <td>
+                    <div className="font-medium" style={{ color: '#162660' }}>{p.emp_name}</div>
+                    <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{p.emp_id}</div>
+                  </td>
+                  <td style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{p.dept_name}</td>
+                  <td style={{ color: 'rgba(22, 38, 96, 0.6)' }} className="text-sm">{p.from_designation_name||'—'}</td>
+                  <td className="font-medium text-indigo-600">{p.to_designation_name}</td>
+                  <td>
+                    <span 
+                      className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold border"
+                      style={{
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        color: '#065f46',
+                        borderColor: 'rgba(16, 185, 129, 0.2)'
+                      }}
+                    >
+                      {p.basis}
+                    </span>
+                  </td>
+                  <td style={{ color: '#162660' }} className="text-xs">{p.effective_date?.split('T')[0]||'—'}</td>
+                  <td style={{ color: '#162660' }} className="text-xs"><span style={{ color: 'rgba(22, 38, 96, 0.5)' }}>L{p.from_pay_level||'?'}</span> → <span className="text-green-600 font-semibold">L{p.to_pay_level||'?'}</span></td>
+                  <td style={{ color: '#162660' }} className="font-mono text-xs">{p.order_number||'—'}</td>
                   <td><Badge text={p.status}/></td>
                   <td>{p.status?.includes('Pending') && isMin('hr_manager') && (
-                    <button className="btn btn-success" style={{padding:'3px 8px',fontSize:11}} onClick={()=>approve(p.id)}><Check size={12}/>Approve</button>
+                    <button 
+                      className="btn btn-success" 
+                      style={{ padding: '6px 10px', borderRadius: '8px', fontSize: 11, boxShadow: '0 2px 6px rgba(16, 185, 129, 0.2)' }} 
+                      onClick={()=>approve(p.id)}
+                    >
+                      <Check size={12}/>Approve
+                    </button>
                   )}</td>
                 </tr>
               ))}</tbody>
@@ -79,18 +216,51 @@ export default function Promotion() {
           </div>
         </div>
       ) : (
-        <div className="card">
-          <h3 className="section-title">Seniority List (by Date of Joining)</h3>
-          <div className="table-wrap">
+        <div 
+          className="hover-card animate-slide-up"
+          style={{ 
+            background: '#fff', 
+            borderRadius: '16px', 
+            padding: '24px', 
+            border: '1px solid rgba(22, 38, 96, 0.1)', 
+            boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)',
+            animationDelay: '100ms'
+          }}
+        >
+          <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Seniority List (by Date of Joining)</h3>
+          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
             <table>
-              <thead><tr><th>#</th><th>Employee</th><th>Dept</th><th>Designation</th><th>DOJ</th><th>Service Years</th><th>Grade</th><th>Category</th></tr></thead>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
+                  {['#', 'Employee', 'Dept', 'Designation', 'DOJ', 'Service Years', 'Grade', 'Category'].map(h => (
+                    <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>{seniority.map((e,i)=>(
-                <tr key={e.emp_id}>
-                  <td className="font-bold text-blue-600">{e.seniority_rank||i+1}</td>
-                  <td><div className="font-medium">{e.name}</div><div className="text-xs text-slate-400">{e.emp_id}</div></td>
-                  <td>{e.dept_name}</td><td>{e.designation_name||'—'}</td>
-                  <td>{e.doj?.split('T')[0]}</td>
-                  <td>{e.service_years||0} yrs</td>
+                <tr 
+                  key={e.emp_id}
+                  className="transition-all duration-300"
+                  style={{ 
+                    borderBottom: '1px solid rgba(22, 38, 96, 0.05)',
+                    animationDelay: `${i * 20}ms`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <td className="font-bold" style={{ color: '#162660' }}>{e.seniority_rank||i+1}</td>
+                  <td>
+                    <div className="font-medium" style={{ color: '#162660' }}>{e.name}</div>
+                    <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{e.emp_id}</div>
+                  </td>
+                  <td style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{e.dept_name}</td>
+                  <td style={{ color: '#162660' }}>{e.designation_name||'—'}</td>
+                  <td style={{ color: '#162660' }}>{e.doj?.split('T')[0]}</td>
+                  <td style={{ color: '#162660' }}>{e.service_years||0} yrs</td>
                   <td><Badge text={e.grade||'—'}/></td>
                   <td><Badge text={e.category}/></td>
                 </tr>
@@ -101,7 +271,7 @@ export default function Promotion() {
       )}
 
       {showForm && (
-        <Modal title="Initiate Promotion" onClose={()=>setShowForm(false)}>
+        <Modal title="Initiate Promotion" onClose={()=>setShowForm(false)} theme="light">
           <div className="grid grid-cols-2 gap-3">
             <F k="emp_id" l="Employee ID"/><F k="basis" l="Basis" opts={['DPC','Seniority','Merit','Seniority+DPC']}/>
             <F k="from_designation_name" l="Current Designation" opts={DESIGS}/>
@@ -111,7 +281,27 @@ export default function Promotion() {
             <F k="dpc_meeting_date" l="DPC Meeting Date" type="date"/>
             <F k="effective_date" l="Effective Date" type="date"/>
           </div>
-          <button className="btn btn-primary w-full mt-4" onClick={submit}>Submit for DPC</button>
+          <button 
+            className="btn w-full mt-4 font-semibold transition-all duration-200" 
+            style={{
+              background: '#162660',
+              color: '#FEFEFA',
+              boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#68aae8';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#162660';
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
+            }}
+            onClick={submit}
+          >
+            Submit for DPC
+          </button>
         </Modal>
       )}
     </Layout>

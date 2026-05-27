@@ -277,34 +277,118 @@ export default function Onboarding() {
   );
 
   return (
-    <Layout title="Employee Onboarding">
+    <Layout title="Employee Onboarding" theme="light">
       {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-slate-400 font-medium">{data.length} candidates in pipeline</p>
+        <p className="text-sm font-medium" style={{ color: 'rgba(22, 38, 96, 0.7)' }}>{data.length} candidates in pipeline</p>
         {isMin('hr_staff') && <button className="btn btn-primary" onClick={()=>setShowAdd(true)}><Plus size={16}/>Add Candidate</button>}
       </div>
       <div className="grid grid-cols-4 gap-4 mb-6">
-        {['Pending Documents','Documents Verified','Joining Formalities','Completed'].map(s=>(
-          <div key={s} className="glass-card text-center">
-            <p className="text-3xl font-bold" style={{color:s==='Completed'?'#34d399':s==='Joining Formalities'?'#60a5fa':'#fbbf24'}}>{data.filter(d=>d.status===s).length}</p>
-            <p className="text-xs text-slate-400 mt-1">{s}</p>
+        {['Pending Documents','Documents Verified','Joining Formalities','Completed'].map((s, idx)=>(
+          <div 
+            key={s} 
+            className="hover-card animate-slide-up text-center"
+            style={{
+              background: '#fff',
+              border: '1px solid rgba(22, 38, 96, 0.08)',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
+              animationDelay: `${idx * 60}ms`
+            }}
+          >
+            <p className="text-3xl font-bold" style={{color:s==='Completed'?'#10b981':s==='Joining Formalities'?'#3b82f6':'#d97706'}}>{data.filter(d=>d.status===s).length}</p>
+            <p className="text-xs mt-1" style={{ color: 'rgba(22, 38, 96, 0.6)', fontWeight: '600' }}>{s}</p>
           </div>
         ))}
       </div>
       {loading ? <Loader/> : (
-        <div className="glass-card">
-          <div className="table-wrap">
+        <div 
+          className="hover-card animate-slide-up"
+          style={{
+            background: '#fff',
+            border: '1px solid rgba(22, 38, 96, 0.08)',
+            borderRadius: '16px',
+            padding: '24px',
+            boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
+            animationDelay: '240ms'
+          }}
+        >
+          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
             <table>
-              <thead><tr><th>Candidate</th><th>Post</th><th>Dept</th><th>Selected</th><th>Joining</th><th>Police</th><th>Status</th><th>Actions</th></tr></thead>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
+                  {['Candidate', 'Post', 'Dept', 'Selected', 'Joining', 'Police', 'Status', 'Actions'].map(h => (
+                    <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>{data.map(o=>(
-                <tr key={o.id}>
-                  <td><div className="font-medium text-white">{o.name}</div><div className="text-xs text-slate-400">{o.candidate_ref_id}</div></td>
-                  <td className="text-slate-300">{o.post}</td><td className="text-slate-300">{o.dept_name_full||o.dept_name}</td>
-                  <td className="text-slate-300">{o.selection_date?.split('T')[0]||'—'}</td>
-                  <td className="text-slate-300">{o.joining_date?.split('T')[0]||'—'}</td>
+                <tr key={o.id} style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.05)' }}>
+                  <td>
+                    <div className="font-medium" style={{ color: '#162660' }}>{o.name}</div>
+                    <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{o.candidate_ref_id}</div>
+                  </td>
+                  <td style={{ color: '#162660' }}>{o.post}</td>
+                  <td style={{ color: '#162660' }}>{o.dept_name_full||o.dept_name}</td>
+                  <td style={{ color: '#162660' }}>{o.selection_date?.split('T')[0]||'—'}</td>
+                  <td style={{ color: '#162660' }}>{o.joining_date?.split('T')[0]||'—'}</td>
                   <td><Badge text={o.police_verification}/></td>
                   <td><Badge text={o.status}/></td>
-                  <td><button className="btn btn-secondary text-xs py-1 px-3" onClick={()=>handleSelectCandidate(o)}><Eye size={14} className="mr-1"/>View</button></td>
+                  <td>
+                    <button 
+                      className="btn transition-all duration-300" 
+                      style={{ 
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        borderRadius: '8px',
+                        background: 'rgba(104, 170, 232, 0.12)',
+                        color: '#162660',
+                        border: '1px solid rgba(104, 170, 232, 0.2)',
+                        cursor: 'pointer'
+                      }} 
+                      onClick={()=>handleSelectCandidate(o)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#68aae8';
+                        e.currentTarget.style.color = '#fff';
+                        e.currentTarget.style.borderColor = '#68aae8';
+                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
+                        e.currentTarget.style.boxShadow = '0 6px 15px rgba(104, 170, 232, 0.4)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(104, 170, 232, 0.12)';
+                        e.currentTarget.style.color = '#162660';
+                        e.currentTarget.style.borderColor = 'rgba(104, 170, 232, 0.2)';
+                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <svg 
+                        viewBox="0 0 24 24" 
+                        width="14" 
+                        height="14" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        className="inline-block mr-1 align-middle"
+                      >
+                        <path d="M2.5 12C4.5 7.5 8 4.5 12 4.5s7.5 3 9.5 7.5c-2 4.5-5.5 7.5-9.5 7.5s-7.5-3-9.5-7.5z" />
+                        <path 
+                          d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" 
+                          fill="currentColor" 
+                          fillRule="evenodd" 
+                          stroke="none" 
+                        />
+                      </svg>
+                      View
+                    </button>
+                  </td>
                 </tr>
               ))}</tbody>
             </table>
@@ -344,7 +428,28 @@ export default function Onboarding() {
             {!selected.appointment_letter_sent ? (
               <button className="btn btn-success flex-1" onClick={()=>handleAction('appointment_letter_sent', 'Appointment Letter Generated Successfully!')}>Generate Appointment Letter</button>
             ) : (
-              <button className="btn btn-success flex-1" onClick={() => setShowLetter(true)}><Eye size={16} className="mr-2 inline"/>View Appointment Letter</button>
+              <button className="btn btn-success flex-1" onClick={() => setShowLetter(true)}>
+                <svg 
+                  viewBox="0 0 24 24" 
+                  width="16" 
+                  height="16" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  className="inline mr-2 align-middle"
+                >
+                  <path d="M2.5 12C4.5 7.5 8 4.5 12 4.5s7.5 3 9.5 7.5c-2 4.5-5.5 7.5-9.5 7.5s-7.5-3-9.5-7.5z" />
+                  <path 
+                    d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" 
+                    fill="currentColor" 
+                    fillRule="evenodd" 
+                    stroke="none" 
+                  />
+                </svg>
+                View Appointment Letter
+              </button>
             )}
             <button className="btn btn-primary flex-1" onClick={()=>handleAction('service_book_created', 'Service Book Created Successfully!')}>Create Service Book</button>
           </div>

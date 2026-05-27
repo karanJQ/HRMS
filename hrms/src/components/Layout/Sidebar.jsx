@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, UserPlus, Users, IndianRupee, Calendar, ArrowLeftRight, TrendingUp, Star, BookOpen, GraduationCap, Clock, AlertTriangle, BarChart3, Building2, LogOut, Shield, Workflow } from 'lucide-react';
+import { taskAPI } from '../../api/endpoints';
+import { 
+  LayoutDashboard, UserPlus, Users, IndianRupee, Calendar, 
+  ArrowLeftRight, TrendingUp, Star, BookOpen, GraduationCap, 
+  Clock, AlertTriangle, BarChart3, Building2, LogOut, Shield, 
+  Workflow, Search, ChevronDown 
+} from 'lucide-react';
 
 const allNav = [
   { label:'Dashboard', icon:LayoutDashboard, path:'/dashboard', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
@@ -26,37 +32,161 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [taskCount, setTaskCount] = useState(24);
+  const [grievanceCount, setGrievanceCount] = useState(8);
+
+  useEffect(() => {
+    if (user) {
+      taskAPI.stats()
+        .then(res => {
+          const inProgress = res.data?.data?.in_progress || 0;
+          const inReview = res.data?.data?.in_review || 0;
+          const total = res.data?.data?.total || 0;
+          setTaskCount(inProgress + inReview || total || 24);
+        })
+        .catch(() => {});
+    }
+  }, [user]);
 
   const nav = allNav.filter(n => n.roles.includes(user?.role));
-  const roleLabel = { super_admin:'Super Admin', hr_manager:'HR Manager', dept_head:'Dept Head', hr_staff:'HR Staff', employee:'Employee' };
+  
+  // Section 1: Top items (Dashboard, Tasks)
+  const group1 = nav.filter(item => 
+    ['/dashboard', '/tasks'].includes(item.path)
+  );
+
+  // Section 2: Middle items (Attendance & Leave, Payroll, Service Book, APAR / Performance)
+  const group2 = nav.filter(item => 
+    ['/attendance', '/payroll', '/servicebook', '/apar'].includes(item.path)
+  );
+
+  // Section 3: Bottom items (Employee Master, Onboarding, Transfer, Promotion, Training, Retirement, Grievance, Reports, User Management)
+  const group3 = nav.filter(item => 
+    !['/dashboard', '/tasks', '/attendance', '/payroll', '/servicebook', '/apar'].includes(item.path)
+  );
+
+  const roleLabel = { 
+    super_admin:'Super Admin', 
+    hr_manager:'HR Manager', 
+    dept_head:'Dept Head', 
+    hr_staff:'HR Staff', 
+    employee:'Employee' 
+  };
   const initials = user ? `${user.first_name?.[0]||''}${user.last_name?.[0]||user.username?.[0]||''}`.toUpperCase() : 'SA';
 
+  const getBadge = (path) => {
+    if (path === '/tasks') return <span className="ml-auto bg-[#a3e635] text-slate-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{taskCount}</span>;
+    if (path === '/grievance') return <span className="ml-auto bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{grievanceCount}</span>;
+    return null;
+  };
+
+  const hasDropdown = (path) => {
+    return ['/employees', '/attendance', '/grievance'].includes(path);
+  };
+
   return (
-    <div className="sidebar fixed top-0 left-0 flex flex-col" style={{zIndex:40}}>
-      <div className="p-5 border-b border-slate-700">
+    <div className="sidebar fixed top-0 left-0 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.3)]" style={{ zIndex: 40, borderRight: '1px solid rgba(255, 255, 255, 0.05)' }}>
+      
+      {/* Header Info */}
+      <div className="px-6 pt-7 pb-5 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center"><Building2 size={20} color="#fff" /></div>
-          <div><p className="text-white font-bold text-sm leading-tight">Gujarat Govt.</p><p className="text-slate-400 text-xs">HRMS Portal</p></div>
+          <div className="w-8 h-8 rounded-xl bg-[#68aae8] flex items-center justify-center shadow-[0_4px_12px_rgba(104,170,232,0.3)]">
+            <TrendingUp size={16} color="#fff" />
+          </div>
+          <div>
+            <p className="text-white font-extrabold text-base leading-tight tracking-tight">Gujarat HRMS</p>
+          </div>
         </div>
       </div>
-      <nav className="flex-1 p-3 overflow-y-auto">
-        {nav.map(item => (
-          <div key={item.path} className={`nav-item mb-0.5 ${location.pathname===item.path?'active':''}`} onClick={()=>navigate(item.path)}>
-            <item.icon size={16} /><span>{item.label}</span>
+
+      {/* Search Input Box */}
+      <div className="px-4 mb-4 flex-shrink-0">
+        <div className="relative">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6e82a5]" />
+          <input 
+            type="text" 
+            placeholder="Search..." 
+            className="w-full pl-9 pr-4 py-2 rounded-xl text-xs text-white placeholder-[#6e82a5] border-none outline-none transition-all duration-200 focus:ring-1 focus:ring-[#68aae8]/50" 
+            style={{ background: '#0d234a' }}
+          />
+        </div>
+      </div>
+
+      {/* Navigation Area */}
+      <nav className="flex-1 px-2 py-2 overflow-y-auto no-scrollbar space-y-0.5">
+        
+        {/* Group 1 */}
+        {group1.map(item => (
+          <div 
+            key={item.path} 
+            className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
+            onClick={() => navigate(item.path)}
+          >
+            <item.icon size={16} className={`${location.pathname === item.path ? 'text-white' : 'text-[#6e82a5]'}`} />
+            <span>{item.label}</span>
+            {getBadge(item.path)}
+            {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto text-[#6e82a5]" />}
           </div>
         ))}
+
+        {group2.length > 0 && (
+          <>
+            <hr style={{ borderColor: 'rgba(255, 255, 255, 0.05)' }} className="my-3 mx-4" />
+            {group2.map(item => (
+              <div 
+                key={item.path} 
+                className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
+                onClick={() => navigate(item.path)}
+              >
+                <item.icon size={16} className={`${location.pathname === item.path ? 'text-white' : 'text-[#6e82a5]'}`} />
+                <span>{item.label}</span>
+                {getBadge(item.path)}
+                {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto text-[#6e82a5]" />}
+              </div>
+            ))}
+          </>
+        )}
+
+        {group3.length > 0 && (
+          <>
+            <hr style={{ borderColor: 'rgba(255, 255, 255, 0.05)' }} className="my-3 mx-4" />
+            {group3.map(item => (
+              <div 
+                key={item.path} 
+                className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
+                onClick={() => navigate(item.path)}
+              >
+                <item.icon size={16} className={`${location.pathname === item.path ? 'text-white' : 'text-[#6e82a5]'}`} />
+                <span>{item.label}</span>
+                {getBadge(item.path)}
+                {hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto text-[#6e82a5]" />}
+              </div>
+            ))}
+          </>
+        )}
       </nav>
-      <div className="p-4 border-t border-slate-700">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">{initials}</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-medium truncate">{user?.first_name||user?.username}</p>
-            <p className="text-slate-400 text-xs">{roleLabel[user?.role]||user?.role}</p>
+
+      {/* Profile Box at the Bottom */}
+      <div className="p-4 border-t border-white/5 bg-[#021430] flex-shrink-0">
+        <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all duration-200">
+          {/* Avatar circle */}
+          <div className="w-10 h-10 rounded-full bg-white text-[#021430] flex items-center justify-center text-xs font-extrabold shadow-sm flex-shrink-0">
+            {initials}
           </div>
+          {/* Name & Role details */}
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-white truncate">{user?.first_name || user?.username}</p>
+            <p className="text-[10px] text-[#6e82a5] truncate mt-0.5">{roleLabel[user?.role] || user?.role}</p>
+          </div>
+          {/* Sign out action option */}
+          <button 
+            onClick={logout} 
+            className="p-1.5 text-[#6e82a5] hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors cursor-pointer" 
+            title="Sign Out"
+          >
+            <LogOut size={15} />
+          </button>
         </div>
-        <button onClick={logout} className="nav-item w-full text-red-400 hover:text-red-300 hover:bg-red-900/20">
-          <LogOut size={15}/><span>Sign Out</span>
-        </button>
       </div>
     </div>
   );

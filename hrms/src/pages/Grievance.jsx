@@ -3,7 +3,8 @@ import Layout from '../components/Layout/Layout';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Loader from '../components/common/Loader';
-import { Plus, AlertTriangle, Shield } from 'lucide-react';
+import { Plus, AlertTriangle, Shield, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import StatsCard from '../components/common/StatsCard';
 import { grievanceAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
@@ -50,8 +51,8 @@ export default function Grievance() {
   const pColor = { High:'#fee2e2:#991b1b', Medium:'#fef9c3:#854d0e', Low:'#f1f5f9:#475569' };
 
   return (
-    <Layout title="Grievance & Disciplinary">
-      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
+    <Layout title="Grievance & Disciplinary" theme="light">
+      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-50 text-red-800 border border-red-200':'bg-emerald-50 text-emerald-800 border border-emerald-200'}`}>{msg}</div>}
       <div className="flex gap-3 mb-5">
         <button className={`tab ${tab==='grievance'?'active':''}`} onClick={()=>setTab('grievance')}><AlertTriangle size={13} className="inline mr-1"/>Grievances</button>
         {isMin('hr_staff') && <button className={`tab ${tab==='disciplinary'?'active':''}`} onClick={()=>setTab('disciplinary')}><Shield size={13} className="inline mr-1"/>Disciplinary</button>}
@@ -63,30 +64,57 @@ export default function Grievance() {
       {loading ? <Loader/> : tab==='grievance' ? (
         <>
           <div className="grid grid-cols-4 gap-4 mb-5">
-            {['Pending','Under Review','Resolved','Escalated'].map(s=>(
-              <div key={s} className="card text-center">
-                <p className="text-2xl font-bold" style={{color:s==='Resolved'?'#22c55e':s==='Under Review'?'#3b82f6':s==='Escalated'?'#ef4444':'#f59e0b'}}>{grievances.filter(g=>g.status===s).length}</p>
-                <p className="text-sm text-slate-400">{s}</p>
-              </div>
-            ))}
+            <StatsCard title="Pending" value={grievances.filter(g=>g.status==='Pending').length} icon={AlertCircle} color="#f59e0b" theme="light" delay={0} />
+            <StatsCard title="Under Review" value={grievances.filter(g=>g.status==='Under Review').length} icon={Clock} color="#3b82f6" theme="light" delay={60} />
+            <StatsCard title="Resolved" value={grievances.filter(g=>g.status==='Resolved').length} icon={CheckCircle} color="#10b981" theme="light" delay={120} />
+            <StatsCard title="Escalated" value={grievances.filter(g=>g.status==='Escalated').length} icon={AlertTriangle} color="#ef4444" theme="light" delay={180} />
           </div>
-          <div className="card">
-            <div className="table-wrap">
+          <div 
+            className="hover-card animate-slide-up"
+            style={{ 
+              background: '#fff', 
+              borderRadius: '16px', 
+              padding: '24px', 
+              border: '1px solid rgba(22, 38, 96, 0.1)', 
+              boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
+            }}
+          >
+            <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
               <table>
-                <thead><tr><th>Employee</th><th>Dept</th><th>Type</th><th>Subject</th><th>Date</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
+                    {['Employee', 'Dept', 'Type', 'Subject', 'Date', 'Priority', 'Status', 'Actions'].map(h => (
+                      <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
                 <tbody>{grievances.map(g=>{
                   const [bg,col]=(pColor[g.priority]||'#f1f5f9:#475569').split(':');
                   return (
-                    <tr key={g.id}>
-                      <td><div className="font-medium">{g.emp_name}</div><div className="text-xs text-slate-400">{g.emp_id}</div></td>
-                      <td>{g.dept_name}</td><td className="text-sm">{g.grievance_type}</td>
-                      <td className="text-sm text-slate-200 max-w-xs truncate">{g.subject}</td>
-                      <td className="text-xs text-slate-400">{g.submission_date?.split('T')[0]}</td>
+                    <tr 
+                      key={g.id}
+                      className="transition-all duration-300"
+                      style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.05)' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                      }}
+                    >
+                      <td style={{ color: '#162660' }}>
+                        <div className="font-medium">{g.emp_name}</div>
+                        <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.4)' }}>{g.emp_id}</div>
+                      </td>
+                      <td style={{ color: '#162660' }}>{g.dept_name}</td>
+                      <td className="text-sm" style={{ color: '#162660' }}>{g.grievance_type}</td>
+                      <td className="text-sm max-w-xs truncate" style={{ color: '#162660' }}>{g.subject}</td>
+                      <td className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{g.submission_date?.split('T')[0]}</td>
                       <td><span className="badge" style={{background:bg,color:col}}>{g.priority}</span></td>
                       <td><Badge text={g.status}/></td>
                       <td>
-                        {g.status==='Pending' && isMin('hr_staff') && <button className="btn btn-primary" style={{padding:'3px 8px',fontSize:11}} onClick={()=>assign(g.id)}>Assign</button>}
-                        {g.status==='Under Review' && isMin('hr_staff') && <button className="btn btn-success" style={{padding:'3px 8px',fontSize:11}} onClick={()=>resolve(g.id)}>Resolve</button>}
+                        {g.status==='Pending' && isMin('hr_staff') && <button className="btn btn-primary" style={{padding:'4px 10px',fontSize:11}} onClick={()=>assign(g.id)}>Assign</button>}
+                        {g.status==='Under Review' && isMin('hr_staff') && <button className="btn btn-success" style={{padding:'4px 10px',fontSize:11}} onClick={()=>resolve(g.id)}>Resolve</button>}
                         {g.status==='Resolved' && <span className="text-xs text-green-600 font-medium">✓ Closed</span>}
                       </td>
                     </tr>
@@ -97,21 +125,49 @@ export default function Grievance() {
           </div>
         </>
       ) : (
-        <div className="card">
-          <h3 className="section-title">Disciplinary Cases</h3>
-          <div className="table-wrap">
+        <div 
+          className="hover-card animate-slide-up"
+          style={{ 
+            background: '#fff', 
+            borderRadius: '16px', 
+            padding: '24px', 
+            border: '1px solid rgba(22, 38, 96, 0.1)', 
+            boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
+          }}
+        >
+          <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Disciplinary Cases</h3>
+          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
             <table>
-              <thead><tr><th>Case ID</th><th>Employee</th><th>Dept</th><th>Charge</th><th>Start Date</th><th>Inquiry Officer</th><th>Status</th><th>Penalty</th></tr></thead>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
+                  {['Case ID', 'Employee', 'Dept', 'Charge', 'Start Date', 'Inquiry Officer', 'Status', 'Penalty'].map(h => (
+                    <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>{disc.map(d=>(
-                <tr key={d.id}>
+                <tr 
+                  key={d.id}
+                  className="transition-all duration-300"
+                  style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.05)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
                   <td className="font-mono text-xs text-red-600">{d.charge_sheet_number||d.id}</td>
-                  <td><div className="font-medium">{d.emp_name}</div><div className="text-xs text-slate-400">{d.emp_id}</div></td>
-                  <td>{d.dept_name}</td>
+                  <td style={{ color: '#162660' }}>
+                    <div className="font-medium">{d.emp_name}</div>
+                    <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.4)' }}>{d.emp_id}</div>
+                  </td>
+                  <td style={{ color: '#162660' }}>{d.dept_name}</td>
                   <td className="text-sm text-red-600 max-w-xs truncate">{d.charge_description}</td>
-                  <td className="text-xs">{d.case_start_date?.split('T')[0]||'—'}</td>
-                  <td className="text-sm">{d.inquiry_officer_name||'—'}</td>
+                  <td className="text-xs" style={{ color: '#162660' }}>{d.case_start_date?.split('T')[0]||'—'}</td>
+                  <td className="text-sm" style={{ color: '#162660' }}>{d.inquiry_officer_name||'—'}</td>
                   <td><Badge text={d.status}/></td>
-                  <td className="text-sm text-slate-400">{d.penalty_type||'Pending'}</td>
+                  <td className="text-sm" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{d.penalty_type||'Pending'}</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -120,7 +176,7 @@ export default function Grievance() {
       )}
 
       {showForm && (
-        <Modal title="Register Grievance" onClose={()=>setShowForm(false)}>
+        <Modal title="Register Grievance" onClose={()=>setShowForm(false)} theme="light">
           <div className="grid grid-cols-2 gap-3">
             {user.role!=='employee' && <div className="col-span-2"><label className="text-xs text-slate-400 block mb-1">Employee ID</label><input className="input" value={form.emp_id} onChange={e=>setForm({...form,emp_id:e.target.value})}/></div>}
             <div><label className="text-xs text-slate-400 block mb-1">Type</label>
@@ -140,7 +196,7 @@ export default function Grievance() {
         </Modal>
       )}
       {showDiscForm && (
-        <Modal title="Register Disciplinary Case" onClose={()=>setShowDiscForm(false)}>
+        <Modal title="Register Disciplinary Case" onClose={()=>setShowDiscForm(false)} theme="light">
           <div className="grid grid-cols-2 gap-3">
             <div><label className="text-xs text-slate-400 block mb-1">Employee ID</label><input className="input" value={discForm.emp_id} onChange={e=>setDiscForm({...discForm,emp_id:e.target.value})}/></div>
             <div><label className="text-xs text-slate-400 block mb-1">Case Start Date</label><input type="date" className="input" value={discForm.case_start_date} onChange={e=>setDiscForm({...discForm,case_start_date:e.target.value})}/></div>

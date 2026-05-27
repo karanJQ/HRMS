@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout/Layout';
 import Loader from '../components/common/Loader';
 import Badge from '../components/common/Badge';
+import StatsCard from '../components/common/StatsCard';
 import { useAuth } from '../context/AuthContext';
 import {
   ClipboardList, Plus, Clock, CheckCircle, AlertCircle,
@@ -42,9 +43,14 @@ function TaskCard({ task, canManage, onStatusChange, onEdit, onDelete }) {
   const p = PRIORITY[task.priority] || PRIORITY.Medium;
   const isOverdue = task.is_overdue;
   return (
-    <div className={`rounded-xl p-4 border transition-all hover:translate-y-[-2px] group
-      ${isOverdue ? 'border-red-500/30 bg-red-500/5' : 'border-white/8 bg-white/4 hover:bg-white/7'}`}
-      style={{ backdropFilter: 'blur(8px)' }}>
+    <div 
+      className="rounded-xl p-4 border transition-all hover:translate-y-[-2px] group"
+      style={{ 
+        background: isOverdue ? '#fef2f2' : '#fff',
+        borderColor: isOverdue ? 'rgba(239, 68, 68, 0.25)' : 'rgba(22, 38, 96, 0.08)',
+        boxShadow: '0 4px 12px rgba(22, 38, 96, 0.03)',
+      }}
+    >
       
       {/* Top row: priority flag + actions */}
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -55,7 +61,7 @@ function TaskCard({ task, canManage, onStatusChange, onEdit, onDelete }) {
             {task.priority}
           </span>
           {isOverdue && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-200">
               <AlertTriangle size={9} /> OVERDUE
             </span>
           )}
@@ -63,11 +69,11 @@ function TaskCard({ task, canManage, onStatusChange, onEdit, onDelete }) {
         {canManage && (
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
             <button onClick={() => onEdit(task)}
-              className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-blue-400 transition-colors">
+              className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors">
               <Edit3 size={13} />
             </button>
             <button onClick={() => onDelete(task.id)}
-              className="p-1 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-colors">
+              className="p-1 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
               <Trash2 size={13} />
             </button>
           </div>
@@ -75,23 +81,23 @@ function TaskCard({ task, canManage, onStatusChange, onEdit, onDelete }) {
       </div>
 
       {/* Title */}
-      <h4 className="text-white text-sm font-semibold mb-1 leading-snug line-clamp-2">{task.title}</h4>
+      <h4 className="text-sm font-semibold mb-1 leading-snug line-clamp-2" style={{ color: '#162660' }}>{task.title}</h4>
       {task.description && (
-        <p className="text-slate-400 text-xs mb-3 line-clamp-2 leading-relaxed">{task.description}</p>
+        <p className="text-xs mb-3 line-clamp-2 leading-relaxed" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{task.description}</p>
       )}
 
       {/* Assignee */}
       {task.assignee_name && task.assignee_name.trim() !== '' ? (
         <div className="flex items-center gap-1.5 mb-2">
-          <div className="w-5 h-5 rounded-full bg-blue-500/30 flex items-center justify-center text-[9px] font-bold text-blue-300">
+          <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center text-[9px] font-bold text-blue-600">
             {task.assignee_name?.trim()?.[0]?.toUpperCase() || '?'}
           </div>
-          <span className="text-xs text-slate-300 truncate">{task.assignee_name?.trim() || task.assignee_username}</span>
+          <span className="text-xs truncate font-medium" style={{ color: '#162660' }}>{task.assignee_name?.trim() || task.assignee_username}</span>
         </div>
       ) : (
         <div className="flex items-center gap-1.5 mb-2">
-          <User size={12} className="text-slate-600" />
-          <span className="text-xs text-slate-600">Unassigned</span>
+          <User size={12} className="text-slate-400" />
+          <span className="text-xs text-slate-400 font-medium">Unassigned</span>
         </div>
       )}
 
@@ -109,12 +115,17 @@ function TaskCard({ task, canManage, onStatusChange, onEdit, onDelete }) {
       {/* Status changer */}
       <div className="relative">
         <select
-          className="w-full text-xs rounded-lg px-2.5 py-1.5 pr-7 outline-none appearance-none cursor-pointer border border-white/10 bg-white/5 text-slate-300 hover:border-white/20 transition-colors"
+          className="w-full text-xs rounded-lg px-2.5 py-1.5 pr-7 outline-none appearance-none cursor-pointer border transition-all"
           value={task.status}
           onChange={e => onStatusChange(task.id, e.target.value)}
+          style={{
+            background: '#fff',
+            borderColor: 'rgba(22, 38, 96, 0.15)',
+            color: '#162660'
+          }}
         >
           {['Todo', 'In Progress', 'In Review', 'Done'].map(s => (
-            <option key={s} value={s} className="bg-slate-800">{s}</option>
+            <option key={s} value={s} style={{ background: '#fff', color: '#162660' }}>{s}</option>
           ))}
         </select>
         <ChevronDown size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
@@ -155,16 +166,25 @@ function TaskModal({ task, users, onClose, onSave, currentUserId }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+      <div 
+        className="modal" 
+        style={{ 
+          maxWidth: 520,
+          background: '#fff',
+          borderColor: 'rgba(22, 38, 96, 0.1)',
+          boxShadow: '0 20px 40px rgba(22, 38, 96, 0.15)'
+        }} 
+        onClick={e => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">{isEdit ? 'Edit Task' : 'Create New Task'}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+          <h2 className="text-xl font-bold" style={{ color: '#162660' }}>{isEdit ? 'Edit Task' : 'Create New Task'}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
             <X size={20} />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 px-3 py-2 bg-red-900/40 border border-red-500/30 rounded-lg text-red-300 text-sm">
+          <div className="mb-4 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             {error}
           </div>
         )}
@@ -172,14 +192,14 @@ function TaskModal({ task, users, onClose, onSave, currentUserId }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-xs text-slate-400 mb-1.5 font-medium">Task Title *</label>
+            <label className="block text-xs mb-1.5 font-semibold text-slate-500">Task Title *</label>
             <input required className="input" value={form.title}
               onChange={e => set('title', e.target.value)} placeholder="What needs to be done?" />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs text-slate-400 mb-1.5 font-medium">Description</label>
+            <label className="block text-xs mb-1.5 font-semibold text-slate-500">Description</label>
             <textarea className="input min-h-[80px] resize-none" value={form.description}
               onChange={e => set('description', e.target.value)} placeholder="Detailed instructions..." />
           </div>
@@ -187,14 +207,14 @@ function TaskModal({ task, users, onClose, onSave, currentUserId }) {
           {/* Assign To + Priority */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-slate-400 mb-1.5 font-medium">
+              <label className="block text-xs mb-1.5 font-semibold text-slate-500">
                 <User size={11} className="inline mr-1" />Assign To
               </label>
               <select className="input" value={form.assigned_to}
                 onChange={e => set('assigned_to', e.target.value)}>
-                <option value="" className="bg-slate-800">— Unassigned —</option>
+                <option value="" className="bg-white text-slate-800">— Unassigned —</option>
                 {users.filter(u => u.id !== currentUserId).map(u => (
-                  <option key={u.id} value={u.id} className="bg-slate-800">
+                  <option key={u.id} value={u.id} className="bg-white text-slate-800">
                     {u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username}
                     {u.role ? ` (${u.role.replace('_', ' ')})` : ''}
                   </option>
@@ -203,13 +223,13 @@ function TaskModal({ task, users, onClose, onSave, currentUserId }) {
             </div>
 
             <div>
-              <label className="block text-xs text-slate-400 mb-1.5 font-medium">
+              <label className="block text-xs mb-1.5 font-semibold text-slate-500">
                 <Flag size={11} className="inline mr-1" />Priority
               </label>
               <select className="input" value={form.priority}
                 onChange={e => set('priority', e.target.value)}>
                 {['Low', 'Medium', 'High', 'Urgent'].map(p => (
-                  <option key={p} value={p} className="bg-slate-800">{p}</option>
+                  <option key={p} value={p} className="bg-white text-slate-800">{p}</option>
                 ))}
               </select>
             </div>
@@ -218,7 +238,7 @@ function TaskModal({ task, users, onClose, onSave, currentUserId }) {
           {/* Due Date + Status */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-slate-400 mb-1.5 font-medium">
+              <label className="block text-xs mb-1.5 font-semibold text-slate-500">
                 <Calendar size={11} className="inline mr-1" />Due Date
               </label>
               <input type="date" className="input" value={form.due_date}
@@ -227,11 +247,11 @@ function TaskModal({ task, users, onClose, onSave, currentUserId }) {
             </div>
 
             <div>
-              <label className="block text-xs text-slate-400 mb-1.5 font-medium">Status</label>
+              <label className="block text-xs mb-1.5 font-semibold text-slate-500">Status</label>
               <select className="input" value={form.status}
                 onChange={e => set('status', e.target.value)}>
                 {['Todo', 'In Progress', 'In Review', 'Done'].map(s => (
-                  <option key={s} value={s} className="bg-slate-800">{s}</option>
+                  <option key={s} value={s} className="bg-white text-slate-800">{s}</option>
                 ))}
               </select>
             </div>
@@ -239,16 +259,16 @@ function TaskModal({ task, users, onClose, onSave, currentUserId }) {
 
           {/* Deadline reminder note */}
           {form.due_date && form.assigned_to && !isEdit && (
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
-              <AlertCircle size={14} className="text-blue-400 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-blue-300">
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 border border-blue-100">
+              <AlertCircle size={14} className="text-blue-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-blue-800">
                 The assignee will receive an in-app notification immediately, and a deadline reminder when the due date approaches.
               </p>
             </div>
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="button" className="btn btn-secondary" style={{ background: 'rgba(22, 38, 96, 0.05)', color: '#162660', border: '1px solid rgba(22, 38, 96, 0.1)' }} onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? 'Saving...' : isEdit ? 'Update Task' : 'Create & Notify'}
             </button>
@@ -280,11 +300,20 @@ function ArchiveRow({ task, canManage, onRestore, onDelete }) {
   const wasOverdue = task.due_date && task.completed_at && new Date(task.completed_at) > new Date(task.due_date);
 
   return (
-    <tr className="hover:bg-white/5 transition-colors group">
+    <tr 
+      className="transition-colors group"
+      style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.05)' }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent';
+      }}
+    >
       <td>
-        <div className="font-medium text-white text-sm">{task.title}</div>
+        <div className="font-medium text-sm" style={{ color: '#162660' }}>{task.title}</div>
         {task.description && (
-          <div className="text-xs text-slate-500 mt-0.5 truncate max-w-xs">{task.description}</div>
+          <div className="text-xs mt-0.5 truncate max-w-xs" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{task.description}</div>
         )}
       </td>
       <td>
@@ -296,24 +325,24 @@ function ArchiveRow({ task, canManage, onRestore, onDelete }) {
       <td>
         {task.assignee_name?.trim() ? (
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full bg-blue-500/30 flex items-center justify-center text-[9px] font-bold text-blue-300">
+            <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center text-[9px] font-bold text-blue-600">
               {task.assignee_name.trim()[0].toUpperCase()}
             </div>
-            <span className="text-sm text-slate-300">{task.assignee_name.trim()}</span>
+            <span className="text-sm font-medium" style={{ color: '#162660' }}>{task.assignee_name.trim()}</span>
           </div>
-        ) : <span className="text-slate-600 text-xs">Unassigned</span>}
+        ) : <span className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.4)' }}>Unassigned</span>}
       </td>
       <td>
-        <span className="text-slate-300 text-xs">{task.creator_name?.trim() || '—'}</span>
+        <span className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{task.creator_name?.trim() || '—'}</span>
       </td>
       <td>
-        <span className="text-slate-400 text-xs">{dueDateFmt}</span>
+        <span className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{dueDateFmt}</span>
       </td>
       <td>
         <div className="flex flex-col gap-0.5">
-          <span className="text-emerald-400 text-xs font-semibold">{completedOn}</span>
+          <span className="text-emerald-600 text-xs font-semibold">{completedOn}</span>
           {wasOverdue && (
-            <span className="text-[10px] text-red-400 font-medium">Completed late</span>
+            <span className="text-[10px] text-red-500 font-medium">Completed late</span>
           )}
         </div>
       </td>
@@ -322,14 +351,14 @@ function ArchiveRow({ task, canManage, onRestore, onDelete }) {
           {canManage && (
             <button onClick={() => onRestore(task.id)}
               title="Restore to board"
-              className="p-1.5 rounded-lg hover:bg-blue-500/10 text-slate-500 hover:text-blue-400 transition-colors">
+              className="p-1.5 rounded-lg hover:bg-blue-500/10 text-slate-500 hover:text-blue-600 transition-colors">
               <ArchiveRestore size={14} />
             </button>
           )}
           {canManage && (
             <button onClick={() => onDelete(task.id)}
               title="Delete permanently"
-              className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors">
+              className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-500 transition-colors">
               <Trash2 size={14} />
             </button>
           )}
@@ -442,13 +471,13 @@ export default function Tasks() {
     });
 
   return (
-    <Layout title="Task Management">
+    <Layout title="Task Management" theme="light">
       {/* Message banner */}
       {msg && (
         <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${
           msg.startsWith('Error') || msg.startsWith('Failed')
-            ? 'bg-red-900/50 text-red-200 border border-red-500/30'
-            : 'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'
+            ? 'bg-red-50 text-red-800 border border-red-200'
+            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
         }`}>{msg}</div>
       )}
 
@@ -461,27 +490,13 @@ export default function Tasks() {
           overdue: filteredTasks.filter(t => t.is_overdue).length,
           done: archiveTasks.length,
         };
-
         return (
-          <div className="flex flex-col xl:flex-row gap-4 mb-6 w-full">
-            {[
-              { label: 'Total Tasks',  value: displayStats.total,       color: '#3b82f6', icon: ClipboardList },
-              { label: 'In Progress',  value: displayStats.in_progress, color: '#f59e0b', icon: Clock },
-              { label: 'In Review',    value: displayStats.in_review,   color: '#8b5cf6', icon: AlertCircle },
-              { label: 'Overdue',      value: displayStats.overdue,     color: '#ef4444', icon: AlertTriangle },
-              { label: 'Completed',    value: displayStats.done,        color: '#22c55e', icon: CheckCircle },
-            ].map(s => (
-              <div key={s.label} className="glass-card flex-1 flex items-center gap-4 py-4 px-5 min-w-[180px]">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: `${s.color}20` }}>
-                  <s.icon size={20} style={{ color: s.color }} />
-                </div>
-                <div className="flex-1 truncate">
-                  <p className="text-2xl font-bold text-white leading-tight">{s.value}</p>
-                  <p className="text-xs text-slate-400 font-medium truncate">{s.label}</p>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 w-full">
+            <StatsCard title="Total Tasks" value={displayStats.total} icon={ClipboardList} color="#3b82f6" theme="light" delay={0} />
+            <StatsCard title="In Progress" value={displayStats.in_progress} icon={Clock} color="#f59e0b" theme="light" delay={60} />
+            <StatsCard title="In Review" value={displayStats.in_review} icon={AlertCircle} color="#8b5cf6" theme="light" delay={120} />
+            <StatsCard title="Overdue" value={displayStats.overdue} icon={AlertTriangle} color="#ef4444" theme="light" delay={180} />
+            <StatsCard title="Completed" value={displayStats.done} icon={CheckCircle} color="#10b981" theme="light" delay={240} />
           </div>
         );
       })()}
@@ -489,22 +504,26 @@ export default function Tasks() {
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-5">
         {/* View toggle */}
-        <div className="flex gap-1 p-1 rounded-xl bg-white/5 border border-white/10">
+        <div className="flex gap-1 p-1 rounded-xl bg-white border border-slate-200 shadow-sm">
           <button onClick={() => setView('board')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              view === 'board' ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-slate-400 hover:text-white'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+              view === 'board' 
+                ? 'bg-[#162660] text-[#FEFEFA] shadow-[0_4px_12px_rgba(22,38,96,0.15)] hover:bg-[#68aae8]' 
+                : 'text-slate-400 hover:text-[#68aae8] hover:bg-[#68aae8]/5'
             }`}>
             <Columns size={13} /> Board
           </button>
           <button onClick={() => setView('archive')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              view === 'archive' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-white'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+              view === 'archive' 
+                ? 'bg-emerald-600 text-white shadow-[0_4px_12px_rgba(16,185,129,0.15)] hover:bg-emerald-700' 
+                : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
             }`}>
             <Archive size={13} />
             Archive
             {stats?.done > 0 && (
               <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                view === 'archive' ? 'bg-white/20 text-white' : 'bg-emerald-500/20 text-emerald-400'
+                view === 'archive' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'
               }`}>{stats.done}</span>
             )}
           </button>
@@ -518,18 +537,23 @@ export default function Tasks() {
                 { key: 'all',     label: 'All' },
                 { key: 'mine',    label: 'Mine' },
                 { key: 'overdue', label: `Overdue${stats?.overdue > 0 ? ` (${stats.overdue})` : ''}` },
-              ].map(f => (
-                <button key={f.key}
-                  onClick={() => setFilter(f.key)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    filter === f.key
-                      ? 'bg-slate-600 text-white'
-                      : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-                  } ${f.key === 'overdue' && stats?.overdue > 0 ? 'border border-red-500/30' : ''}`}>
-                  {f.key === 'overdue' && stats?.overdue > 0 && <AlertTriangle size={10} className="inline mr-1 text-red-400" />}
-                  {f.label}
-                </button>
-              ))}
+              ].map(f => {
+                const isActive = filter === f.key;
+                return (
+                  <button 
+                    key={f.key}
+                    onClick={() => setFilter(f.key)}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 cursor-pointer ${
+                      isActive 
+                        ? 'bg-[#162660] text-[#FEFEFA] border-[#162660] shadow-[0_4px_12px_rgba(22,38,96,0.12)] hover:bg-[#68aae8] hover:border-[#68aae8]'
+                        : 'bg-white text-[#162660]/60 border-[#162660]/15 hover:bg-[#68aae8]/5 hover:text-[#68aae8] hover:border-[#68aae8]'
+                    }`}
+                  >
+                    {f.key === 'overdue' && stats?.overdue > 0 && <AlertTriangle size={10} className="inline mr-1 text-red-500" />}
+                    {f.label}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -544,7 +568,10 @@ export default function Tasks() {
           )}
 
           {canManage && view === 'board' && (
-            <button onClick={() => setModal('create')} className="btn btn-primary">
+            <button 
+              onClick={() => setModal('create')} 
+              className="btn font-semibold transition-all duration-200 bg-[#162660] text-[#FEFEFA] border border-[#162660] shadow-[0_4px_15px_rgba(22,38,96,0.2)] hover:bg-[#68aae8] hover:border-[#68aae8] hover:shadow-[0_6px_20px_rgba(104,170,232,0.4)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+            >
               <Plus size={16} /> Assign Task
             </button>
           )}
@@ -562,15 +589,15 @@ export default function Tasks() {
                   <div className="flex items-center justify-between mb-3 px-1">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ background: col.color }} />
-                      <h3 className="text-sm font-semibold text-slate-300">{col.label}</h3>
+                      <h3 className="text-sm font-semibold text-[#162660]">{col.label}</h3>
                     </div>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/8 text-slate-400">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(22, 38, 96, 0.05)', color: 'rgba(22, 38, 96, 0.6)' }}>
                       {colTasks.length}
                     </span>
                   </div>
-                  <div className="flex-1 space-y-3 p-3 rounded-2xl border border-white/5 bg-white/[0.02]">
+                  <div className="flex-1 space-y-3 p-3 rounded-2xl border" style={{ background: 'rgba(22, 38, 96, 0.02)', borderColor: 'rgba(22, 38, 96, 0.08)' }}>
                     {colTasks.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-40 text-slate-600">
+                      <div className="flex flex-col items-center justify-center h-40 text-slate-400">
                         <col.icon size={28} className="mb-2 opacity-30" />
                         <p className="text-xs">No tasks here</p>
                       </div>
@@ -597,39 +624,44 @@ export default function Tasks() {
       {/* ── Archive View ───────────────────────────── */}
       {view === 'archive' && (
         loading ? <Loader /> : (
-          <div className="glass-card">
+          <div 
+            className="hover-card animate-slide-up"
+            style={{ 
+              background: '#fff', 
+              borderRadius: '16px', 
+              padding: '24px', 
+              border: '1px solid rgba(22, 38, 96, 0.1)', 
+              boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
+            }}
+          >
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-                <Archive size={18} className="text-emerald-400" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                <Archive size={18} className="text-emerald-600" />
               </div>
               <div>
-                <h3 className="text-white font-semibold text-base">Completed Tasks</h3>
-                <p className="text-slate-400 text-xs mt-0.5">
+                <h3 className="font-semibold text-base" style={{ color: '#162660' }}>Completed Tasks</h3>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>
                   {archiveTasks.length} task{archiveTasks.length !== 1 ? 's' : ''} archived{archiveSearch ? ' (filtered)' : ''}
                 </p>
               </div>
             </div>
 
             {archiveTasks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-slate-600">
+              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                 <Archive size={48} className="mb-3 opacity-20" />
                 <p className="text-sm font-medium">{archiveSearch ? 'No matching tasks' : 'No completed tasks yet'}</p>
-                <p className="text-xs mt-1 text-slate-700">
+                <p className="text-xs mt-1 text-slate-500">
                   {archiveSearch ? 'Try a different search term' : 'Completed tasks will appear here'}
                 </p>
               </div>
             ) : (
-              <div className="table-wrap">
+              <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
                 <table>
                   <thead>
-                    <tr>
-                      <th>Task</th>
-                      <th>Priority</th>
-                      <th>Assigned To</th>
-                      <th>Assigned By</th>
-                      <th>Due Date</th>
-                      <th>Completed On</th>
-                      <th></th>
+                    <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
+                      {['Task', 'Priority', 'Assigned To', 'Assigned By', 'Due Date', 'Completed On', ''].map(h => (
+                        <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -652,9 +684,9 @@ export default function Tasks() {
 
       {/* Deadline Reminder Banner — shown if overdue tasks exist */}
       {!loading && stats?.overdue > 0 && (
-        <div className="mt-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-red-900/20 border border-red-500/30 animate-pulse">
-          <AlertTriangle size={16} className="text-red-400 flex-shrink-0" />
-          <p className="text-sm text-red-300">
+        <div className="mt-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 animate-pulse">
+          <AlertTriangle size={16} className="text-red-600 flex-shrink-0" />
+          <p className="text-sm text-red-800">
             <strong>{stats.overdue} task{stats.overdue > 1 ? 's are' : ' is'} overdue</strong> — please update their status or reassign them.
           </p>
         </div>
@@ -662,9 +694,9 @@ export default function Tasks() {
 
       {/* Due Today Banner */}
       {!loading && stats?.due_today > 0 && (
-        <div className="mt-3 flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-900/20 border border-amber-500/30">
-          <Clock size={16} className="text-amber-400 flex-shrink-0" />
-          <p className="text-sm text-amber-300">
+        <div className="mt-3 flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
+          <Clock size={16} className="text-amber-600 flex-shrink-0" />
+          <p className="text-sm text-amber-800">
             <strong>{stats.due_today} task{stats.due_today > 1 ? 's are' : ' is'} due today</strong> — make sure to complete them!
           </p>
         </div>

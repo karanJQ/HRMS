@@ -8,6 +8,144 @@ import { IndianRupee, Download, FileText, Check, RefreshCw } from 'lucide-react'
 import { payrollAPI, empAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
+function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = React.useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => String(opt.value) === String(value)) || { label: placeholder, value: "" };
+
+  return (
+    <div 
+      ref={containerRef} 
+      className="relative transition-all duration-300"
+      style={{ width, zIndex: isOpen ? 50 : 10 }}
+    >
+      <div
+        className="flex items-center justify-between"
+        style={{
+          background: '#fff',
+          border: isOpen ? '1px solid #68aae8' : '1px solid rgba(22, 38, 96, 0.15)',
+          color: '#162660',
+          padding: '8px 12px',
+          height: '38px',
+          borderRadius: '8px',
+          boxShadow: isOpen 
+            ? '0 0 0 4px rgba(104, 170, 232, 0.35), 0 4px 12px rgba(22, 38, 96, 0.1)' 
+            : '0 2px 4px rgba(22, 38, 96, 0.03)',
+          cursor: 'pointer',
+          transform: isOpen ? 'translateY(-1px)' : 'none',
+          transition: 'all 0.3s ease',
+          fontSize: '14px',
+          userSelect: 'none'
+        }}
+        onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={(e) => {
+          if (!isOpen) {
+            e.currentTarget.style.borderColor = '#68aae8';
+            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(104, 170, 232, 0.25), 0 4px 10px rgba(22, 38, 96, 0.06)';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isOpen) {
+            e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.15)';
+            e.currentTarget.style.boxShadow = '0 2px 4px rgba(22, 38, 96, 0.03)';
+            e.currentTarget.style.transform = 'none';
+          }
+        }}
+      >
+        <span className="truncate font-medium">{selectedOption.label}</span>
+        <svg 
+          viewBox="0 0 24 24" 
+          width="16" 
+          height="16" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          fill="none" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+          style={{
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            marginLeft: '4px',
+            color: 'rgba(22, 38, 96, 0.6)',
+            flexShrink: 0
+          }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+
+      {isOpen && (
+        <div
+          className="absolute left-0 mt-1.5 w-full rounded-xl"
+          style={{
+            background: '#fff',
+            border: '1px solid rgba(22, 38, 96, 0.08)',
+            boxShadow: '0 10px 25px rgba(22, 38, 96, 0.15), 0 4px 12px rgba(22, 38, 96, 0.05)',
+            maxHeight: '220px',
+            overflowY: 'auto',
+            animation: 'slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            padding: '4px'
+          }}
+        >
+          {options.map((opt) => {
+            const isSelected = String(opt.value) === String(value);
+            return (
+              <div
+                key={opt.value}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                className="transition-all duration-150"
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: isSelected ? '#162660' : 'rgba(22, 38, 96, 0.8)',
+                  background: isSelected ? 'rgba(104, 170, 232, 0.15)' : 'transparent',
+                  fontWeight: isSelected ? '600' : '400',
+                  userSelect: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = isSelected ? 'rgba(104, 170, 232, 0.25)' : 'rgba(22, 38, 96, 0.04)';
+                  e.currentTarget.style.color = '#162660';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = isSelected ? 'rgba(104, 170, 232, 0.15)' : 'transparent';
+                  e.currentTarget.style.color = isSelected ? '#162660' : 'rgba(22, 38, 96, 0.8)';
+                }}
+              >
+                <span className="truncate flex-1 text-left">{opt.label}</span>
+                {isSelected && (
+                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="#162660" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: '6px' }}>
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Payroll() {
   const { isMin, user } = useAuth();
   const now = new Date();
@@ -393,76 +531,259 @@ export default function Payroll() {
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   return (
-    <Layout title="Payroll Management">
+    <Layout title="Payroll Management" theme="light">
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <select className="input" style={{width:160}} value={month} onChange={e=>setMonth(e.target.value)}>
-          {months.map((m,i)=><option key={i} value={i+1}>{m}</option>)}
-        </select>
-        <select className="input" style={{width:100}} value={year} onChange={e=>setYear(e.target.value)}>
-          {[2023,2024,2025,2026].map(y=><option key={y}>{y}</option>)}
-        </select>
+        <CustomDropdown
+          value={month}
+          onChange={val => setMonth(val)}
+          options={months.map((m, i) => ({ value: i + 1, label: m }))}
+          placeholder="Select Month"
+          width={160}
+        />
+        <CustomDropdown
+          value={year}
+          onChange={val => setYear(val)}
+          options={[2023, 2024, 2025, 2026].map(y => ({ value: y, label: String(y) }))}
+          placeholder="Select Year"
+          width={100}
+        />
         {isMin('hr_manager') && <>
-          <button className="btn btn-primary" onClick={processAll} disabled={processing}>
+          <button 
+            className="btn font-semibold transition-all duration-200" 
+            style={{ 
+              background: '#162660', 
+              color: '#FEFEFA',
+              boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
+            }}
+            onClick={processAll} 
+            disabled={processing}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.disabled) {
+                e.currentTarget.style.background = '#68aae8';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.3)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#162660';
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
+            }}
+          >
             <RefreshCw size={15}/>{processing?'Processing...':'Process All'}
           </button>
-          <button className="btn btn-success" onClick={markPaid}><Check size={15}/>Mark All Paid</button>
+          <button 
+            className="btn font-semibold transition-all duration-200" 
+            style={{ 
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              color: '#fff',
+              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.2)'
+            }}
+            onClick={markPaid}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.2)';
+            }}
+          >
+            <Check size={15}/>Mark All Paid
+          </button>
         </>}
-        <button className="btn btn-secondary" onClick={fetchAnnualSummary} disabled={annualLoading}>
+        <button 
+          className="btn font-semibold transition-all duration-200 mr-2" 
+          style={{ 
+            background: '#fff', 
+            color: '#162660',
+            border: '1px solid rgba(22, 38, 96, 0.2)',
+            boxShadow: '0 4px 12px rgba(22, 38, 96, 0.05)'
+          }}
+          onClick={fetchAnnualSummary} 
+          disabled={annualLoading}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#fff';
+            e.currentTarget.style.transform = 'none';
+            e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
+          }}
+        >
           <IndianRupee size={15}/>{annualLoading ? 'Loading...' : 'Annual Summary'}
         </button>
-        <button className="btn btn-secondary"><Download size={15}/>Export</button>
+        <button 
+          className="btn font-semibold transition-all duration-200" 
+          style={{ 
+            background: '#fff', 
+            color: '#162660',
+            border: '1px solid rgba(22, 38, 96, 0.2)',
+            boxShadow: '0 4px 12px rgba(22, 38, 96, 0.05)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#fff';
+            e.currentTarget.style.transform = 'none';
+            e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
+          }}
+        >
+          <Download size={15}/>Export
+        </button>
       </div>
 
-      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
+      {msg && (
+        <div 
+          className={`px-4 py-3 rounded-xl text-sm mb-4 border transition-all duration-300 ${
+            msg.startsWith('Error') 
+              ? 'bg-red-50 text-red-800 border-red-200' 
+              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+          }`}
+          style={{
+            boxShadow: '0 4px 12px rgba(22, 38, 96, 0.03)'
+          }}
+        >
+          {msg}
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-4 mb-5">
-        <StatsCard title="Gross Payroll" value={`₹${((summary.gross||0)/100000).toFixed(2)}L`} icon={IndianRupee} color="#3b82f6"/>
-        <StatsCard title="Net Payroll" value={`₹${((summary.net||0)/100000).toFixed(2)}L`} icon={IndianRupee} color="#22c55e"/>
-        <StatsCard title="Total PF" value={`₹${Math.round(summary.pf||0).toLocaleString()}`} icon={IndianRupee} color="#8b5cf6"/>
-        <StatsCard title="Total TDS" value={`₹${Math.round(summary.tds||0).toLocaleString()}`} icon={IndianRupee} color="#f59e0b"/>
+        <StatsCard title="Gross Payroll" value={`₹${((summary.gross||0)/100000).toFixed(2)}L`} icon={IndianRupee} color="#3b82f6" theme="light" delay={0}/>
+        <StatsCard title="Net Payroll" value={`₹${((summary.net||0)/100000).toFixed(2)}L`} icon={IndianRupee} color="#22c55e" theme="light" delay={60}/>
+        <StatsCard title="Total PF" value={`₹${Math.round(summary.pf||0).toLocaleString()}`} icon={IndianRupee} color="#8b5cf6" theme="light" delay={120}/>
+        <StatsCard title="Total TDS" value={`₹${Math.round(summary.tds||0).toLocaleString()}`} icon={IndianRupee} color="#f59e0b" theme="light" delay={180}/>
       </div>
 
       {loading ? <Loader /> : (
-        <div className="card">
-          <h3 className="section-title">Salary Register — {months[month-1]} {year}</h3>
+        <div 
+          className="hover-card animate-slide-up"
+          style={{ 
+            background: '#fff', 
+            borderRadius: '16px', 
+            padding: '24px', 
+            border: '1px solid rgba(22, 38, 96, 0.1)', 
+            boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)',
+            animationDelay: '240ms'
+          }}
+        >
+          <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Salary Register — {months[month-1]} {year}</h3>
           {records.length===0 ? (
             <div className="text-center py-12">
-              <p className="text-slate-400 mb-3">No payroll records for this month.</p>
-              {isMin('hr_manager') && <button className="btn btn-primary" onClick={processAll} disabled={processing}><RefreshCw size={15}/>{processing?'Processing...':'Generate Payroll'}</button>}
+              <p className="mb-3 font-medium" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>No payroll records for this month.</p>
+              {isMin('hr_manager') && (
+                <button 
+                  className="btn font-semibold transition-all duration-200" 
+                  style={{ 
+                    background: '#162660', 
+                    color: '#FEFEFA',
+                    boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
+                  }}
+                  onClick={processAll} 
+                  disabled={processing}
+                  onMouseEnter={(e) => {
+                    if (!e.currentTarget.disabled) {
+                      e.currentTarget.style.background = '#68aae8';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.3)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#162660';
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
+                  }}
+                >
+                  <RefreshCw size={15}/>{processing?'Processing...':'Generate Payroll'}
+                </button>
+              )}
             </div>
           ) : (
-            <div className="table-wrap">
+            <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
               <table>
-                <thead><tr><th>Emp ID</th><th>Name</th><th>Dept</th><th>Basic</th><th>DA</th><th>HRA</th><th>TA</th><th>Gross</th><th>PF</th><th>TDS</th><th>Net Pay</th><th>Status</th><th>Slip</th></tr></thead>
-                <tbody>{records.map(p=>(
-                  <tr key={p.id}>
-                    <td className="font-mono text-blue-600 text-xs">{p.emp_id}</td>
-                    <td><div className="font-medium text-sm">{p.emp_name}</div><div className="text-xs text-slate-400">{p.dept_name}</div></td>
-                    <td className="text-xs text-slate-400">{p.dept_name}</td>
-                    <td>₹{parseFloat(p.basic_pay).toLocaleString()}</td>
-                    <td>₹{parseFloat(p.da_amount).toLocaleString()}</td>
-                    <td>₹{parseFloat(p.hra_amount).toLocaleString()}</td>
-                    <td>₹{parseFloat(p.ta_amount).toLocaleString()}</td>
-                    <td className="font-semibold">₹{parseFloat(p.gross_pay).toLocaleString()}</td>
-                    <td className="text-red-500">-₹{parseFloat(p.pf_employee).toLocaleString()}</td>
-                    <td className="text-red-500">-₹{parseFloat(p.tds).toLocaleString()}</td>
-                    <td className="font-bold text-green-600">₹{parseFloat(p.net_pay).toLocaleString()}</td>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
+                    {['Emp ID', 'Name', 'Dept', 'Basic', 'DA', 'HRA', 'TA', 'Gross', 'PF', 'TDS', 'Net Pay', 'Status', 'Slip'].map(h => (
+                      <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>{records.map((p, idx)=>(
+                  <tr 
+                    key={p.id}
+                    className="transition-all duration-300"
+                    style={{ 
+                      borderBottom: '1px solid rgba(22, 38, 96, 0.05)',
+                      animationDelay: `${idx * 20}ms`
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
+                    <td className="font-mono text-xs font-semibold" style={{ color: '#162660' }}>{p.emp_id}</td>
+                    <td>
+                      <div className="font-medium text-sm" style={{ color: '#162660' }}>{p.emp_name}</div>
+                      <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.4)' }}>{p.dept_name}</div>
+                    </td>
+                    <td className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{p.dept_name}</td>
+                    <td style={{ color: '#162660' }}>₹{parseFloat(p.basic_pay).toLocaleString()}</td>
+                    <td style={{ color: '#162660' }}>₹{parseFloat(p.da_amount).toLocaleString()}</td>
+                    <td style={{ color: '#162660' }}>₹{parseFloat(p.hra_amount).toLocaleString()}</td>
+                    <td style={{ color: '#162660' }}>₹{parseFloat(p.ta_amount).toLocaleString()}</td>
+                    <td className="font-semibold" style={{ color: '#162660' }}>₹{parseFloat(p.gross_pay).toLocaleString()}</td>
+                    <td className="text-red-600 font-medium">-₹{parseFloat(p.pf_employee).toLocaleString()}</td>
+                    <td className="text-red-600 font-medium">-₹{parseFloat(p.tds).toLocaleString()}</td>
+                    <td className="font-bold text-emerald-600">₹{parseFloat(p.net_pay).toLocaleString()}</td>
                     <td><Badge text={p.status}/></td>
-                    <td><button className="btn btn-outline" style={{padding:'3px 8px',fontSize:11}} onClick={()=>{
-                      payrollAPI.getSlip(p.emp_id, p.month, p.year)
-                        .then(r => setSlip(r.data.data))
-                        .catch(e => { console.error(e); setSlip(p); });
-                    }}><FileText size={12}/>Slip</button></td>
+                    <td>
+                      <button 
+                        className="btn font-semibold transition-all duration-300" 
+                        style={{ 
+                          padding: '6px 10px', 
+                          borderRadius: '8px', 
+                          fontSize: 11, 
+                          border: '1px solid rgba(22, 38, 96, 0.2)',
+                          background: '#fff',
+                          color: '#162660',
+                          boxShadow: '0 2px 6px rgba(22, 38, 96, 0.03)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+                          e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#fff';
+                          e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
+                        }}
+                        onClick={()=>{
+                          payrollAPI.getSlip(p.emp_id, p.month, p.year)
+                            .then(r => setSlip(r.data.data))
+                            .catch(e => { console.error(e); setSlip(p); });
+                        }}
+                      >
+                        <FileText size={12}/>Slip
+                      </button>
+                    </td>
                   </tr>
                 ))}</tbody>
-                <tfoot><tr style={{background:'rgba(255, 255, 255, 0.1)'}}>
-                  <td colSpan={7} className="font-bold px-4 py-3 text-sm text-white">TOTALS</td>
-                  <td className="font-bold px-4 py-3 text-white">₹{Math.round(summary.gross||0).toLocaleString()}</td>
-                  <td className="font-bold text-red-400 px-4 py-3">-₹{Math.round(summary.pf||0).toLocaleString()}</td>
-                  <td className="font-bold text-red-400 px-4 py-3">-₹{Math.round(summary.tds||0).toLocaleString()}</td>
-                  <td className="font-bold text-green-400 px-4 py-3">₹{Math.round(summary.net||0).toLocaleString()}</td>
-                  <td colSpan={2}></td>
-                </tr></tfoot>
+                <tfoot>
+                  <tr style={{ background: 'rgba(22, 38, 96, 0.04)', borderTop: '2px solid rgba(22, 38, 96, 0.15)' }}>
+                    <td colSpan={7} className="font-bold px-4 py-3 text-sm" style={{ color: '#162660' }}>TOTALS</td>
+                    <td className="font-bold px-4 py-3" style={{ color: '#162660' }}>₹{Math.round(summary.gross||0).toLocaleString()}</td>
+                    <td className="font-bold text-red-600 px-4 py-3">-₹{Math.round(summary.pf||0).toLocaleString()}</td>
+                    <td className="font-bold text-red-600 px-4 py-3">-₹{Math.round(summary.tds||0).toLocaleString()}</td>
+                    <td className="font-bold text-emerald-600 px-4 py-3">₹{Math.round(summary.net||0).toLocaleString()}</td>
+                    <td colSpan={2}></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}
@@ -470,46 +791,69 @@ export default function Payroll() {
       )}
 
       {slip && (
-        <Modal title="Salary Slip" onClose={()=>setSlip(null)}>
-          <div className="border rounded-xl overflow-hidden">
-            <div className="bg-blue-700 text-white p-4 text-center">
+        <Modal title="Salary Slip" onClose={()=>setSlip(null)} theme="light">
+          <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'rgba(22, 38, 96, 0.1)' }}>
+            <div className="text-white p-4 text-center" style={{ background: '#162660' }}>
               <p className="font-bold text-lg">Government of Gujarat</p>
               <p className="text-sm opacity-80">HRMS — Salary Slip</p>
               <p className="text-sm mt-1">Month: {months[slip.month-1]} {slip.year}</p>
             </div>
-            <div className="p-4 bg-slate-800/50 grid grid-cols-2 text-sm gap-2 border-b border-white/10">
+            <div className="p-4 grid grid-cols-2 text-sm gap-2 border-b" style={{ background: 'rgba(22, 38, 96, 0.03)', borderColor: 'rgba(22, 38, 96, 0.08)' }}>
               {[['Employee',slip.emp_name],['Emp ID',slip.emp_id],['Department',slip.dept_name],['Status',slip.status]].map(([k,v])=>(
-                <div key={k}><p className="text-slate-400 text-xs">{k}</p><p className="font-bold">{v}</p></div>
+                <div key={k}>
+                  <p className="text-xs font-semibold" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{k}</p>
+                  <p className="font-bold" style={{ color: '#162660' }}>{v}</p>
+                </div>
               ))}
             </div>
-            <div className="p-4">
+            <div className="p-4" style={{ background: '#fff' }}>
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <p className="font-semibold text-sm mb-2 text-green-700">Earnings</p>
+                  <p className="font-semibold text-sm mb-2 text-emerald-700">Earnings</p>
                   {[['Basic Pay',slip.basic_pay],['Dearness Allowance',slip.da_amount],['HRA',slip.hra_amount],['Transport Allowance',slip.ta_amount]].map(([k,v])=>(
-                    <div key={k} className="flex justify-between text-sm py-1 border-b border-white/10">
+                    <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
                       <span>{k}</span><span className="font-medium">₹{parseFloat(v||0).toLocaleString()}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-sm py-2 font-bold text-green-700"><span>Gross Pay</span><span>₹{parseFloat(slip.gross_pay||0).toLocaleString()}</span></div>
+                  <div className="flex justify-between text-sm py-2 font-bold text-emerald-700"><span>Gross Pay</span><span>₹{parseFloat(slip.gross_pay||0).toLocaleString()}</span></div>
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-sm mb-2 text-red-600">Deductions</p>
+                  <p className="font-semibold text-sm mb-2 text-rose-600">Deductions</p>
                   {[['Provident Fund',slip.pf_employee],['Professional Tax',slip.professional_tax],['Income Tax (TDS)',slip.tds]].map(([k,v])=>(
-                    <div key={k} className="flex justify-between text-sm py-1 border-b border-white/10">
-                      <span>{k}</span><span className="font-medium text-red-500">₹{parseFloat(v||0).toLocaleString()}</span>
+                    <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
+                      <span>{k}</span><span className="font-medium text-rose-600">₹{parseFloat(v||0).toLocaleString()}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-sm py-2 font-bold text-red-600"><span>Total Deductions</span><span>₹{parseFloat(slip.total_deductions||0).toLocaleString()}</span></div>
+                  <div className="flex justify-between text-sm py-2 font-bold text-rose-600"><span>Total Deductions</span><span>₹{parseFloat(slip.total_deductions||0).toLocaleString()}</span></div>
                 </div>
               </div>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3 flex justify-between">
-                <span className="font-bold text-green-800">Net Pay</span>
-                <span className="font-bold text-green-800 text-lg">₹{parseFloat(slip.net_pay||0).toLocaleString()}</span>
+              <div className="border rounded-lg p-3 mt-3 flex justify-between items-center" style={{ background: 'rgba(16, 185, 129, 0.06)', borderColor: 'rgba(16, 185, 129, 0.15)' }}>
+                <span className="font-bold text-emerald-800">Net Pay</span>
+                <span className="font-bold text-emerald-800 text-lg">₹{parseFloat(slip.net_pay||0).toLocaleString()}</span>
               </div>
             </div>
           </div>
-          <button className="btn btn-primary w-full mt-3" onClick={handleDownloadSlip}><Download size={15}/>Download Slip</button>
+          <button 
+            className="btn w-full mt-4 font-semibold transition-all duration-200" 
+            style={{
+              background: '#162660',
+              color: '#FEFEFA',
+              boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#68aae8';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#162660';
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
+            }}
+            onClick={handleDownloadSlip}
+          >
+            <Download size={15}/>Download Slip
+          </button>
         </Modal>
       )}
 
