@@ -107,21 +107,40 @@ exports.update = async (req, res) => {
     const result = await query(
       `UPDATE employees SET
         first_name=COALESCE($1,first_name), last_name=COALESCE($2,last_name),
-        father_name=COALESCE($3,father_name), mobile=COALESCE($4,mobile),
-        alternate_mobile=COALESCE($5,alternate_mobile), official_email=COALESCE($6,official_email),
-        personal_email=COALESCE($7,personal_email), dept_id=COALESCE($8,dept_id),
-        designation_id=COALESCE($9,designation_id), grade=COALESCE($10,grade),
-        pay_level=COALESCE($11,pay_level), basic_pay=COALESCE($12,basic_pay),
-        category=COALESCE($13,category), district=COALESCE($14,district),
-        posting_station=COALESCE($15,posting_station), blood_group=COALESCE($16,blood_group),
-        qualification=COALESCE($17,qualification), bank_name=COALESCE($18,bank_name),
-        account_number=COALESCE($19,account_number), ifsc_code=COALESCE($20,ifsc_code),
-        pf_number=COALESCE($21,pf_number), nominee_name=COALESCE($22,nominee_name),
-        status=COALESCE($23,status), updated_by=$24, updated_at=NOW()
-       WHERE emp_id=$25 RETURNING *`,
-      [b.first_name, b.last_name, b.father_name, b.mobile, b.alternate_mobile, b.official_email, b.personal_email,
-       b.dept_id, b.designation_id, b.grade, b.pay_level, b.basic_pay, b.category, b.district, b.posting_station,
-       b.blood_group, b.qualification, b.bank_name, b.account_number, b.ifsc_code, b.pf_number, b.nominee_name,
+        father_name=COALESCE($3,father_name), mother_name=COALESCE($4,mother_name),
+        gender=COALESCE($5,gender), dob=COALESCE(NULLIF($6,'')::date,dob),
+        mobile=COALESCE($7,mobile), alternate_mobile=COALESCE($8,alternate_mobile),
+        official_email=COALESCE($9,official_email), personal_email=COALESCE($10,personal_email),
+        aadhaar_number=COALESCE($11,aadhaar_number), pan_number=COALESCE($12,pan_number),
+        voter_id=COALESCE($13,voter_id), dept_id=COALESCE($14,dept_id),
+        designation_id=COALESCE($15,designation_id), grade=COALESCE($16,grade),
+        pay_level=COALESCE($17,pay_level), pay_step=COALESCE($18,pay_step),
+        basic_pay=COALESCE($19,basic_pay), category=COALESCE($20,category),
+        religion=COALESCE($21,religion), caste=COALESCE($22,caste),
+        district=COALESCE($23,district), posting_station=COALESCE($24,posting_station),
+        present_address=COALESCE($25,present_address), permanent_address=COALESCE($26,permanent_address),
+        blood_group=COALESCE($27,blood_group), qualification=COALESCE($28,qualification),
+        subject_specialization=COALESCE($29,subject_specialization),
+        experience_years=COALESCE($30,experience_years), doj=COALESCE(NULLIF($31,'')::date,doj),
+        account_number=COALESCE($32,account_number), bank_name=COALESCE($33,bank_name),
+        ifsc_code=COALESCE($34,ifsc_code), bank_branch=COALESCE($35,bank_branch),
+        pf_number=COALESCE($36,pf_number), nps_id=COALESCE($37,nps_id),
+        nominee_name=COALESCE($38,nominee_name), nominee_relation=COALESCE($39,nominee_relation),
+        nominee_dob=COALESCE(NULLIF($40,'')::date,nominee_dob),
+        emergency_contact_name=COALESCE($41,emergency_contact_name),
+        emergency_contact_mobile=COALESCE($42,emergency_contact_mobile),
+        status=COALESCE($43,status), updated_by=$44, updated_at=NOW()
+       WHERE emp_id=$45 RETURNING *`,
+      [b.first_name, b.last_name, b.father_name, b.mother_name, b.gender, b.dob,
+       b.mobile, b.alternate_mobile, b.official_email, b.personal_email,
+       b.aadhaar_number, b.pan_number, b.voter_id, b.dept_id, b.designation_id,
+       b.grade, b.pay_level, b.pay_step, b.basic_pay, b.category,
+       b.religion, b.caste, b.district, b.posting_station,
+       b.present_address, b.permanent_address, b.blood_group, b.qualification,
+       b.subject_specialization, b.experience_years, b.doj,
+       b.account_number, b.bank_name, b.ifsc_code, b.bank_branch,
+       b.pf_number, b.nps_id, b.nominee_name, b.nominee_relation, b.nominee_dob,
+       b.emergency_contact_name, b.emergency_contact_mobile,
        b.status, req.user.id, empId]
     );
     if (!result.rows.length) return error(res, 'Employee not found.', 404);
@@ -134,5 +153,47 @@ exports.myProfile = async (req, res) => {
     const result = await query(`${empSelect} WHERE e.emp_id = $1`, [req.user.emp_id]);
     if (!result.rows.length) return error(res, 'Profile not found.', 404);
     return success(res, result.rows[0]);
+  } catch (err) { return error(res, err.message); }
+};
+
+exports.getBirthdays = async (req, res) => {
+  const { month } = req.query;
+  const m = parseInt(month) || new Date().getMonth() + 1;
+  try {
+    const result = await query(
+      `SELECT e.emp_id, e.first_name, e.last_name, e.dob, e.designation_id,
+              d.name as dept_name, des.name as designation_name
+       FROM employees e
+       JOIN departments d ON d.id = e.dept_id
+       LEFT JOIN designations des ON des.id = e.designation_id
+       WHERE EXTRACT(MONTH FROM e.dob) = $1 AND e.status = 'Active'
+       ORDER BY EXTRACT(DAY FROM e.dob)`,
+      [m]
+    );
+    const data = result.rows.map(r => ({
+      ...r,
+      day: new Date(r.dob).getDate(),
+      date: new Date(new Date().getFullYear(), m - 1, new Date(r.dob).getDate())
+    }));
+    return success(res, data, 'Birthdays fetched');
+  } catch (err) { return error(res, err.message); }
+};
+
+exports.getAnniversaries = async (req, res) => {
+  const { month } = req.query;
+  const m = parseInt(month) || new Date().getMonth() + 1;
+  try {
+    const result = await query(
+      `SELECT e.emp_id, e.first_name, e.last_name, e.doj, e.designation_id,
+              d.name as dept_name, des.name as designation_name,
+              EXTRACT(YEAR FROM AGE(NOW(), e.doj)) as years_completed
+       FROM employees e
+       JOIN departments d ON d.id = e.dept_id
+       LEFT JOIN designations des ON des.id = e.designation_id
+       WHERE EXTRACT(MONTH FROM e.doj) = $1 AND e.status = 'Active'
+       ORDER BY EXTRACT(DAY FROM e.doj)`,
+      [m]
+    );
+    return success(res, result.rows, 'Anniversaries fetched');
   } catch (err) { return error(res, err.message); }
 };

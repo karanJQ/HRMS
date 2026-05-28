@@ -25,6 +25,8 @@ export const empAPI = {
   create: (data) => API.post('/employees', data),
   update: (empId, data) => API.put(`/employees/${empId}`, data),
   me: () => API.get('/employees/me'),
+  birthdays: (params) => API.get('/employees/birthdays', { params }),
+  anniversaries: (params) => API.get('/employees/anniversaries', { params }),
 };
 
 // Payroll
@@ -42,6 +44,8 @@ export const leaveAPI = {
   apply: (data) => API.post('/leaves/applications', data),
   review: (id, data) => API.put(`/leaves/applications/${id}/review`, data),
   listBalances: (params) => API.get('/leaves/balances', { params }),
+  myBalances: (params) => API.get('/leaves/my-balances', { params }),
+  updateBalance: (empId, data) => API.put(`/leaves/balances/${empId}`, data),
 };
 
 // Transfers
@@ -116,6 +120,7 @@ export const documentAPI = {
   performOCR: (id) => API.post(`/documents/${id}/ocr`),
   delete: (id) => API.delete(`/documents/${id}`),
 };
+
 // Reports
 export const reportsAPI = {
   dashboard: () => API.get('/reports/dashboard'),
@@ -128,12 +133,22 @@ export const reportsAPI = {
 // Attendance & Biometrics
 export const attendanceAPI = {
   get: (params) => API.get('/attendance', { params }),
+  calendar: (params) => API.get('/attendance/calendar', { params }),
+  stats: (params) => API.get('/attendance/stats', { params }),
+  teamCalendar: (params) => API.get('/attendance/team-calendar', { params }),
   sync: (data) => API.post('/attendance/sync', data),
+  punch: (data) => API.post('/attendance/punch', data),
   getSettings: () => API.get('/attendance/settings'),
   updateSettings: (data) => API.put('/attendance/settings', data),
   applyRegularization: (data) => API.post('/attendance/regularize', data),
   getRegularizations: () => API.get('/attendance/regularize'),
   reviewRegularization: (id, data) => API.put(`/attendance/regularize/${id}`, data),
+  applyWFH: (data) => API.post('/attendance/wfh', data),
+  getWFH: () => API.get('/attendance/wfh'),
+  reviewWFH: (id, data) => API.put(`/attendance/wfh/${id}`, data),
+  getHolidays: (params) => API.get('/attendance/holidays', { params }),
+  addHoliday: (data) => API.post('/attendance/holidays', data),
+  deleteHoliday: (id) => API.delete(`/attendance/holidays/${id}`),
 };
 
 // Tasks

@@ -8,16 +8,19 @@ async function runMigration() {
   const sqlFile2 = path.join(__dirname, '002_tasks_attendance.sql');
   const sqlFile3 = path.join(__dirname, '003_attendance_rules.sql');
   const sqlFile4 = path.join(__dirname, '004_notifications.sql');
+  const sqlFile5 = path.join(__dirname, '005_attendance_enhancements.sql');
   const sql1 = fs.readFileSync(sqlFile1, 'utf8');
   const sql2 = fs.readFileSync(sqlFile2, 'utf8');
   const sql3 = fs.readFileSync(sqlFile3, 'utf8');
   const sql4 = fs.readFileSync(sqlFile4, 'utf8');
+  const sql5 = fs.readFileSync(sqlFile5, 'utf8');
   const client = await pool.connect();
   try {
     await client.query(sql1);
     await client.query(sql2);
     await client.query(sql3);
     await client.query(sql4);
+    await client.query(sql5);
     console.log('✅ Migration completed successfully');
   } catch (err) {
     console.error('❌ Migration failed:', err.message);
