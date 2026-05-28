@@ -12,6 +12,7 @@ export const useApi = (apiFn, params, deps = []) => {
       const res = await apiFn(params);
       setData(res.data.data);
     } catch (err) {
+      ``
       setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);

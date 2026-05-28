@@ -407,7 +407,7 @@ export default function EmployeeMaster() {
                               cursor: 'pointer',
                               padding: 0
                             }} 
-                            onClick={() => { setForm(e); setEditMode(true); setShowForm(true); }}
+                            onClick={() => { setForm({...e, dob: e.dob?.split('T')[0] || '', doj: e.doj?.split('T')[0] || '', nominee_dob: e.nominee_dob?.split('T')[0] || ''}); setEditMode(true); setShowForm(true); }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.background = '#162660';
                               e.currentTarget.style.color = '#fff';
