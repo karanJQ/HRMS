@@ -25,8 +25,8 @@ function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) 
   const selectedOption = options.find(opt => String(opt.value) === String(value)) || { label: placeholder, value: "" };
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="relative transition-all duration-300"
       style={{ width, zIndex: isOpen ? 50 : 10 }}
     >
@@ -39,8 +39,8 @@ function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) 
           padding: '8px 12px',
           height: '38px',
           borderRadius: '8px',
-          boxShadow: isOpen 
-            ? '0 0 0 4px rgba(104, 170, 232, 0.35), 0 4px 12px rgba(22, 38, 96, 0.1)' 
+          boxShadow: isOpen
+            ? '0 0 0 4px rgba(104, 170, 232, 0.35), 0 4px 12px rgba(22, 38, 96, 0.1)'
             : '0 2px 4px rgba(22, 38, 96, 0.03)',
           cursor: 'pointer',
           transform: isOpen ? 'translateY(-1px)' : 'none',
@@ -65,14 +65,14 @@ function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) 
         }}
       >
         <span className="truncate font-medium">{selectedOption.label}</span>
-        <svg 
-          viewBox="0 0 24 24" 
-          width="16" 
-          height="16" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          fill="none" 
-          strokeLinecap="round" 
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
           strokeLinejoin="round"
           style={{
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -149,7 +149,7 @@ function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) 
 export default function Payroll() {
   const { isMin, user } = useAuth();
   const now = new Date();
-  const [month, setMonth] = useState(now.getMonth()+1);
+  const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [records, setRecords] = useState([]);
   const [summary, setSummary] = useState({});
@@ -208,7 +208,7 @@ export default function Payroll() {
       setMsg(formObj.id ? 'Payroll entry updated!' : 'Payroll entry created successfully!');
       setShowFormModal(false);
       load();
-    } catch(e) {
+    } catch (e) {
       setMsg('Error: ' + (e.response?.data?.message || e.message));
     } finally {
       setSavingForm(false);
@@ -224,7 +224,7 @@ export default function Payroll() {
       });
       setMsg(`Successfully processed payment to ${record.emp_name}!`);
       load();
-    } catch(e) {
+    } catch (e) {
       setMsg('Error: ' + (e.response?.data?.message || e.message));
     }
   };
@@ -243,7 +243,7 @@ export default function Payroll() {
   const load = () => {
     setLoading(true);
     payrollAPI.list({ month, year })
-      .then(r => { setRecords(r.data.data.records||[]); setSummary(r.data.data.summary||{}); })
+      .then(r => { setRecords(r.data.data.records || []); setSummary(r.data.data.summary || {}); })
       .catch(e => console.error(e))
       .finally(() => setLoading(false));
   };
@@ -256,13 +256,13 @@ export default function Payroll() {
       const r = await payrollAPI.processAll({ month, year });
       setMsg(`${r.data.data.processed} records processed`);
       load();
-    } catch(e) { setMsg('Error: '+e.response?.data?.message); }
+    } catch (e) { setMsg('Error: ' + e.response?.data?.message); }
     finally { setProcessing(false); }
   };
 
   const markPaid = async () => {
     try { await payrollAPI.markPaid({ month, year }); setMsg('All marked as Paid'); load(); }
-    catch(e) { setMsg('Error: '+e.response?.data?.message); }
+    catch (e) { setMsg('Error: ' + e.response?.data?.message); }
   };
 
   const handleDownloadSlip = () => {
@@ -274,7 +274,7 @@ export default function Payroll() {
     }
 
     const monthName = months[slip.month - 1];
-    
+
     printWindow.document.write(`
       <html>
         <head>
@@ -445,7 +445,7 @@ export default function Payroll() {
         <body>
           <div class="container">
             <div class="header">
-              <h2>GOVERNMENT OF GUJARAT</h2>
+              <h2>JadeQuest</h2>
               <h3>Human Resources Department</h3>
               <p>Salary Slip for ${monthName} ${slip.year}</p>
             </div>
@@ -595,7 +595,7 @@ export default function Payroll() {
     setMsg('Salary Slip PDF download triggered successfully!');
   };
 
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   return (
     <Layout title="Payroll Management" theme="light" bg="#F8F8FF">
@@ -615,14 +615,14 @@ export default function Payroll() {
           width={100}
         />
         {isMin('hr_manager') && <>
-          <button 
-            className="btn font-semibold transition-all duration-200" 
-            style={{ 
-              background: '#162660', 
+          <button
+            className="btn font-semibold transition-all duration-200"
+            style={{
+              background: '#162660',
               color: '#FEFEFA',
               boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
             }}
-            onClick={processAll} 
+            onClick={processAll}
             disabled={processing}
             onMouseEnter={(e) => {
               if (!e.currentTarget.disabled) {
@@ -637,11 +637,11 @@ export default function Payroll() {
               e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
             }}
           >
-            <RefreshCw size={15}/>{processing?'Processing...':'Process All'}
+            <RefreshCw size={15} />{processing ? 'Processing...' : 'Process All'}
           </button>
-          <button 
-            className="btn font-semibold transition-all duration-200" 
-            style={{ 
+          <button
+            className="btn font-semibold transition-all duration-200"
+            style={{
               background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
               color: '#fff',
               boxShadow: '0 4px 15px rgba(16, 185, 129, 0.2)'
@@ -656,14 +656,14 @@ export default function Payroll() {
               e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.2)';
             }}
           >
-            <Check size={15}/>Mark All Paid
+            <Check size={15} />Mark All Paid
           </button>
         </>}
         {isMin('hr_staff') && (
-          <button 
-            className="btn font-semibold transition-all duration-200 mr-2" 
-            style={{ 
-              background: '#162660', 
+          <button
+            className="btn font-semibold transition-all duration-200 mr-2"
+            style={{
+              background: '#162660',
               color: '#FEFEFA',
               boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
             }}
@@ -698,18 +698,18 @@ export default function Payroll() {
               e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
             }}
           >
-            <Plus size={15}/>New Entry
+            <Plus size={15} />New Entry
           </button>
         )}
-        <button 
-          className="btn font-semibold transition-all duration-200 mr-2" 
-          style={{ 
-            background: '#fff', 
+        <button
+          className="btn font-semibold transition-all duration-200 mr-2"
+          style={{
+            background: '#fff',
             color: '#162660',
             border: '1px solid rgba(22, 38, 96, 0.2)',
             boxShadow: '0 4px 12px rgba(22, 38, 96, 0.05)'
           }}
-          onClick={fetchAnnualSummary} 
+          onClick={fetchAnnualSummary}
           disabled={annualLoading}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
@@ -722,12 +722,12 @@ export default function Payroll() {
             e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
           }}
         >
-          <IndianRupee size={15}/>{annualLoading ? 'Loading...' : 'Annual Summary'}
+          <IndianRupee size={15} />{annualLoading ? 'Loading...' : 'Annual Summary'}
         </button>
-        <button 
-          className="btn font-semibold transition-all duration-200" 
-          style={{ 
-            background: '#fff', 
+        <button
+          className="btn font-semibold transition-all duration-200"
+          style={{
+            background: '#fff',
             color: '#162660',
             border: '1px solid rgba(22, 38, 96, 0.2)',
             boxShadow: '0 4px 12px rgba(22, 38, 96, 0.05)'
@@ -743,17 +743,16 @@ export default function Payroll() {
             e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
           }}
         >
-          <Download size={15}/>Export
+          <Download size={15} />Export
         </button>
       </div>
 
       {msg && (
-        <div 
-          className={`px-4 py-3 rounded-xl text-sm mb-4 border transition-all duration-300 ${
-            msg.startsWith('Error') 
-              ? 'bg-red-50 text-red-800 border-red-200' 
+        <div
+          className={`px-4 py-3 rounded-xl text-sm mb-4 border transition-all duration-300 ${msg.startsWith('Error')
+              ? 'bg-red-50 text-red-800 border-red-200'
               : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-          }`}
+            }`}
           style={{
             boxShadow: '0 4px 12px rgba(22, 38, 96, 0.03)'
           }}
@@ -763,37 +762,37 @@ export default function Payroll() {
       )}
 
       <div className="grid grid-cols-4 gap-4 mb-5">
-        <StatsCard title="Gross Payroll" value={`₹${((summary.gross||0)/100000).toFixed(2)}L`} icon={IndianRupee} color="#3b82f6" theme="light" delay={0}/>
-        <StatsCard title="Net Payroll" value={`₹${((summary.net||0)/100000).toFixed(2)}L`} icon={IndianRupee} color="#22c55e" theme="light" delay={60}/>
-        <StatsCard title="Total PF" value={`₹${Math.round(summary.pf||0).toLocaleString()}`} icon={IndianRupee} color="#8b5cf6" theme="light" delay={120}/>
-        <StatsCard title="Total TDS" value={`₹${Math.round(summary.tds||0).toLocaleString()}`} icon={IndianRupee} color="#f59e0b" theme="light" delay={180}/>
+        <StatsCard title="Gross Payroll" value={`₹${((summary.gross || 0) / 100000).toFixed(2)}L`} icon={IndianRupee} color="#3b82f6" theme="light" delay={0} />
+        <StatsCard title="Net Payroll" value={`₹${((summary.net || 0) / 100000).toFixed(2)}L`} icon={IndianRupee} color="#22c55e" theme="light" delay={60} />
+        <StatsCard title="Total PF" value={`₹${Math.round(summary.pf || 0).toLocaleString()}`} icon={IndianRupee} color="#8b5cf6" theme="light" delay={120} />
+        <StatsCard title="Total TDS" value={`₹${Math.round(summary.tds || 0).toLocaleString()}`} icon={IndianRupee} color="#f59e0b" theme="light" delay={180} />
       </div>
 
       {loading ? <Loader /> : (
-        <div 
+        <div
           className="hover-card animate-slide-up"
-          style={{ 
-            background: '#fff', 
-            borderRadius: '16px', 
-            padding: '24px', 
-            border: '1px solid rgba(22, 38, 96, 0.1)', 
+          style={{
+            background: '#fff',
+            borderRadius: '16px',
+            padding: '24px',
+            border: '1px solid rgba(22, 38, 96, 0.1)',
             boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)',
             animationDelay: '240ms'
           }}
         >
-          <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Salary Register — {months[month-1]} {year}</h3>
-          {records.length===0 ? (
+          <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Salary Register — {months[month - 1]} {year}</h3>
+          {records.length === 0 ? (
             <div className="text-center py-12">
               <p className="mb-3 font-medium" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>No payroll records for this month.</p>
               {isMin('hr_manager') && (
-                <button 
-                  className="btn font-semibold transition-all duration-200" 
-                  style={{ 
-                    background: '#162660', 
+                <button
+                  className="btn font-semibold transition-all duration-200"
+                  style={{
+                    background: '#162660',
                     color: '#FEFEFA',
                     boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
                   }}
-                  onClick={processAll} 
+                  onClick={processAll}
                   disabled={processing}
                   onMouseEnter={(e) => {
                     if (!e.currentTarget.disabled) {
@@ -808,7 +807,7 @@ export default function Payroll() {
                     e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
                   }}
                 >
-                  <RefreshCw size={15}/>{processing?'Processing...':'Generate Payroll'}
+                  <RefreshCw size={15} />{processing ? 'Processing...' : 'Generate Payroll'}
                 </button>
               )}
             </div>
@@ -822,11 +821,11 @@ export default function Payroll() {
                     ))}
                   </tr>
                 </thead>
-                <tbody>{records.map((p, idx)=>(
-                  <tr 
+                <tbody>{records.map((p, idx) => (
+                  <tr
                     key={p.id}
                     className="transition-all duration-300"
-                    style={{ 
+                    style={{
                       borderBottom: '1px solid rgba(22, 38, 96, 0.05)',
                       animationDelay: `${idx * 20}ms`
                     }}
@@ -851,15 +850,15 @@ export default function Payroll() {
                     <td className="text-red-600 font-medium">-₹{parseFloat(p.pf_employee).toLocaleString()}</td>
                     <td className="text-red-600 font-medium">-₹{parseFloat(p.tds).toLocaleString()}</td>
                     <td className="font-bold text-emerald-600">₹{parseFloat(p.net_pay).toLocaleString()}</td>
-                    <td><Badge text={p.status}/></td>
+                    <td><Badge text={p.status} /></td>
                     <td>
                       <div className="flex gap-1.5 justify-center">
-                        <button 
-                          className="btn font-semibold transition-all duration-300" 
-                          style={{ 
-                            padding: '6px 10px', 
-                            borderRadius: '8px', 
-                            fontSize: 11, 
+                        <button
+                          className="btn font-semibold transition-all duration-300"
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            fontSize: 11,
                             border: '1px solid rgba(22, 38, 96, 0.2)',
                             background: '#fff',
                             color: '#162660',
@@ -873,22 +872,22 @@ export default function Payroll() {
                             e.currentTarget.style.background = '#fff';
                             e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
                           }}
-                          onClick={()=>{
+                          onClick={() => {
                             payrollAPI.getSlip(p.emp_id, p.month, p.year)
                               .then(r => setSlip(r.data.data))
                               .catch(e => { console.error(e); setSlip(p); });
                           }}
                           title="View & Print Slip"
                         >
-                          <FileText size={12}/>Slip
+                          <FileText size={12} />Slip
                         </button>
                         {isMin('hr_staff') && (
-                          <button 
-                            className="btn font-semibold transition-all duration-300" 
-                            style={{ 
-                              padding: '6px 10px', 
-                              borderRadius: '8px', 
-                              fontSize: 11, 
+                          <button
+                            className="btn font-semibold transition-all duration-300"
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: '8px',
+                              fontSize: 11,
                               border: '1px solid rgba(59, 130, 246, 0.2)',
                               background: 'rgba(59, 130, 246, 0.05)',
                               color: '#2563eb',
@@ -920,18 +919,18 @@ export default function Payroll() {
                               setShowFormModal(true);
                             }}
                           >
-                            <Edit2 size={12}/>Edit
+                            <Edit2 size={12} />Edit
                           </button>
                         )}
                         {isMin('hr_manager') && p.status === 'Processed' && (
-                          <button 
-                            className="btn font-semibold transition-all duration-300" 
-                            style={{ 
-                              padding: '6px 10px', 
-                              borderRadius: '8px', 
-                              fontSize: 11, 
-                              border: '1px solid rgba(16, 185, 129, 0.2)', 
-                              background: 'rgba(16, 185, 129, 0.08)', 
+                          <button
+                            className="btn font-semibold transition-all duration-300"
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: '8px',
+                              fontSize: 11,
+                              border: '1px solid rgba(16, 185, 129, 0.2)',
+                              background: 'rgba(16, 185, 129, 0.08)',
                               color: '#059669',
                               boxShadow: '0 2px 6px rgba(16, 185, 129, 0.03)'
                             }}
@@ -946,7 +945,7 @@ export default function Payroll() {
                             title="Process Individual Payment"
                             onClick={() => payIndividualEmployee(p)}
                           >
-                            <CreditCard size={12}/>Pay
+                            <CreditCard size={12} />Pay
                           </button>
                         )}
                       </div>
@@ -956,10 +955,10 @@ export default function Payroll() {
                 <tfoot>
                   <tr style={{ background: 'rgba(22, 38, 96, 0.04)', borderTop: '2px solid rgba(22, 38, 96, 0.15)' }}>
                     <td colSpan={7} className="font-bold px-4 py-3 text-sm" style={{ color: '#162660' }}>TOTALS</td>
-                    <td className="font-bold px-4 py-3" style={{ color: '#162660' }}>₹{Math.round(summary.gross||0).toLocaleString()}</td>
-                    <td className="font-bold text-red-600 px-4 py-3">-₹{Math.round(summary.pf||0).toLocaleString()}</td>
-                    <td className="font-bold text-red-600 px-4 py-3">-₹{Math.round(summary.tds||0).toLocaleString()}</td>
-                    <td className="font-bold text-emerald-600 px-4 py-3">₹{Math.round(summary.net||0).toLocaleString()}</td>
+                    <td className="font-bold px-4 py-3" style={{ color: '#162660' }}>₹{Math.round(summary.gross || 0).toLocaleString()}</td>
+                    <td className="font-bold text-red-600 px-4 py-3">-₹{Math.round(summary.pf || 0).toLocaleString()}</td>
+                    <td className="font-bold text-red-600 px-4 py-3">-₹{Math.round(summary.tds || 0).toLocaleString()}</td>
+                    <td className="font-bold text-emerald-600 px-4 py-3">₹{Math.round(summary.net || 0).toLocaleString()}</td>
                     <td colSpan={2}></td>
                   </tr>
                 </tfoot>
@@ -970,15 +969,15 @@ export default function Payroll() {
       )}
 
       {slip && (
-        <Modal title="Salary Slip" onClose={()=>setSlip(null)} theme="light">
+        <Modal title="Salary Slip" onClose={() => setSlip(null)} theme="light">
           <div className="border rounded-xl overflow-hidden" style={{ borderColor: 'rgba(22, 38, 96, 0.1)' }}>
             <div className="text-white p-4 text-center" style={{ background: '#162660' }}>
-              <p className="font-bold text-lg">Government of Gujarat</p>
+              <p className="font-bold text-lg">JadeQuest</p>
               <p className="text-sm opacity-80">HRMS — Salary Slip</p>
-              <p className="text-sm mt-1">Month: {months[slip.month-1]} {slip.year}</p>
+              <p className="text-sm mt-1">Month: {months[slip.month - 1]} {slip.year}</p>
             </div>
             <div className="p-4 grid grid-cols-2 text-sm gap-2 border-b" style={{ background: 'rgba(22, 38, 96, 0.03)', borderColor: 'rgba(22, 38, 96, 0.08)' }}>
-              {[['Employee',slip.emp_name],['Emp ID',slip.emp_id],['Department',slip.dept_name],['Status',slip.status]].map(([k,v])=>(
+              {[['Employee', slip.emp_name], ['Emp ID', slip.emp_id], ['Department', slip.dept_name], ['Status', slip.status]].map(([k, v]) => (
                 <div key={k}>
                   <p className="text-xs font-semibold" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{k}</p>
                   <p className="font-bold" style={{ color: '#162660' }}>{v}</p>
@@ -989,31 +988,31 @@ export default function Payroll() {
               <div className="flex gap-4">
                 <div className="flex-1">
                   <p className="font-semibold text-sm mb-2 text-emerald-700">Earnings</p>
-                  {[['Basic Pay',slip.basic_pay],['Dearness Allowance',slip.da_amount],['HRA',slip.hra_amount],['Transport Allowance',slip.ta_amount]].map(([k,v])=>(
+                  {[['Basic Pay', slip.basic_pay], ['Dearness Allowance', slip.da_amount], ['HRA', slip.hra_amount], ['Transport Allowance', slip.ta_amount]].map(([k, v]) => (
                     <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
-                      <span>{k}</span><span className="font-medium">₹{parseFloat(v||0).toLocaleString()}</span>
+                      <span>{k}</span><span className="font-medium">₹{parseFloat(v || 0).toLocaleString()}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-sm py-2 font-bold text-emerald-700"><span>Gross Pay</span><span>₹{parseFloat(slip.gross_pay||0).toLocaleString()}</span></div>
+                  <div className="flex justify-between text-sm py-2 font-bold text-emerald-700"><span>Gross Pay</span><span>₹{parseFloat(slip.gross_pay || 0).toLocaleString()}</span></div>
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-sm mb-2 text-rose-600">Deductions</p>
-                  {[['Provident Fund',slip.pf_employee],['Professional Tax',slip.professional_tax],['Income Tax (TDS)',slip.tds]].map(([k,v])=>(
+                  {[['Provident Fund', slip.pf_employee], ['Professional Tax', slip.professional_tax], ['Income Tax (TDS)', slip.tds]].map(([k, v]) => (
                     <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
-                      <span>{k}</span><span className="font-medium text-rose-600">₹{parseFloat(v||0).toLocaleString()}</span>
+                      <span>{k}</span><span className="font-medium text-rose-600">₹{parseFloat(v || 0).toLocaleString()}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-sm py-2 font-bold text-rose-600"><span>Total Deductions</span><span>₹{parseFloat(slip.total_deductions||0).toLocaleString()}</span></div>
+                  <div className="flex justify-between text-sm py-2 font-bold text-rose-600"><span>Total Deductions</span><span>₹{parseFloat(slip.total_deductions || 0).toLocaleString()}</span></div>
                 </div>
               </div>
               <div className="border rounded-lg p-3 mt-3 flex justify-between items-center" style={{ background: 'rgba(16, 185, 129, 0.06)', borderColor: 'rgba(16, 185, 129, 0.15)' }}>
                 <span className="font-bold text-emerald-800">Net Pay</span>
-                <span className="font-bold text-emerald-800 text-lg">₹{parseFloat(slip.net_pay||0).toLocaleString()}</span>
+                <span className="font-bold text-emerald-800 text-lg">₹{parseFloat(slip.net_pay || 0).toLocaleString()}</span>
               </div>
             </div>
           </div>
-          <button 
-            className="btn w-full mt-4 font-semibold transition-all duration-200" 
+          <button
+            className="btn w-full mt-4 font-semibold transition-all duration-200"
             style={{
               background: '#162660',
               color: '#FEFEFA',
@@ -1031,13 +1030,13 @@ export default function Payroll() {
             }}
             onClick={handleDownloadSlip}
           >
-            <Download size={15}/>Download Slip
+            <Download size={15} />Download Slip
           </button>
         </Modal>
       )}
 
       {showAnnualModal && annualSummary && (
-        <Modal title={`Annual Salary Summary — ${year}`} onClose={()=>setShowAnnualModal(false)} wide>
+        <Modal title={`Annual Salary Summary — ${year}`} onClose={() => setShowAnnualModal(false)} wide>
           {user.role === 'employee' ? (
             <div className="table-wrap">
               <table>
@@ -1058,7 +1057,7 @@ export default function Payroll() {
                 <tbody>
                   {annualSummary.records.map(r => (
                     <tr key={r.month}>
-                      <td className="font-bold">{months[r.month-1]}</td>
+                      <td className="font-bold">{months[r.month - 1]}</td>
                       <td>₹{parseFloat(r.basic_pay).toLocaleString()}</td>
                       <td>₹{parseFloat(r.da_amount).toLocaleString()}</td>
                       <td>₹{parseFloat(r.hra_amount).toLocaleString()}</td>
@@ -1067,18 +1066,18 @@ export default function Payroll() {
                       <td className="text-red-400">-₹{parseFloat(r.pf_employee).toLocaleString()}</td>
                       <td className="text-red-400">-₹{parseFloat(r.tds).toLocaleString()}</td>
                       <td className="font-bold text-green-400">₹{parseFloat(r.net_pay).toLocaleString()}</td>
-                      <td><Badge text={r.status}/></td>
+                      <td><Badge text={r.status} /></td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr style={{background:'rgba(255, 255, 255, 0.1)'}}>
+                  <tr style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
                     <td className="font-bold text-white">TOTALS</td>
                     <td colSpan={4}></td>
-                    <td className="font-bold text-white">₹{Math.round(annualSummary.summary.gross||0).toLocaleString()}</td>
-                    <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.pf||0).toLocaleString()}</td>
-                    <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.tds||0).toLocaleString()}</td>
-                    <td className="font-bold text-green-400">₹{Math.round(annualSummary.summary.net||0).toLocaleString()}</td>
+                    <td className="font-bold text-white">₹{Math.round(annualSummary.summary.gross || 0).toLocaleString()}</td>
+                    <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.pf || 0).toLocaleString()}</td>
+                    <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.tds || 0).toLocaleString()}</td>
+                    <td className="font-bold text-green-400">₹{Math.round(annualSummary.summary.net || 0).toLocaleString()}</td>
                     <td></td>
                   </tr>
                 </tfoot>
@@ -1134,12 +1133,12 @@ export default function Payroll() {
                     })()}
                   </tbody>
                   <tfoot>
-                    <tr style={{background:'rgba(255, 255, 255, 0.1)'}}>
+                    <tr style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
                       <td colSpan={3} className="font-bold text-white text-sm">TOTALS</td>
-                      <td className="font-bold text-white">₹{Math.round(annualSummary.summary.gross||0).toLocaleString()}</td>
-                      <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.pf||0).toLocaleString()}</td>
-                      <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.tds||0).toLocaleString()}</td>
-                      <td className="font-bold text-green-400">₹{Math.round(annualSummary.summary.net||0).toLocaleString()}</td>
+                      <td className="font-bold text-white">₹{Math.round(annualSummary.summary.gross || 0).toLocaleString()}</td>
+                      <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.pf || 0).toLocaleString()}</td>
+                      <td className="font-bold text-red-400">-₹{Math.round(annualSummary.summary.tds || 0).toLocaleString()}</td>
+                      <td className="font-bold text-green-400">₹{Math.round(annualSummary.summary.net || 0).toLocaleString()}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -1150,7 +1149,7 @@ export default function Payroll() {
       )}
 
       {showFormModal && (
-        <Modal title={formObj.id ? `Adjust Salary Components — ${formObj.emp_name}` : 'New Payroll Entry'} onClose={()=>setShowFormModal(false)}>
+        <Modal title={formObj.id ? `Adjust Salary Components — ${formObj.emp_name}` : 'New Payroll Entry'} onClose={() => setShowFormModal(false)}>
           <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -1168,8 +1167,8 @@ export default function Payroll() {
               </div>
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Payment Mode</label>
-                <select className="input" value={formObj.payment_mode} onChange={e=>setFormObj({...formObj, payment_mode: e.target.value})}>
-                  {['Bank Transfer', 'Cash', 'Cheque'].map(m=><option key={m}>{m}</option>)}
+                <select className="input" value={formObj.payment_mode} onChange={e => setFormObj({ ...formObj, payment_mode: e.target.value })}>
+                  {['Bank Transfer', 'Cash', 'Cheque'].map(m => <option key={m}>{m}</option>)}
                 </select>
               </div>
             </div>
@@ -1178,18 +1177,18 @@ export default function Payroll() {
               <div className="col-span-3 pb-1 border-b border-white/5"><span className="text-xs font-bold text-white uppercase">Salary Period & Status</span></div>
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Month</label>
-                <select className="input text-xs" value={formObj.month} onChange={e=>setFormObj({...formObj, month: parseInt(e.target.value)})}>
-                  {months.map((m,i)=><option key={i} value={i+1}>{m}</option>)}
+                <select className="input text-xs" value={formObj.month} onChange={e => setFormObj({ ...formObj, month: parseInt(e.target.value) })}>
+                  {months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Year</label>
-                <input type="number" className="input text-xs" value={formObj.year} onChange={e=>setFormObj({...formObj, year: parseInt(e.target.value)})}/>
+                <input type="number" className="input text-xs" value={formObj.year} onChange={e => setFormObj({ ...formObj, year: parseInt(e.target.value) })} />
               </div>
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Status</label>
-                <select className="input text-xs" value={formObj.status} onChange={e=>setFormObj({...formObj, status: e.target.value})}>
-                  {['Draft', 'Processed', 'Paid'].map(s=><option key={s}>{s}</option>)}
+                <select className="input text-xs" value={formObj.status} onChange={e => setFormObj({ ...formObj, status: e.target.value })}>
+                  {['Draft', 'Processed', 'Paid'].map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
             </div>
@@ -1200,33 +1199,33 @@ export default function Payroll() {
                 <p className="text-xs font-bold text-emerald-400 uppercase border-b border-emerald-500/10 pb-1.5 mb-2">Earnings</p>
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Basic Pay (₹)<span className="text-red-400">*</span></label>
-                  <input type="number" className="input text-xs" value={formObj.basic_pay} onChange={e=>setFormObj({...formObj, basic_pay: parseFloat(e.target.value)||''})}/>
+                  <input type="number" className="input text-xs" value={formObj.basic_pay} onChange={e => setFormObj({ ...formObj, basic_pay: parseFloat(e.target.value) || '' })} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs text-slate-400 block mb-1">DA (%)</label>
-                    <input type="number" className="input text-xs" value={formObj.da_percentage} onChange={e=>setFormObj({...formObj, da_percentage: parseFloat(e.target.value)||0})}/>
+                    <input type="number" className="input text-xs" value={formObj.da_percentage} onChange={e => setFormObj({ ...formObj, da_percentage: parseFloat(e.target.value) || 0 })} />
                   </div>
                   <div>
                     <label className="text-xs text-slate-400 block mb-1">HRA (%)</label>
-                    <input type="number" className="input text-xs" value={formObj.hra_percentage} onChange={e=>setFormObj({...formObj, hra_percentage: parseFloat(e.target.value)||0})}/>
+                    <input type="number" className="input text-xs" value={formObj.hra_percentage} onChange={e => setFormObj({ ...formObj, hra_percentage: parseFloat(e.target.value) || 0 })} />
                   </div>
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">TA Amount (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.ta_amount} onChange={e=>setFormObj({...formObj, ta_amount: parseFloat(e.target.value)||0})}/>
+                  <input type="number" className="input text-xs" value={formObj.ta_amount} onChange={e => setFormObj({ ...formObj, ta_amount: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Medical Allowance (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.medical_allowance} onChange={e=>setFormObj({...formObj, medical_allowance: parseFloat(e.target.value)||0})}/>
+                  <input type="number" className="input text-xs" value={formObj.medical_allowance} onChange={e => setFormObj({ ...formObj, medical_allowance: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Special Allowance (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.special_allowance} onChange={e=>setFormObj({...formObj, special_allowance: parseFloat(e.target.value)||0})}/>
+                  <input type="number" className="input text-xs" value={formObj.special_allowance} onChange={e => setFormObj({ ...formObj, special_allowance: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Other Allowances (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.other_allowances} onChange={e=>setFormObj({...formObj, other_allowances: parseFloat(e.target.value)||0})}/>
+                  <input type="number" className="input text-xs" value={formObj.other_allowances} onChange={e => setFormObj({ ...formObj, other_allowances: parseFloat(e.target.value) || 0 })} />
                 </div>
               </div>
 
@@ -1235,15 +1234,15 @@ export default function Payroll() {
                 <p className="text-xs font-bold text-red-400 uppercase border-b border-red-500/10 pb-1.5 mb-2">Deductions</p>
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Professional Tax (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.professional_tax} onChange={e=>setFormObj({...formObj, professional_tax: parseFloat(e.target.value)||0})}/>
+                  <input type="number" className="input text-xs" value={formObj.professional_tax} onChange={e => setFormObj({ ...formObj, professional_tax: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Income Tax / TDS (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.tds} onChange={e=>setFormObj({...formObj, tds: parseFloat(e.target.value)||0})}/>
+                  <input type="number" className="input text-xs" value={formObj.tds} onChange={e => setFormObj({ ...formObj, tds: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Other Deductions (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.other_deductions} onChange={e=>setFormObj({...formObj, other_deductions: parseFloat(e.target.value)||0})}/>
+                  <input type="number" className="input text-xs" value={formObj.other_deductions} onChange={e => setFormObj({ ...formObj, other_deductions: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div className="pt-2 text-xs text-slate-500">
                   <p>* PF will be auto-calculated at 12% of Basic Pay upon save.</p>

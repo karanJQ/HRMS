@@ -18,8 +18,6 @@ export default function Onboarding() {
   const [msg, setMsg] = useState('');
   const [form, setForm] = useState({ candidate_ref_id:'', name:'', post:'', dept_id:'', selection_date:'', joining_date:'' });
   const [showCompleted, setShowCompleted] = useState(false);
-
-  // Document states
   const [documents, setDocuments] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [docType, setDocType] = useState('Aadhar');
@@ -128,7 +126,7 @@ export default function Onboarding() {
       return;
     }
     
-    const refNum = `GUJ/${(selected.dept_name || 'GEN').substring(0,3).toUpperCase()}/2026/${Math.floor(1000 + Math.random() * 9000)}`;
+    const refNum = `JQ/${(selected.dept_name || 'GEN').substring(0,3).toUpperCase()}/2026/${Math.floor(1000 + Math.random() * 9000)}`;
     const currentDate = new Date().toLocaleDateString();
     
     printWindow.document.write(`
@@ -218,7 +216,7 @@ export default function Onboarding() {
         <body>
           <div class="container">
             <div class="header">
-              <h2>GOVERNMENT OF GUJARAT</h2>
+              <h2>JadeQuest</h2>
               <h3>${selected.dept_name_full || selected.dept_name}</h3>
               <p>Ref No: ${refNum}</p>
               <p>Date: ${currentDate}</p>
@@ -549,9 +547,9 @@ export default function Onboarding() {
         <Modal title="Appointment Letter Preview" onClose={()=>setShowLetter(false)} wide>
           <div className="bg-white text-slate-800 p-8 rounded-lg shadow-inner font-serif h-[60vh] overflow-y-auto">
             <div className="text-center border-b-2 border-slate-300 pb-4 mb-6">
-              <h2 className="text-xl font-bold uppercase">Government of Gujarat</h2>
+              <h2 className="text-xl font-bold uppercase">JadeQuest </h2>
               <h3 className="text-md font-semibold text-slate-600">{selected.dept_name_full || selected.dept_name}</h3>
-              <p className="text-sm mt-2">Ref No: GUJ/{selected.dept_name?.substring(0,3).toUpperCase()}/2026/{(Math.random()*10000).toFixed(0)}</p>
+              <p className="text-sm mt-2">Ref No: JQ/{selected.dept_name?.substring(0,3).toUpperCase()}/2026/{(Math.random()*10000).toFixed(0)}</p>
               <p className="text-sm">Date: {new Date().toLocaleDateString()}</p>
             </div>
             
@@ -578,7 +576,7 @@ export default function Onboarding() {
             <div className="flex justify-between items-end mt-12 pt-8">
               <div>
                 <p>Date: ____________</p>
-                <p>Place: Gandhinagar</p>
+                <p>Place: Ahmedabad</p>
               </div>
               <div className="text-center">
                 <p className="mb-4">(Digital Signature)</p>

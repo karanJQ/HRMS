@@ -35,7 +35,7 @@ export default function Login() {
           <div style={{ width: 72, height: 72, borderRadius: 20, background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
             <Building2 size={36} color="#fff" />
           </div>
-          <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 700 }}>Government of Gujarat</h1>
+          <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 700 }}>JadeQuest</h1>
           <p style={{ color: '#94a3b8', fontSize: 14, marginTop: 4 }}>HRMS — Human Resource Management System</p>
         </div>
 

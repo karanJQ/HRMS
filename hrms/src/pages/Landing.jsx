@@ -109,7 +109,7 @@ export default function Landing() {
         <div className="nav-logo">
           <div className="nav-logo-icon">🏛️</div>
           <div className="nav-logo-text">
-            Gujarat Govt. HRMS
+            JadeQuest HRMS
             <span>AI-Powered Platform</span>
           </div>
         </div>
@@ -134,11 +134,11 @@ export default function Landing() {
         <div className="hero-content">
           <div className="hero-badge" id="hero-badge">
             <span className="dot"></span>
-            EOI — Expression of Interest · Gujarat State Government
+            EOI — Expression of Interest ·
           </div>
           <h1 className="hero-title" id="hero-title">
             The Future of<br/>
-            <span className="grad">Government HR Management</span>
+            <span className="grad">JadeQuest HR Management</span>
           </h1>
           <p className="hero-sub" id="hero-sub">
             A fully integrated, AI-powered HRMS platform purpose-built for state government departments — from biometric attendance to intelligent performance evaluation.
@@ -174,9 +174,6 @@ export default function Landing() {
           <div className="reveal">
             <div className="section-tag">Platform Overview</div>
             <h2 className="section-title">One Platform.<br/>All HR Operations.</h2>
-            <p className="section-sub">
-              Gujarat Govt. HRMS consolidates every aspect of government HR into a single, secure digital platform — eliminating paper trails, reducing processing time, and enabling data-driven governance.
-            </p>
             <div style={{marginTop:32, display:'flex', flexDirection:'column', gap:14}}>
               <div style={{display:'flex',gap:12,alignItems:'center',fontSize:14,color:'var(--muted)'}}>
                 <span style={{width:28,height:28,borderRadius:8,background:'rgba(37,99,235,.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>✅</span>
@@ -642,7 +639,7 @@ export default function Landing() {
       <footer>
         <div className="footer-left">
           <div className="nav-logo-icon">🏛️</div>
-          <div className="footer-text">Gujarat Govt. HRMS Platform · EOI Demonstration · Confidential</div>
+          <div className="footer-text">JadeQuest HRMS Platform · EOI Demonstration · Confidential</div>
         </div>
         <div className="footer-links">
           <a href="#overview">Overview</a>

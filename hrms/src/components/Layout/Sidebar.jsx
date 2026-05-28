@@ -93,7 +93,7 @@ export default function Sidebar({ collapsed }) {
           </div>
           {!collapsed && (
             <div>
-              <p className="font-extrabold text-base leading-tight tracking-tight" style={{ color: '#162660' }}>Gujarat HRMS</p>
+              <p className="font-extrabold text-base leading-tight tracking-tight" style={{ color: '#162660' }}>JadeQuest HRMS</p>
             </div>
           )}
         </div>

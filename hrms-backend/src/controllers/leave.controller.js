@@ -60,7 +60,7 @@ exports.apply = async (req, res) => {
     
     const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [eid]);
     if (!empCheck.rows.length) {
-      return error(res, `Employee with ID '${eid}' does not exist.`, 404);
+      return error(res, `Em ployee with ID '${eid}' does not exist.`, 404);
     }
     const result = await query(
       `INSERT INTO leave_applications(emp_id,leave_type,from_date,to_date,days,reason)

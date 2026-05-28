@@ -124,7 +124,7 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-      </div>
+      </div>  
       <div className="grid grid-cols-2 gap-6 mb-6">
         <div 
           className="flex flex-col p-6 hover-card animate-slide-up"
