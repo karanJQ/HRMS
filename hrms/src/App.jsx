@@ -20,6 +20,8 @@ import Grievance from './pages/Grievance';
 import Reports from './pages/Reports';
 import UserManagement from './pages/UserManagement';
 import Tasks from './pages/Tasks';
+import DocumentUpload from './pages/DocumentUpload';
+import DocumentVerification from './pages/DocumentVerification';
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
@@ -44,6 +46,8 @@ export default function App() {
           <Route path="/onboarding" element={<Prot comp={Onboarding} roles={['super_admin','hr_manager','hr_staff']} />} />
           <Route path="/employees" element={<Prot comp={EmployeeMaster} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
           <Route path="/my-profile" element={<Prot comp={MyProfile} roles={['employee']} />} />
+          <Route path="/my-documents" element={<Prot comp={DocumentUpload} roles={['employee', 'hr_staff', 'hr_manager', 'super_admin']} />} />
+          <Route path="/document-verification" element={<Prot comp={DocumentVerification} roles={['super_admin','hr_manager','hr_staff']} />} />
           <Route path="/payroll" element={<Prot comp={Payroll} />} />
           <Route path="/attendance" element={<Prot comp={Attendance} />} />
           <Route path="/transfer" element={<Prot comp={Transfer} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />

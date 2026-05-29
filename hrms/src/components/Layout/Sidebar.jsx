@@ -6,7 +6,7 @@ import {
   LayoutDashboard, UserPlus, Users, IndianRupee, Calendar, 
   ArrowLeftRight, TrendingUp, Star, BookOpen, GraduationCap, 
   Clock, AlertTriangle, BarChart3, Building2, LogOut, Shield, 
-  Workflow, Search, ChevronDown 
+  Workflow, Search, ChevronDown, FileText, FileCheck
 } from 'lucide-react';
 
 const allNav = [
@@ -14,6 +14,8 @@ const allNav = [
   { label:'Onboarding', icon:UserPlus, path:'/onboarding', roles:['super_admin','hr_manager','hr_staff'] },
   { label:'Employee Master', icon:Users, path:'/employees', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
   { label:'My Profile', icon:Users, path:'/my-profile', roles:['employee'] },
+  { label:'My Documents', icon:FileText, path:'/my-documents', roles:['employee', 'hr_staff', 'hr_manager', 'super_admin'] },
+  { label:'Doc Verification', icon:FileCheck, path:'/document-verification', roles:['super_admin','hr_manager','hr_staff'] },
   { label:'Payroll', icon:IndianRupee, path:'/payroll', roles:['super_admin','hr_manager','hr_staff','employee'] },
   { label:'Attendance & Leave', icon:Calendar, path:'/attendance', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'Transfer & Posting', icon:ArrowLeftRight, path:'/transfer', roles:['super_admin','hr_manager','dept_head','hr_staff'] },

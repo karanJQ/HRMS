@@ -27,15 +27,18 @@ const upload = multer({ storage: storage });
 router.use(auth);
 
 // Upload a document
-router.post('/upload', allow('super_admin', 'hr_manager', 'hr_staff'), upload.single('file'), documentController.uploadDocument);
+router.post('/upload', allow('super_admin', 'hr_manager', 'hr_staff', 'employee'), upload.single('file'), documentController.uploadDocument);
 
 // Get documents for an owner
-router.get('/:owner_id', allow('super_admin', 'hr_manager', 'hr_staff', 'dept_head'), documentController.getDocuments);
+router.get('/:owner_id', allow('super_admin', 'hr_manager', 'hr_staff', 'dept_head', 'employee'), documentController.getDocuments);
 
 // Trigger OCR on a document
 router.post('/:id/ocr', allow('super_admin', 'hr_manager', 'hr_staff'), documentController.performOCR);
 
+// Update extracted data
+router.put('/:id/data', allow('super_admin', 'hr_manager', 'hr_staff'), documentController.updateData);
+
 // Delete a document
-router.delete('/:id', allow('super_admin', 'hr_manager', 'hr_staff'), documentController.deleteDocument);
+router.delete('/:id', allow('super_admin', 'hr_manager', 'hr_staff', 'employee'), documentController.deleteDocument);
 
 module.exports = router;

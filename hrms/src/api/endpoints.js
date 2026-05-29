@@ -119,6 +119,7 @@ export const documentAPI = {
   list: (ownerId) => API.get(`/documents/${ownerId}`),
   upload: (data) => API.post('/documents/upload', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   performOCR: (id) => API.post(`/documents/${id}/ocr`),
+  updateData: (id, data) => API.put(`/documents/${id}/data`, data),
   delete: (id) => API.delete(`/documents/${id}`),
 };
 

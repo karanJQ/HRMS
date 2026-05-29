@@ -148,6 +148,15 @@ function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) 
   );
 }
 
+const F = ({ k, l, type = 'text', opts, full, req, form, setForm }) => (
+  <div className={full ? 'col-span-3' : ''}>
+    <label className="text-xs text-slate-400 block mb-1">{l}{req && <span className="text-red-400">*</span>}</label>
+    {opts ? <select className="input" value={form[k] || ''} onChange={e => setForm({ ...form, [k]: e.target.value })}>
+      <option value="">Select</option>{opts.map(o => <option key={o.v || o} value={o.v || o}>{o.l || o}</option>)}
+    </select> : <input type={type} className="input" value={form[k] || ''} onChange={e => setForm({ ...form, [k]: e.target.value })} />}
+  </div>
+);
+
 export default function EmployeeMaster() {
   const { can, isMin, user } = useAuth();
   const [emps, setEmps] = useState([]);
@@ -194,14 +203,7 @@ export default function EmployeeMaster() {
   const categories = ['General', 'OBC', 'SC', 'ST', 'EWS'];
   const districts = ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhavnagar', 'Jamnagar', 'Gandhinagar', 'Anand', 'Mehsana', 'Kutch'];
 
-  const F = ({ k, l, type = 'text', opts, full, req }) => (
-    <div className={full ? 'col-span-3' : ''}>
-      <label className="text-xs text-slate-400 block mb-1">{l}{req && <span className="text-red-400">*</span>}</label>
-      {opts ? <select className="input" value={form[k] || ''} onChange={e => setForm({ ...form, [k]: e.target.value })}>
-        <option value="">Select</option>{opts.map(o => <option key={o.v || o} value={o.v || o}>{o.l || o}</option>)}
-      </select> : <input type={type} className="input" value={form[k] || ''} onChange={e => setForm({ ...form, [k]: e.target.value })} />}
-    </div>
-  );
+
 
   return (
     <Layout title="Employee Master" theme="light" bg="#F8F8FF">
@@ -453,27 +455,27 @@ export default function EmployeeMaster() {
         {showForm && (
           <Modal title={editMode ? `Edit: ${form.first_name} ${form.last_name}` : 'Add New Employee'} onClose={() => setShowForm(false)} theme="light" wide>
             <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
-              <F k="first_name" l="First Name" req /><F k="last_name" l="Last Name" req /><F k="father_name" l="Father's Name" />
-              <F k="gender" l="Gender" opts={['Male', 'Female', 'Other']} req />
-              <F k="dob" l="Date of Birth" type="date" req /><F k="doj" l="Date of Joining" type="date" req />
+              <F form={form} setForm={setForm} k="first_name" l="First Name" req /><F form={form} setForm={setForm} k="last_name" l="Last Name" req /><F form={form} setForm={setForm} k="father_name" l="Father's Name" />
+              <F form={form} setForm={setForm} k="gender" l="Gender" opts={['Male', 'Female', 'Other']} req />
+              <F form={form} setForm={setForm} k="dob" l="Date of Birth" type="date" req /><F form={form} setForm={setForm} k="doj" l="Date of Joining" type="date" req />
               <div><label className="text-xs text-slate-400 block mb-1">Department<span className="text-red-400">*</span></label>
                 <select className="input" value={form.dept_id || ''} onChange={e => setForm({ ...form, dept_id: e.target.value })}>
                   <option value="">Select</option>{depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
-              <F k="grade" l="Grade" opts={grades} /><F k="pay_level" l="Pay Level" type="number" />
-              <F k="basic_pay" l="Basic Pay (₹)" type="number" />
-              <F k="category" l="Category" opts={categories} req />
-              <F k="district" l="District" opts={districts} />
-              <F k="posting_station" l="Posting Station" full />
-              <F k="mobile" l="Mobile" req /><F k="alternate_mobile" l="Alternate Mobile" /><F k="official_email" l="Official Email" type="email" />
-              <F k="blood_group" l="Blood Group" opts={['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']} />
-              <F k="qualification" l="Qualification" /><F k="experience_years" l="Experience (Years)" type="number" />
-              <F k="pan_number" l="PAN No." /><F k="aadhaar_number" l="Aadhaar No." /><F k="pf_number" l="PF No." />
-              <F k="bank_name" l="Bank Name" /><F k="account_number" l="Account No." /><F k="ifsc_code" l="IFSC Code" />
-              <F k="nominee_name" l="Nominee Name" /><F k="nominee_relation" l="Relation" />
-              <F k="emergency_contact_name" l="Emergency Contact" /><F k="emergency_contact_mobile" l="Emergency Mobile" />
-              <F k="status" l="Status" opts={['Active', 'On Leave', 'Retired', 'Suspended', 'Resigned']} />
+              <F form={form} setForm={setForm} k="grade" l="Grade" opts={grades} /><F form={form} setForm={setForm} k="pay_level" l="Pay Level" type="number" />
+              <F form={form} setForm={setForm} k="basic_pay" l="Basic Pay (₹)" type="number" />
+              <F form={form} setForm={setForm} k="category" l="Category" opts={categories} req />
+              <F form={form} setForm={setForm} k="district" l="District" opts={districts} />
+              <F form={form} setForm={setForm} k="posting_station" l="Posting Station" full />
+              <F form={form} setForm={setForm} k="mobile" l="Mobile" req /><F form={form} setForm={setForm} k="alternate_mobile" l="Alternate Mobile" /><F form={form} setForm={setForm} k="official_email" l="Official Email" type="email" />
+              <F form={form} setForm={setForm} k="blood_group" l="Blood Group" opts={['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']} />
+              <F form={form} setForm={setForm} k="qualification" l="Qualification" /><F form={form} setForm={setForm} k="experience_years" l="Experience (Years)" type="number" />
+              <F form={form} setForm={setForm} k="pan_number" l="PAN No." /><F form={form} setForm={setForm} k="aadhaar_number" l="Aadhaar No." /><F form={form} setForm={setForm} k="pf_number" l="PF No." />
+              <F form={form} setForm={setForm} k="bank_name" l="Bank Name" /><F form={form} setForm={setForm} k="account_number" l="Account No." /><F form={form} setForm={setForm} k="ifsc_code" l="IFSC Code" />
+              <F form={form} setForm={setForm} k="nominee_name" l="Nominee Name" /><F form={form} setForm={setForm} k="nominee_relation" l="Relation" />
+              <F form={form} setForm={setForm} k="emergency_contact_name" l="Emergency Contact" /><F form={form} setForm={setForm} k="emergency_contact_mobile" l="Emergency Mobile" />
+              <F form={form} setForm={setForm} k="status" l="Status" opts={['Active', 'On Leave', 'Retired', 'Suspended', 'Resigned']} />
             </div>
             <button 
               className="btn w-full mt-4 font-semibold" 

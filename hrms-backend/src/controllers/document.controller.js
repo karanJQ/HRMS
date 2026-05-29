@@ -152,6 +152,42 @@ exports.performOCR = async (req, res) => {
   }
 };
 
+exports.updateData = async (req, res) => {
+  const { id } = req.params;
+  const { data } = req.body;
+  try {
+    const docResult = await query(`SELECT * FROM employee_documents WHERE id = $1`, [id]);
+    if (docResult.rows.length === 0) {
+      return error(res, 'Document not found.', 404);
+    }
+    const document = docResult.rows[0];
+    
+    // Parse existing data to preserve rawText if any
+    let existingData = {};
+    if (document.extracted_data) {
+      try {
+        existingData = typeof document.extracted_data === 'string' ? JSON.parse(document.extracted_data) : document.extracted_data;
+      } catch (e) {}
+    }
+    
+    const newData = {
+      ...existingData,
+      data: data
+    };
+
+    const updatedResult = await query(
+      `UPDATE employee_documents 
+       SET extracted_data = $1, updated_at = NOW() 
+       WHERE id = $2 RETURNING *`,
+      [JSON.stringify(newData), id]
+    );
+
+    return success(res, updatedResult.rows[0], 'Data updated successfully');
+  } catch (err) {
+    return error(res, err.message, 500);
+  }
+};
+
 exports.deleteDocument = async (req, res) => {
   const { id } = req.params;
   try {

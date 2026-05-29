@@ -474,72 +474,7 @@ export default function Onboarding() {
             <button className="btn btn-primary flex-1" onClick={()=>handleAction('service_book_created', 'Service Book Created Successfully!')}>Create Service Book</button>
           </div>
 
-          <h4 className="font-semibold text-white mb-3 mt-8">Documents & OCR Verification</h4>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-            <div className="flex items-end gap-4 mb-6 pb-6 border-b border-white/10">
-              <div className="flex-1">
-                <label className="text-xs text-slate-400 block mb-1">Document Type</label>
-                <select className="input py-2 text-sm" value={docType} onChange={e=>setDocType(e.target.value)}>
-                  <option value="Aadhar">Aadhar Card</option>
-                  <option value="PAN">PAN Card</option>
-                  <option value="Passport">Passport</option>
-                  <option value="Passbook">Bank Passbook</option>
-                  <option value="CancelCheque">Cancelled Cheque</option>
-                  <option value="BirthCertificate">Birth Certificate</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className="text-xs text-slate-400 block mb-1">File</label>
-                <input type="file" className="input py-1.5 text-sm" onChange={e=>setFileToUpload(e.target.files[0])} />
-              </div>
-              <button className="btn btn-primary h-[38px]" onClick={handleUploadDocument} disabled={!fileToUpload}>Upload</button>
-            </div>
-            
-            {loadingDocs ? <Loader /> : documents.length > 0 ? (
-              <div className="space-y-4">
-                {documents.map(doc => (
-                  <div key={doc.id} className="bg-slate-800/50 rounded-lg p-4 border border-white/5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <span className="font-medium text-white">{doc.doc_type}</span>
-                        <span className="text-xs text-slate-400 ml-2">Uploaded on {new Date(doc.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge text={doc.ocr_status} />
-                        {doc.ocr_status !== 'Processed' && doc.doc_type !== 'Other' && (
-                          <button 
-                            className="btn btn-secondary text-xs py-1" 
-                            onClick={() => handlePerformOCR(doc.id)}
-                            disabled={ocrLoading === doc.id}
-                          >
-                            {ocrLoading === doc.id ? 'Processing...' : 'Perform OCR'}
-                          </button>
-                        )}
-                        <button
-                          title="Delete document"
-                          onClick={() => handleDeleteDocument(doc.id)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                    {doc.extracted_data && (
-                      <div className="mt-3 bg-slate-900 rounded p-3 overflow-x-auto">
-                        <p className="text-xs font-semibold text-emerald-400 mb-2">Extracted Data:</p>
-                        <pre className="text-xs text-slate-300 whitespace-pre-wrap font-mono">
-                          {JSON.stringify(doc.extracted_data?.data || doc.extracted_data, null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-400 text-center py-4">No documents uploaded yet.</p>
-            )}
-          </div>
+
         </Modal>
       )}
 
