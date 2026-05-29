@@ -1,608 +1,1145 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout/Layout';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Loader from '../components/common/Loader';
-import { Star, Plus } from 'lucide-react';
-import { aparAPI } from '../api/endpoints';
+import {
+  Star, Plus, ChevronDown, ChevronUp, Check, X, Sparkles,
+  Send, Settings, TrendingUp, Award, AlertCircle, Layers,
+  RefreshCw, FileText, Target, Eye
+} from 'lucide-react';
+import { aparAPI, kpiAPI, empAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const GRADES = ['Outstanding','Very Good','Good','Average','Poor'];
-const COLOR = { Outstanding:'#22c55e','Very Good':'#3b82f6',Good:'#6366f1',Average:'#f59e0b',Poor:'#ef4444' };
+const BRAND  = '#162660';
+const GRADES = ['Outstanding', 'Very Good', 'Good', 'Average', 'Poor'];
+const GRADE_COLOR = {
+  Outstanding: '#22c55e', 'Very Good': '#3b82f6',
+  Good: '#6366f1', Average: '#f59e0b', Poor: '#ef4444',
+};
 
-function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = React.useRef(null);
+// ─── KPI Status helpers ───────────────────────────────────────────────────────
+const KPI_STATUS_COLOR = {
+  'Draft':          { bg: '#f1f5f9', text: '#64748b', border: '#e2e8f0' },
+  'Submitted':      { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
+  'CPO/COO Review': { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
+  'MD Review':      { bg: '#f5f3ff', text: '#7c3aed', border: '#ddd6fe' },
+  'Approved':       { bg: '#ecfdf5', text: '#065f46', border: '#a7f3d0' },
+  'Published':      { bg: '#d1fae5', text: '#065f46', border: '#6ee7b7' },
+  'Returned':       { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' },
+};
+const NODE_COLOR = {
+  Pending:  { bg: '#fffbeb', border: '#fbbf24', text: '#b45309', pulse: true  },
+  Approved: { bg: '#ecfdf5', border: '#34d399', text: '#065f46', pulse: false },
+  Returned: { bg: '#fef2f2', border: '#f87171', text: '#b91c1c', pulse: false },
+  Waiting:  { bg: '#f8fafc', border: '#cbd5e1', text: '#94a3b8', pulse: false },
+};
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+const kpiStatusBadge = (status) => {
+  const s = KPI_STATUS_COLOR[status] || { bg: '#f1f5f9', text: '#64748b', border: '#e2e8f0' };
+  return (
+    <span style={{ background: s.bg, color: s.text, border: `1px solid ${s.border}`, borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
+      {status}
+    </span>
+  );
+};
 
-  const selectedOption = options.find(opt => String(opt.value) === String(value)) || { label: placeholder, value: "" };
+// ─── Animated approval tree ───────────────────────────────────────────────────
+function WorkflowTree({ approvals, onAction, canActCPO, canActCOO, canActMD, reportStatus }) {
+  const [remarksInput, setRemarksInput] = useState({ cpo: '', coo: '', md: '' });
+  const [actingOn, setActingOn] = useState(null);
+
+  const getNode = (role) => approvals?.find(a => a.approver_role === role) || { status: 'Waiting', approver_role: role };
+  const cpo = getNode('cpo'), coo = getNode('coo'), md = getNode('md');
+
+  const NodeCard = ({ node, canAct, label, roleLabel }) => {
+    const color = NODE_COLOR[node.status] || NODE_COLOR.Waiting;
+    const isActing = actingOn === node.approver_role;
+    return (
+      <div style={{
+        background: color.bg, border: `2px solid ${color.border}`, borderRadius: 14,
+        padding: '14px 16px', minWidth: 155, maxWidth: 195, position: 'relative',
+        boxShadow: node.status === 'Pending' ? `0 0 0 4px ${color.border}30` : '0 2px 8px rgba(0,0,0,0.05)',
+        animation: color.pulse ? 'pa-pulse 2s ease-in-out infinite' : 'none',
+      }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: color.text, textTransform: 'uppercase', marginBottom: 3 }}>{label}</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: BRAND, marginBottom: 5 }}>{roleLabel}</div>
+        <span style={{ display: 'inline-block', background: color.bg, color: color.text, border: `1px solid ${color.border}`, borderRadius: 12, padding: '1px 8px', fontSize: 10, fontWeight: 700, marginBottom: 8 }}>
+          {node.status === 'Pending' ? '⏳ Pending' : node.status === 'Approved' ? '✓ Approved' : node.status === 'Returned' ? '↩ Returned' : '● Waiting'}
+        </span>
+        {node.acted_at && <div style={{ fontSize: 10, color: 'rgba(22,38,96,0.4)', marginBottom: 3 }}>{new Date(node.acted_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</div>}
+        {node.remarks && <div style={{ fontSize: 10, color: BRAND, background: 'rgba(22,38,96,0.04)', borderRadius: 6, padding: '4px 8px', marginBottom: 8, fontStyle: 'italic' }}>"{node.remarks.slice(0, 60)}{node.remarks.length > 60 ? '…' : ''}"</div>}
+
+        {canAct && node.status === 'Pending' && !isActing && (
+          <button onClick={() => setActingOn(node.approver_role)}
+            style={{ width: '100%', padding: '6px 0', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#162660,#1e40af)', color: '#fff', border: 'none' }}>
+            Add Remarks & Act
+          </button>
+        )}
+        {canAct && node.status === 'Pending' && isActing && (
+          <div>
+            <textarea rows={2} placeholder="Remarks (optional)"
+              value={remarksInput[node.approver_role]}
+              onChange={e => setRemarksInput(p => ({ ...p, [node.approver_role]: e.target.value }))}
+              style={{ width: '100%', borderRadius: 6, border: '1px solid rgba(22,38,96,0.2)', fontSize: 11, padding: '4px 6px', resize: 'none', marginBottom: 6, fontFamily: 'inherit', boxSizing: 'border-box', color: '#1e293b', background: '#fff' }}/>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button onClick={() => { onAction(node.approver_role, 'approve', remarksInput[node.approver_role]); setActingOn(null); }}
+                style={{ flex: 1, padding: '5px 0', borderRadius: 6, background: '#10b981', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>✓ Approve</button>
+              <button onClick={() => { onAction(node.approver_role, 'return', remarksInput[node.approver_role]); setActingOn(null); }}
+                style={{ flex: 1, padding: '5px 0', borderRadius: 6, background: '#ef4444', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↩ Return</button>
+            </div>
+            <button onClick={() => setActingOn(null)} style={{ width: '100%', marginTop: 4, padding: '4px 0', borderRadius: 6, background: 'transparent', border: '1px solid rgba(22,38,96,0.15)', fontSize: 10, cursor: 'pointer', color: BRAND }}>Cancel</button>
+          </div>
+        )}
+        {(!canAct && node.status === 'Pending') && <div style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>👁 View Only</div>}
+        {node.status === 'Waiting' && <div style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>Awaiting prior stage</div>}
+      </div>
+    );
+  };
 
   return (
-    <div 
-      ref={containerRef} 
-      className="relative transition-all duration-300"
-      style={{ width, zIndex: isOpen ? 50 : 10 }}
-    >
-      <div
-        className="flex items-center justify-between"
-        style={{
-          background: '#fff',
-          border: isOpen ? '1px solid #68aae8' : '1px solid rgba(22, 38, 96, 0.15)',
-          color: '#162660',
-          padding: '8px 12px',
-          height: '38px',
-          borderRadius: '8px',
-          boxShadow: isOpen 
-            ? '0 0 0 4px rgba(104, 170, 232, 0.35), 0 4px 12px rgba(22, 38, 96, 0.1)' 
-            : '0 2px 4px rgba(22, 38, 96, 0.03)',
-          cursor: 'pointer',
-          transform: isOpen ? 'translateY(-1px)' : 'none',
-          transition: 'all 0.3s ease',
-          fontSize: '14px',
-          userSelect: 'none'
-        }}
-        onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={(e) => {
-          if (!isOpen) {
-            e.currentTarget.style.borderColor = '#68aae8';
-            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(104, 170, 232, 0.25), 0 4px 10px rgba(22, 38, 96, 0.06)';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isOpen) {
-            e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.15)';
-            e.currentTarget.style.boxShadow = '0 2px 4px rgba(22, 38, 96, 0.03)';
-            e.currentTarget.style.transform = 'none';
-          }
-        }}
-      >
-        <span className="truncate font-medium">{selectedOption.label}</span>
-        <svg 
-          viewBox="0 0 24 24" 
-          width="16" 
-          height="16" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          fill="none" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          style={{
-            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            marginLeft: '4px',
-            color: 'rgba(22, 38, 96, 0.6)',
-            flexShrink: 0
-          }}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+    <div style={{ padding: '12px 0 8px', position: 'relative' }}>
+      <style>{`
+        @keyframes pa-pulse { 0%,100%{box-shadow:0 0 0 4px rgba(251,191,36,0.25)} 50%{box-shadow:0 0 0 8px rgba(251,191,36,0.08)} }
+        @keyframes pa-spin { to{transform:rotate(360deg)} }
+      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {/* CPO + COO parallel fork */}
+        <div style={{ display: 'flex', gap: 28, position: 'relative' }}>
+          <div style={{ position: 'absolute', top: -28, left: '50%', transform: 'translateX(-50%)', width: 240, height: 36, pointerEvents: 'none' }}>
+            <svg width="240" height="36" style={{ overflow: 'visible', position: 'absolute', top: 0 }}>
+              <line x1="120" y1="0" x2="120" y2="12" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4,2"/>
+              <line x1="40"  y1="12" x2="200" y2="12" stroke="#cbd5e1" strokeWidth="2"/>
+              <line x1="40"  y1="12" x2="40"  y2="36" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4,2"/>
+              <line x1="200" y1="12" x2="200" y2="36" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4,2"/>
+            </svg>
+          </div>
+          <div style={{ marginTop: 28 }}><NodeCard node={cpo} canAct={canActCPO} label="CPO" roleLabel="HR Manager"/></div>
+          <div style={{ marginTop: 28 }}><NodeCard node={coo} canAct={canActCOO} label="COO" roleLabel="Super Admin"/></div>
+        </div>
+
+        {/* Converge → MD */}
+        <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <svg width="240" height="36" style={{ overflow: 'visible', position: 'absolute', top: -4, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }}>
+            <line x1="40"  y1="0"  x2="40"  y2="14" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4,2"/>
+            <line x1="200" y1="0"  x2="200" y2="14" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4,2"/>
+            <line x1="40"  y1="14" x2="200" y2="14" stroke="#cbd5e1" strokeWidth="2"/>
+            <line x1="120" y1="14" x2="120" y2="36" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4,2"/>
+          </svg>
+          <div style={{ marginTop: 36 }}><NodeCard node={md} canAct={canActMD} label="MD" roleLabel="Managing Director"/></div>
+        </div>
+
+        {/* Published terminal */}
+        {reportStatus === 'Published' && (
+          <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <svg width="2" height="20"><line x1="1" y1="0" x2="1" y2="20" stroke="#34d399" strokeWidth="2" strokeDasharray="4,2"/></svg>
+            <div style={{ background: '#ecfdf5', border: '2px solid #34d399', borderRadius: 14, padding: '10px 28px', color: '#065f46', fontWeight: 800, fontSize: 13 }}>🎉 Published</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Score Gauge ──────────────────────────────────────────────────────────────
+function ScoreGauge({ score }) {
+  const pct = Math.min(Math.max(parseFloat(score) || 0, 0), 100);
+  const color = pct >= 80 ? '#10b981' : pct >= 60 ? '#f59e0b' : '#ef4444';
+  const r = 34; const c = 2 * Math.PI * r; const filled = (pct / 100) * c;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <svg width="88" height="88" viewBox="0 0 88 88">
+        <circle cx="44" cy="44" r={r} fill="none" stroke="#f1f5f9" strokeWidth="8"/>
+        <circle cx="44" cy="44" r={r} fill="none" stroke={color} strokeWidth="8"
+          strokeDasharray={`${filled} ${c - filled}`} strokeLinecap="round"
+          transform="rotate(-90 44 44)" style={{ transition: 'stroke-dasharray 0.8s ease' }}/>
+        <text x="44" y="48" textAnchor="middle" fontSize="16" fontWeight="800" fill={color}>{pct.toFixed(0)}</text>
+        <text x="44" y="59" textAnchor="middle" fontSize="9" fill="#94a3b8">/100</text>
+      </svg>
+      <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>Overall Score</div>
+    </div>
+  );
+}
+
+// ─── Weightage Bar ────────────────────────────────────────────────────────────
+function WeightageBar({ items }) {
+  const total = items.reduce((s, i) => s + parseFloat(i.weightage || 0), 0);
+  const ok = Math.abs(total - 100) < 0.1;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+      <div style={{ flex: 1, height: 6, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' }}>
+        <div style={{ width: `${Math.min(total, 100)}%`, height: '100%', background: ok ? '#10b981' : total > 100 ? '#ef4444' : '#f59e0b', borderRadius: 99, transition: 'width 0.3s' }}/>
+      </div>
+      <span style={{ fontSize: 12, fontWeight: 700, color: ok ? '#065f46' : total > 100 ? '#b91c1c' : '#b45309', minWidth: 50 }}>{total.toFixed(1)}%</span>
+      {ok ? <Check size={13} color="#10b981"/> : <AlertCircle size={13} color={total > 100 ? '#ef4444' : '#f59e0b'}/>}
+    </div>
+  );
+}
+
+// ─── AI Insights Modal ────────────────────────────────────────────────────────
+function AIInsightsModal({ insights, onClose }) {
+  if (!insights) return null;
+  const rColor = { 'Outstanding': '#065f46', 'Exceeds Expectations': '#1d4ed8', 'Meets Expectations': '#b45309', 'Needs Improvement': '#b91c1c', 'Unsatisfactory': '#7f1d1d' };
+  const rBg    = { 'Outstanding': '#ecfdf5', 'Exceeds Expectations': '#eff6ff', 'Meets Expectations': '#fef3c7', 'Needs Improvement': '#fef2f2', 'Unsatisfactory': '#fee2e2' };
+  return (
+    <Modal title="✨ AI Performance Insights" onClose={onClose} theme="light">
+      <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        {insights.overall_rating && (
+          <div style={{ background: rBg[insights.overall_rating] || '#f1f5f9', border: `1px solid ${rColor[insights.overall_rating] || '#64748b'}30`, borderRadius: 12, padding: '10px 16px', marginBottom: 14, textAlign: 'center' }}>
+            <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 2 }}>OVERALL RATING</div>
+            <div style={{ fontWeight: 800, fontSize: 15, color: rColor[insights.overall_rating] || '#1e293b' }}>{insights.overall_rating}</div>
+          </div>
+        )}
+        <div style={{ background: '#f8fafc', borderRadius: 10, padding: '12px 14px', marginBottom: 10 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>SUMMARY</div>
+          <p style={{ fontSize: 13, color: '#1e293b', lineHeight: 1.6, margin: 0 }}>{insights.summary || insights.kpi_alignment}</p>
+        </div>
+        {insights.score_analysis && (
+          <div style={{ background: '#f8fafc', borderRadius: 10, padding: '12px 14px', marginBottom: 10 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>SCORE ANALYSIS</div>
+            <p style={{ fontSize: 13, color: '#1e293b', lineHeight: 1.6, margin: 0 }}>{insights.score_analysis}</p>
+          </div>
+        )}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+          <div style={{ background: '#ecfdf5', borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#065f46', marginBottom: 6 }}>💪 KEY STRENGTHS</div>
+            {(insights.key_strengths || []).map((s, i) => (
+              <div key={i} style={{ display: 'flex', gap: 5, alignItems: 'flex-start', marginBottom: 3 }}>
+                <Check size={11} color="#10b981" style={{ marginTop: 2, flexShrink: 0 }}/>
+                <span style={{ fontSize: 12, color: '#065f46' }}>{s}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ background: '#fef2f2', borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#b91c1c', marginBottom: 6 }}>📈 AREAS TO IMPROVE</div>
+            {(insights.areas_for_improvement || []).map((a, i) => (
+              <div key={i} style={{ display: 'flex', gap: 5, alignItems: 'flex-start', marginBottom: 3 }}>
+                <TrendingUp size={11} color="#ef4444" style={{ marginTop: 2, flexShrink: 0 }}/>
+                <span style={{ fontSize: 12, color: '#b91c1c' }}>{a}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {insights.recommendation && (
+          <div style={{ background: 'linear-gradient(135deg,#f0f9ff,#e0f2fe)', borderRadius: 10, padding: '12px 14px', border: '1px solid #bae6fd' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#0369a1', marginBottom: 4 }}>💡 RECOMMENDATION</div>
+            <p style={{ fontSize: 13, color: '#0c4a6e', lineHeight: 1.6, margin: 0 }}>{insights.recommendation}</p>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ─── KPI Report Card ──────────────────────────────────────────────────────────
+function KPIReportCard({ report, onAction, onAIInsights, currentUser, grouped = false }) {
+  const [expanded, setExpanded] = useState(false);
+  const [fullReport, setFullReport] = useState(null);
+  const [loading, setLoading]   = useState(false);
+
+  const canActCPO = currentUser.role === 'hr_manager' || currentUser.role === 'super_admin';
+  const canActCOO = currentUser.role === 'super_admin';
+  const canActMD  = currentUser.role === 'super_admin';
+
+  const loadFull = async () => {
+    if (fullReport) { setExpanded(e => !e); return; }
+    setLoading(true);
+    try { const r = await kpiAPI.getReport(report.id); setFullReport(r.data.data); setExpanded(true); }
+    catch(e) {} finally { setLoading(false); }
+  };
+
+  const approvals = fullReport?.approvals || report.approvals || [];
+  const score = parseFloat(report.overall_score) || 0;
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid rgba(22,38,96,0.1)', borderRadius: 16, overflow: 'hidden', marginBottom: 10, boxShadow: '0 2px 10px rgba(22,38,96,0.05)' }}>
+      <div style={{ padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ width: 42, height: 42, borderRadius: '50%', flexShrink: 0, border: `3px solid ${score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, color: score >= 80 ? '#065f46' : score >= 60 ? '#b45309' : '#b91c1c', background: '#f8fafc' }}>
+          {score.toFixed(0)}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {!grouped && <div style={{ fontWeight: 700, fontSize: 13, color: BRAND }}>{report.emp_name}</div>}
+          <div style={{ fontSize: grouped ? 13 : 11, fontWeight: grouped ? 700 : 400, color: grouped ? BRAND : 'rgba(22,38,96,0.5)' }}>{!grouped && `${report.dept_name} • `}{report.cycle_name}</div>
+        </div>
+        {kpiStatusBadge(report.status)}
+        {['Submitted','CPO/COO Review','MD Review','Approved','Published','Returned'].includes(report.status) && (
+          <button onClick={() => onAIInsights(report.id)}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', border: 'none', cursor: 'pointer' }}>
+            <Sparkles size={11}/> AI Insights
+          </button>
+        )}
+        {report.status === 'Approved' && canActMD && (
+          <button onClick={() => onAction('publish', report.id)}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: '#10b981', color: '#fff', border: 'none', cursor: 'pointer' }}>
+            <Send size={11}/> Publish
+          </button>
+        )}
+        <button onClick={loadFull} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(22,38,96,0.35)', padding: 4 }}>
+          {loading ? <RefreshCw size={15} style={{ animation: 'pa-spin 1s linear infinite' }}/> : expanded ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}
+        </button>
       </div>
 
-      {isOpen && (
-        <div
-          className="absolute left-0 mt-1.5 w-full rounded-xl"
-          style={{
-            background: '#fff',
-            border: '1px solid rgba(22, 38, 96, 0.08)',
-            boxShadow: '0 10px 25px rgba(22, 38, 96, 0.15), 0 4px 12px rgba(22, 38, 96, 0.05)',
-            maxHeight: '220px',
-            overflowY: 'auto',
-            animation: 'slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-            padding: '4px'
-          }}
-        >
-          {options.map((opt) => {
-            const isSelected = String(opt.value) === String(value);
-            return (
-              <div
-                key={opt.value}
-                onClick={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-                className="transition-all duration-150"
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  color: isSelected ? '#162660' : 'rgba(22, 38, 96, 0.8)',
-                  background: isSelected ? 'rgba(104, 170, 232, 0.15)' : 'transparent',
-                  fontWeight: isSelected ? '600' : '400',
-                  userSelect: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = isSelected ? 'rgba(104, 170, 232, 0.25)' : 'rgba(22, 38, 96, 0.04)';
-                  e.currentTarget.style.color = '#162660';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = isSelected ? 'rgba(104, 170, 232, 0.15)' : 'transparent';
-                  e.currentTarget.style.color = isSelected ? '#162660' : 'rgba(22, 38, 96, 0.8)';
-                }}
-              >
-                <span className="truncate flex-1 text-left">{opt.label}</span>
-                {isSelected && (
-                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="#162660" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: '6px' }}>
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                )}
-              </div>
-            );
-          })}
+      {expanded && fullReport && (
+        <div style={{ borderTop: '1px solid rgba(22,38,96,0.06)', padding: '14px 16px', background: '#fafafe' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 20, alignItems: 'start', marginBottom: 16 }}>
+            <div>
+              <ScoreGauge score={fullReport.overall_score}/>
+              {fullReport.manager_remarks && (
+                <div style={{ marginTop: 8, background: '#f1f5f9', borderRadius: 8, padding: '7px 10px', fontSize: 11, color: '#475569', fontStyle: 'italic', maxWidth: 160 }}>"{fullReport.manager_remarks}"</div>
+              )}
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: BRAND, marginBottom: 8 }}>KPI Items</div>
+              {fullReport.items?.length > 0 ? (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(22,38,96,0.03)' }}>
+                      {['KPI Item','Weight','Score','Weighted','Remarks'].map(h => (
+                        <th key={h} style={{ padding: '5px 8px', textAlign: 'left', color: 'rgba(22,38,96,0.5)', fontWeight: 600, fontSize: 10, borderBottom: '1px solid rgba(22,38,96,0.08)' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fullReport.items.map((item, i) => {
+                      const sc = item.score >= 80 ? '#065f46' : item.score >= 60 ? '#b45309' : '#b91c1c';
+                      return (
+                        <tr key={i} style={{ borderBottom: '1px solid rgba(22,38,96,0.04)' }}>
+                          <td style={{ padding: '6px 8px', color: BRAND, fontWeight: 600 }}>{item.item_name}</td>
+                          <td style={{ padding: '6px 8px', color: '#64748b' }}>{item.weightage}%</td>
+                          <td style={{ padding: '6px 8px' }}><span style={{ color: sc, fontWeight: 700 }}>{item.score}</span><span style={{ color: '#94a3b8' }}>/100</span></td>
+                          <td style={{ padding: '6px 8px', fontWeight: 700, color: sc }}>{parseFloat(item.weighted_score||0).toFixed(1)}</td>
+                          <td style={{ padding: '6px 8px', color: '#64748b', fontStyle: 'italic', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.manager_remarks||'—'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : <div style={{ color: '#94a3b8', fontSize: 12 }}>No KPI items yet.</div>}
+            </div>
+          </div>
+
+          {/* Approval tree */}
+          <div style={{ borderTop: '1px solid rgba(22,38,96,0.06)', paddingTop: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: BRAND, marginBottom: 4 }}>Approval Workflow</div>
+            <WorkflowTree
+              approvals={fullReport.approvals}
+              reportStatus={fullReport.status}
+              canActCPO={canActCPO} canActCOO={canActCOO} canActMD={canActMD}
+              onAction={(role, action, remarks) => onAction(role, fullReport.id, action, remarks)}
+            />
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-export default function APAR() {
-  const { isMin, can, user } = useAuth();
-  const FY_OPTIONS = ['2025-26','2024-25','2023-24','2022-23'];
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState('2024-25');
-  const [selected, setSelected] = useState(null);
-  const [fillMode, setFillMode] = useState(null); // 'self'|'reporting'|'reviewing'
-  const [form, setForm] = useState({ grade:'', remarks:'' });
+// ─── Employee KPI Group (Accordion) ───────────────────────────────────────────
+function EmployeeKPIGroup({ group, onAction, onAIInsights, currentUser }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  return (
+    <div style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.1)', borderRadius:14, marginBottom:16, overflow:'hidden', boxShadow:'0 2px 10px rgba(22,38,96,0.03)' }}>
+      <div 
+        onClick={() => setExpanded(!expanded)}
+        style={{ padding:'12px 20px', background:'#f8fafc', borderBottom: expanded ? '1px solid rgba(22,38,96,0.08)' : 'none', display:'flex', justifyContent:'space-between', alignItems:'center', cursor: 'pointer' }}
+      >
+        <div>
+          <div style={{ fontWeight:800, color:BRAND, fontSize:15 }}>{group.emp_name}</div>
+          <div style={{ fontSize:12, color:'rgba(22,38,96,0.6)' }}>{group.dept_name} • {group.emp_id}</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ fontSize:12, fontWeight:700, color:'#64748b' }}>{group.reports.length} Reports</div>
+          {expanded ? <ChevronUp size={16} color="rgba(22,38,96,0.5)" /> : <ChevronDown size={16} color="rgba(22,38,96,0.5)" />}
+        </div>
+      </div>
+      {expanded && (
+        <div style={{ padding:'12px', background: '#f8fafc' }}>
+          {group.reports.sort((a,b) => a.cycle_name.localeCompare(b.cycle_name)).map(r => (
+            <div key={r.id} style={{ marginBottom: group.reports.length > 1 ? 8 : 0 }}>
+               <KPIReportCard report={r} onAction={onAction} onAIInsights={onAIInsights} currentUser={currentUser} grouped={true}/>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── KPI Items Editor ─────────────────────────────────────────────────────────
+function ItemsEditor({ reportId, onSaved }) {
+  const [items, setItems] = useState([{ item_name:'', description:'', weightage:'', target:'', score:'', manager_remarks:'' }]);
+  const [managerRemarks, setManagerRemarks] = useState('');
+  const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
-  const [initForm, setInitForm] = useState({ emp_id:'', financial_year:'' });
-  const [showInit, setShowInit] = useState(false);
-  const [aiInsights, setAiInsights] = useState(null);
-  const [loadingInsights, setLoadingInsights] = useState(false);
 
-  const load = (yr) => {
-    setLoading(true);
-    aparAPI.list({ year: yr || selectedYear }).then(r=>setData(r.data.data||[])).finally(()=>setLoading(false));
-  };
-  useEffect(()=>{ load(selectedYear); },[selectedYear]);
+  const addItem = () => setItems(p => [...p, { item_name:'', description:'', weightage:'', target:'', score:'', manager_remarks:'' }]);
+  const removeItem = (i) => setItems(p => p.filter((_,idx) => idx !== i));
+  const update = (i, f, v) => setItems(p => p.map((item, idx) => idx === i ? {...item,[f]:v} : item));
 
-  const fetchInsights = async (id) => {
-    setLoadingInsights(true);
+  const save = async () => {
+    setSaving(true);
     try {
-      const res = await aparAPI.aiInsights(id);
-      setAiInsights(res.data.data);
+      await kpiAPI.saveItems(reportId, { items, manager_remarks: managerRemarks });
+      setMsg('✓ Saved'); onSaved?.();
+    } catch(e) { setMsg('Error: '+(e.response?.data?.message||e.message)); }
+    finally { setSaving(false); setTimeout(() => setMsg(''), 3000); }
+  };
+
+  return (
+    <div>
+      <WeightageBar items={items}/>
+      {msg && <div style={{ padding:'6px 12px', borderRadius:8, marginBottom:10, fontSize:12, background:msg.startsWith('Error')?'#fef2f2':'#ecfdf5', color:msg.startsWith('Error')?'#b91c1c':'#065f46', border:`1px solid ${msg.startsWith('Error')?'#fecaca':'#a7f3d0'}` }}>{msg}</div>}
+      {items.map((item, i) => (
+        <div key={i} style={{ background:'#f8fafc', border:'1px solid rgba(22,38,96,0.1)', borderRadius:12, padding:'12px 14px', marginBottom:8 }}>
+          <div style={{ display:'flex', gap:8, marginBottom:6 }}>
+            <div style={{ flex:2 }}>
+              <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:2 }}>KPI ITEM *</label>
+              <input value={item.item_name} onChange={e => update(i,'item_name',e.target.value)} placeholder="e.g. Target Achievement"
+                style={{ width:'100%', padding:'6px 10px', borderRadius:8, border:'1px solid rgba(22,38,96,0.15)', fontSize:12, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
+            </div>
+            <div style={{ flex:1 }}>
+              <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:2 }}>WEIGHT %</label>
+              <input type="text" inputMode="numeric" pattern="[0-9]*" value={item.weightage} onChange={e => update(i,'weightage',e.target.value)} placeholder="25"
+                style={{ width:'100%', padding:'6px 10px', borderRadius:8, border:'1px solid rgba(22,38,96,0.15)', fontSize:12, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
+            </div>
+            <div style={{ flex:1 }}>
+              <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:2 }}>SCORE /100</label>
+              <input type="text" inputMode="numeric" pattern="[0-9]*" value={item.score} onChange={e => update(i,'score',e.target.value)} placeholder="0"
+                style={{ width:'100%', padding:'6px 10px', borderRadius:8, border:'1px solid rgba(22,38,96,0.15)', fontSize:12, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
+            </div>
+            <button onClick={() => removeItem(i)} style={{ marginTop:18, padding:'6px', borderRadius:8, background:'#fef2f2', border:'1px solid #fecaca', cursor:'pointer', color:'#ef4444' }}><X size={12}/></button>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+            <div>
+              <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:2 }}>TARGET</label>
+              <input value={item.target} onChange={e => update(i,'target',e.target.value)} placeholder="What is the expected target?"
+                style={{ width:'100%', padding:'5px 10px', borderRadius:8, border:'1px solid rgba(22,38,96,0.12)', fontSize:11, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
+            </div>
+            <div>
+              <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:2 }}>REMARKS</label>
+              <input value={item.manager_remarks} onChange={e => update(i,'manager_remarks',e.target.value)} placeholder="Optional remarks"
+                style={{ width:'100%', padding:'5px 10px', borderRadius:8, border:'1px solid rgba(22,38,96,0.12)', fontSize:11, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
+            </div>
+          </div>
+          <div style={{ marginTop:6, display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ flex:1, height:3, background:'#e2e8f0', borderRadius:99, overflow:'hidden' }}>
+              <div style={{ width:`${item.score}%`, height:'100%', background:item.score>=80?'#10b981':item.score>=60?'#f59e0b':'#ef4444', borderRadius:99, transition:'width 0.3s' }}/>
+            </div>
+            <span style={{ fontSize:10, color:'#94a3b8', minWidth:38 }}>{(parseFloat(item.weightage||0)*parseFloat(item.score||0)/100).toFixed(1)} pts</span>
+          </div>
+        </div>
+      ))}
+      <button onClick={addItem} style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 12px', borderRadius:10, background:'rgba(22,38,96,0.04)', border:'1px dashed rgba(22,38,96,0.2)', color:BRAND, fontSize:12, fontWeight:600, cursor:'pointer', marginBottom:10 }}>
+        <Plus size={12}/> Add KPI Item
+      </button>
+      <div style={{ marginBottom:10 }}>
+        <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:3 }}>OVERALL MANAGER REMARKS</label>
+        <textarea rows={2} value={managerRemarks} onChange={e => setManagerRemarks(e.target.value)} placeholder="Overall assessment..."
+          style={{ width:'100%', borderRadius:10, border:'1px solid rgba(22,38,96,0.15)', fontSize:12, padding:'7px 10px', resize:'vertical', fontFamily:'inherit', outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
+      </div>
+      <button onClick={save} disabled={saving}
+        style={{ padding:'9px 20px', borderRadius:10, background:'linear-gradient(135deg,#162660,#1e40af)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer' }}>
+        {saving ? 'Saving…' : 'Save KPI Items'}
+      </button>
+    </div>
+  );
+}
+
+// ─── APAR grade tag ───────────────────────────────────────────────────────────
+const GradeTag = ({ val }) => val
+  ? <span style={{ color: GRADE_COLOR[val], fontWeight: 600, fontSize: 12 }}>{val}</span>
+  : <span style={{ color: 'rgba(22,38,96,0.2)', fontSize: 12 }}>—</span>;
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function APAR() {
+  const { isMin, user } = useAuth();
+  const FY_OPTIONS = [
+    'Q4 2027', 'Q3 2027', 'Q2 2027', 'Q1 2027',
+    'Q4 2026', 'Q3 2026', 'Q2 2026', 'Q1 2026',
+    'Q4 2025', 'Q3 2025', 'Q2 2025', 'Q1 2025',
+    'Q4 2024', 'Q3 2024', 'Q2 2024', 'Q1 2024',
+    'Q4 2023', 'Q3 2023', 'Q2 2023', 'Q1 2023'
+  ];
+
+  // Shared state
+  const [tab, setTab]             = useState('kpi');
+  const [aiInsights, setAIInsights] = useState(null);
+  const [aiLoading, setAILoading]   = useState(false);
+  const [msg, setMsg]             = useState('');
+
+  // KPI state
+  const [kpiReports, setKpiReports]   = useState([]);
+  const [kpiCycles, setKpiCycles]     = useState([]);
+  const [employees, setEmployees]     = useState([]);
+  const [kpiLoading, setKpiLoading]   = useState(true);
+  const [showCreateReport, setShowCreateReport] = useState(false);
+  const [showCreateCycle, setShowCreateCycle]   = useState(false);
+  const [showItemsEditor, setShowItemsEditor]   = useState(null);
+  const [submitLoading, setSubmitLoading]       = useState(null);
+  const [createReportForm, setCreateReportForm] = useState({ cycle_id: '', emp_id: '' });
+  const [cycleForm, setCycleForm] = useState({ quarter: '', year: new Date().getFullYear(), start_date: '', end_date: '' });
+
+  // APAR state
+  const [aparData, setAparData]       = useState([]);
+  const [aparLoading, setAparLoading] = useState(true);
+  const [selectedYear, setSelectedYear] = useState('Q4 2026');
+  const [selected, setSelected]         = useState(null);
+  const [fillMode, setFillMode]         = useState(null);
+  const [aparForm, setAparForm]         = useState({ grade: '', remarks: '' });
+  const [initForm, setInitForm]         = useState({ emp_id: '', cycle_name: '' });
+  const [showInit, setShowInit]         = useState(false);
+  const [showYearlyReport, setShowYearlyReport] = useState(false);
+  const [yearlyForm, setYearlyForm]     = useState({ emp_id: '', year: '2026' });
+  const [yearlyResult, setYearlyResult] = useState(null);
+  const [yearlyLoading, setYearlyLoading] = useState(false);
+
+  const showMsg = useCallback((m) => { setMsg(m); setTimeout(() => setMsg(''), 4000); }, []);
+
+  // KPI loaders
+  const loadKPI = useCallback(async () => {
+    setKpiLoading(true);
+    try {
+      const [r, c] = await Promise.all([
+        kpiAPI.listReports().catch(() => ({ data: { data: [] } })),
+        kpiAPI.listCycles().catch(() => ({ data: { data: [] } })),
+      ]);
+      setKpiReports(r.data.data || []);
+      setKpiCycles(c.data.data || []);
+      if (isMin('hr_staff')) {
+        const e = await empAPI.list({ limit: 200, status: 'Active' }).catch(() => ({ data: { data: { employees: [] } } }));
+        setEmployees(e.data.data?.employees || []);
+      }
+    } finally { setKpiLoading(false); }
+  }, [isMin]);
+
+  // APAR loaders
+  const loadAPAR = useCallback((yr) => {
+    setAparLoading(true);
+    aparAPI.list({ year: yr || selectedYear })
+      .then(r => setAparData(r.data.data || []))
+      .finally(() => setAparLoading(false));
+  }, [selectedYear]);
+
+  useEffect(() => { loadKPI(); }, [loadKPI]);
+  useEffect(() => { loadAPAR(selectedYear); }, [selectedYear]);
+
+  // KPI actions
+  const handleKPIAction = async (role, reportId, action, remarks) => {
+    try {
+      if (role === 'cpo')     await kpiAPI.cpoAction(reportId, { action, remarks });
+      else if (role === 'coo') await kpiAPI.cooAction(reportId, { action, remarks });
+      else if (role === 'md')  await kpiAPI.mdAction(reportId, { action, remarks });
+      else if (role === 'publish') await kpiAPI.publishReport(reportId);
+      showMsg('Action completed');
+      loadKPI();
+    } catch(e) { showMsg('Error: '+(e.response?.data?.message||e.message)); }
+  };
+
+  const handleAIInsights = async (id, isApar = false) => {
+    setAILoading(true);
+    try {
+      const res = isApar ? await aparAPI.aiInsights(id) : await kpiAPI.aiInsights(id);
+      setAIInsights(res.data.data);
+    } catch(e) { showMsg('Error: '+e.message); }
+    finally { setAILoading(false); }
+  };
+
+  const handleSubmitKPI = async (reportId) => {
+    setSubmitLoading(reportId);
+    try { await kpiAPI.submitReport(reportId); showMsg('Report submitted for CPO/COO review'); loadKPI(); }
+    catch(e) { showMsg('Error: '+(e.response?.data?.message||e.message)); }
+    finally { setSubmitLoading(null); }
+  };
+
+  const createKPIReport = async () => {
+    try { await kpiAPI.createReport(createReportForm); showMsg('Report created'); setShowCreateReport(false); setCreateReportForm({ cycle_id:'', emp_id:'' }); loadKPI(); }
+    catch(e) { showMsg('Error: '+(e.response?.data?.message||e.message)); }
+  };
+
+  const createKPICycle = async () => {
+    try {
+      await kpiAPI.createCycle({ ...cycleForm, name: `Q${cycleForm.quarter}-${cycleForm.year}` });
+      showMsg('Cycle created'); setShowCreateCycle(false);
+      setCycleForm({ quarter:'', year:new Date().getFullYear(), start_date:'', end_date:'' });
+      loadKPI();
+    } catch(e) { showMsg('Error: '+(e.response?.data?.message||e.message)); }
+  };
+
+  // APAR actions
+  const submitAparFill = async () => {
+    try {
+      if (fillMode === 'reporting') await aparAPI.fillReporting(selected.id, { reporting_grade: aparForm.grade, reporting_remarks: aparForm.remarks });
+      else if (fillMode === 'reviewing') await aparAPI.fillReviewing(selected.id, { reviewing_grade: aparForm.grade, reviewing_remarks: aparForm.remarks, final_grade: aparForm.grade, final_remarks: aparForm.remarks });
+      showMsg('APAR updated'); setFillMode(null); setSelected(null); setAparForm({ grade:'', remarks:'' }); loadAPAR();
+    } catch(e) { showMsg('Error: '+(e.response?.data?.message||e.message)); }
+  };
+
+  const initAPAR = async () => {
+    try { await aparAPI.initiate(initForm); showMsg('APAR initiated'); setShowInit(false); loadAPAR(); }
+    catch(e) { showMsg('Error: '+(e.response?.data?.message||e.message)); }
+  };
+
+  const handleGenerateYearlyReport = async (manual = false) => {
+    setYearlyLoading(true); setYearlyResult(null);
+    try {
+      const res = await aparAPI.yearlyReportAI({ emp_id: yearlyForm.emp_id, year: yearlyForm.year, manual: manual });
+      setYearlyResult(res.data.data);
     } catch(e) {
-      setMsg('Error fetching insights: ' + e.message);
+      showMsg('Error: ' + (e.response?.data?.message || e.message));
     } finally {
-      setLoadingInsights(false);
+      setYearlyLoading(false);
     }
   };
 
-  const submitFill = async () => {
+  const handleAutoGenerateFinal = async () => {
+    setAILoading(true);
     try {
-      if (fillMode==='self') await aparAPI.fillSelf(selected.id,{ self_grade:form.grade, self_remarks:form.remarks });
-      else if (fillMode==='reporting') await aparAPI.fillReporting(selected.id,{ reporting_grade:form.grade, reporting_remarks:form.remarks });
-      else if (fillMode==='reviewing') await aparAPI.fillReviewing(selected.id,{ reviewing_grade:form.grade, reviewing_remarks:form.remarks, final_grade:form.grade, final_remarks:form.remarks });
-      setMsg('APAR updated'); setFillMode(null); setSelected(null); setForm({ grade:'', remarks:'' }); load();
-    } catch(e) { setMsg('Error: '+e.response?.data?.message); }
+      const res = await aparAPI.aiInsights(selected.id);
+      const data = res.data.data;
+      if (data) {
+        let gradeToSet = 'Good';
+        const rec = data.recommendation || '';
+        const lowerRec = rec.toLowerCase();
+        if (lowerRec.includes('outstanding')) gradeToSet = 'Outstanding';
+        else if (lowerRec.includes('very good')) gradeToSet = 'Very Good';
+        else if (lowerRec.includes('average')) gradeToSet = 'Average';
+        else if (lowerRec.includes('below average')) gradeToSet = 'Below Average';
+        
+        const generatedRemarks = `Summary: ${data.summary}\nKPI Alignment: ${data.kpi_alignment}\nStrengths: ${(data.key_strengths||[]).join(', ')}\nAreas for Improvement: ${(data.areas_for_improvement||[]).join(', ')}\nRecommendation: ${data.recommendation}`;
+        
+        setAparForm({ grade: gradeToSet, remarks: generatedRemarks });
+        showMsg('Form populated with AI Insights. Please review before submitting.');
+      }
+    } catch(e) {
+      showMsg('Error generating insights: '+e.message);
+    } finally {
+      setAILoading(false);
+    }
   };
 
-  const initiate = async () => {
-    try { await aparAPI.initiate(initForm); setMsg('APAR initiated'); setShowInit(false); load(); }
-    catch(e) { setMsg('Error: '+e.response?.data?.message); }
-  };
+  // Derived KPI data
+  const kpiPending   = kpiReports.filter(r => ['CPO/COO Review','MD Review'].includes(r.status));
+  const kpiMyDrafts  = kpiReports.filter(r => ['Draft','Returned'].includes(r.status));
+  const kpiPublished = kpiReports.filter(r => r.status === 'Published');
+  const avgScore = kpiReports.length ? (kpiReports.reduce((s,r) => s + parseFloat(r.overall_score||0), 0) / kpiReports.length).toFixed(1) : '—';
+  const activeCycle = kpiCycles.find(c => c.is_active);
 
-  const GradeTag = ({val}) => val ? <span style={{color:COLOR[val],fontWeight:600}}>{val}</span> : <span style={{ color: 'rgba(22, 38, 96, 0.25)' }}>—</span>;
+  const groupedKpiReports = Object.values(kpiReports.reduce((acc, r) => {
+    if (!acc[r.emp_id]) acc[r.emp_id] = { emp_name: r.emp_name, emp_id: r.emp_id, dept_name: r.dept_name, reports: [] };
+    acc[r.emp_id].reports.push(r);
+    return acc;
+  }, {})).sort((a,b) => a.emp_name.localeCompare(b.emp_name));
+
+  const TABS = [
+    { id: 'kpi',    label: 'KPI Appraisal',   icon: Target },
+    { id: 'apar',   label: 'Annual APAR',      icon: Star   },
+    ...(isMin('hr_manager') ? [{ id: 'cycles', label: 'Cycles', icon: TrendingUp }] : []),
+  ];
+
+  const KPI_SUB_TABS = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'all',      label: 'All Reports' },
+    { id: 'review',   label: `Review Queue${kpiPending.length > 0 ? ` (${kpiPending.length})` : ''}` },
+    { id: 'manage',   label: 'Manage' },
+  ];
+  const [kpiSubTab, setKpiSubTab] = useState('overview');
 
   return (
-    <Layout title="APAR / Performance Appraisal" theme="light" bg="#F8F8FF">
+    <Layout title="Performance Appraisal" theme="light" bg="#F8F8FF">
+      <style>{`
+        @keyframes pa-spin { to{transform:rotate(360deg)} }
+        @keyframes pa-fadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+        .pa-anim { animation: pa-fadeIn 0.3s ease; }
+      `}</style>
+
       {msg && (
-        <div 
-          className={`px-4 py-3 rounded-xl text-sm mb-4 border transition-all duration-300 ${
-            msg.startsWith('Error') 
-              ? 'bg-red-50 text-red-800 border-red-200' 
-              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-          }`}
-          style={{
-            boxShadow: '0 4px 12px rgba(22, 38, 96, 0.03)'
-          }}
-        >
-          {msg}
-        </div>
+        <div style={{ padding:'10px 16px', borderRadius:10, marginBottom:12, fontSize:13, background:msg.startsWith('Error')?'#fef2f2':'#ecfdf5', color:msg.startsWith('Error')?'#b91c1c':'#065f46', border:`1px solid ${msg.startsWith('Error')?'#fecaca':'#a7f3d0'}` }}>{msg}</div>
       )}
-      <div className="grid grid-cols-4 gap-4 mb-5">
-        {['Completed','Pending Self-Assessment','Pending Reporting Officer','Pending Reviewing Officer'].map(s=>(
-          <div 
-            key={s} 
-            className="hover-card text-center transition-all duration-300"
-            style={{
-              background: '#fff',
-              borderRadius: '16px',
-              padding: '20px',
-              border: '1px solid rgba(22, 38, 96, 0.1)',
-              boxShadow: '0 4px 12px rgba(22, 38, 96, 0.03)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 15px rgba(22, 38, 96, 0.08)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(22, 38, 96, 0.03)';
-            }}
-          >
-            <p className="text-3xl font-bold" style={{color:s==='Completed'?'#10B981':'#D97706'}}>{data.filter(a=>a.status===s).length}</p>
-            <p className="text-xs font-semibold mt-1.5" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{s}</p>
-          </div>
+
+      {/* Main tabs */}
+      <div style={{ display:'flex', gap:6, marginBottom:18, borderBottom:'1px solid rgba(22,38,96,0.08)', paddingBottom:10, flexWrap:'wrap' }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 18px', borderRadius:22, fontSize:13, fontWeight:700, cursor:'pointer', transition:'all 0.2s', background:tab===t.id?BRAND:'transparent', color:tab===t.id?'#fff':'rgba(22,38,96,0.55)', border:tab===t.id?`1px solid ${BRAND}`:'1px solid transparent', boxShadow:tab===t.id?'0 4px 14px rgba(22,38,96,0.18)':'none' }}>
+            <t.icon size={14}/>{t.label}
+          </button>
         ))}
       </div>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
-          <h3 className="text-xl font-semibold" style={{ color: '#162660' }}>APAR Records</h3>
-          <CustomDropdown
-            value={selectedYear}
-            onChange={val => setSelectedYear(val)}
-            options={FY_OPTIONS.map(y => ({ value: y, label: y }))}
-            placeholder="Select Year"
-            width={130}
-          />
-        </div>
-        {isMin('hr_staff') && (
-          <button 
-            className="btn font-semibold transition-all duration-200" 
-            style={{
-              background: '#162660',
-              color: '#FEFEFA',
-              boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#68aae8';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#162660';
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
-            }}
-            onClick={()=>setShowInit(true)}
-          >
-            <Plus size={16}/>Initiate APAR
-          </button>
-        )}
-      </div>
-      {loading ? <Loader /> : (
-        <div 
-          className="hover-card animate-slide-up"
-          style={{ 
-            background: '#fff', 
-            borderRadius: '16px', 
-            padding: '24px', 
-            border: '1px solid rgba(22, 38, 96, 0.1)', 
-            boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
-          }}
-        >
-          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
-            <table>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
-                  {['Employee', 'Dept', 'Year', 'Self', 'Reporting', 'Reviewing', 'Final', 'Status', 'Actions'].map(h => (
-                    <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>{data.map(a=>(
-                <tr 
-                  key={a.id}
-                  className="transition-all duration-300"
-                  style={{ 
-                    borderBottom: '1px solid rgba(22, 38, 96, 0.05)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                  }}
-                >
-                  <td>
-                    <div className="font-medium" style={{ color: '#162660' }}>{a.emp_name}</div>
-                    <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{a.emp_id}</div>
-                  </td>
-                  <td style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{a.dept_name}</td>
-                  <td style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{a.financial_year}</td>
-                  <td><GradeTag val={a.self_grade}/></td>
-                  <td><GradeTag val={a.reporting_grade}/></td>
-                  <td><GradeTag val={a.reviewing_grade}/></td>
-                  <td><GradeTag val={a.final_grade}/></td>
-                  <td><Badge text={a.status}/></td>
-                  <td>
-                    <div className="flex gap-2">
-                      {a.status==='Pending Self-Assessment' && (user.emp_id===a.emp_id||isMin('hr_manager')) && (
-                        <button 
-                          className="btn text-xs py-1 px-2.5 font-semibold transition-all duration-200" 
-                          style={{
-                            background: '#162660',
-                            color: '#FEFEFA',
-                            boxShadow: '0 2px 6px rgba(22, 38, 96, 0.15)',
-                            borderRadius: '8px'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#68aae8';
-                            e.currentTarget.style.boxShadow = '0 4px 10px rgba(22, 38, 96, 0.25)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = '#162660';
-                            e.currentTarget.style.boxShadow = '0 2px 6px rgba(22, 38, 96, 0.15)';
-                          }}
-                          onClick={()=>{setSelected(a);setFillMode('self');setForm({grade:'',remarks:''});}}
-                        >
-                          Self
-                        </button>
-                      )}
-                      {a.status==='Pending Reporting Officer' && isMin('dept_head') && (
-                        <button 
-                          className="btn text-xs py-1 px-2.5 font-semibold transition-all duration-200" 
-                          style={{
-                            background: '#162660',
-                            color: '#FEFEFA',
-                            boxShadow: '0 2px 6px rgba(22, 38, 96, 0.15)',
-                            borderRadius: '8px'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#68aae8';
-                            e.currentTarget.style.boxShadow = '0 4px 10px rgba(22, 38, 96, 0.25)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = '#162660';
-                            e.currentTarget.style.boxShadow = '0 2px 6px rgba(22, 38, 96, 0.15)';
-                          }}
-                          onClick={()=>{setSelected(a);setFillMode('reporting');setForm({grade:'',remarks:''});}}
-                        >
-                          Report
-                        </button>
-                      )}
-                      {a.status==='Pending Reviewing Officer' && isMin('hr_manager') && (
-                        <button 
-                          className="btn text-xs py-1 px-2.5 font-semibold transition-all duration-200" 
-                          style={{
-                            background: '#162660',
-                            color: '#FEFEFA',
-                            boxShadow: '0 2px 6px rgba(22, 38, 96, 0.15)',
-                            borderRadius: '8px'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#68aae8';
-                            e.currentTarget.style.boxShadow = '0 4px 10px rgba(22, 38, 96, 0.25)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = '#162660';
-                            e.currentTarget.style.boxShadow = '0 2px 6px rgba(22, 38, 96, 0.15)';
-                          }}
-                          onClick={()=>{setSelected(a);setFillMode('reviewing');setForm({grade:'',remarks:''});}}
-                        >
-                          Review
-                        </button>
-                      )}
-                      
-                      {isMin('hr_manager') && a.self_grade && (
-                        <button 
-                          className="btn text-xs py-1 px-2.5 font-semibold transition-all duration-200" 
-                          style={{
-                            background: 'rgba(104, 170, 232, 0.15)',
-                            color: '#162660',
-                            border: '1px solid rgba(104, 170, 232, 0.25)',
-                            boxShadow: 'none',
-                            borderRadius: '8px'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#68aae8';
-                            e.currentTarget.style.color = '#fff';
-                            e.currentTarget.style.borderColor = '#68aae8';
-                            e.currentTarget.style.boxShadow = '0 4px 10px rgba(104, 170, 232, 0.3)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(104, 170, 232, 0.15)';
-                            e.currentTarget.style.color = '#162660';
-                            e.currentTarget.style.borderColor = 'rgba(104, 170, 232, 0.25)';
-                            e.currentTarget.style.boxShadow = 'none';
-                          }}
-                          onClick={()=>fetchInsights(a.id)}
-                        >
-                          <Star size={12} className="mr-1"/> AI Insights
-                        </button>
-                      )}
+
+      {/* ══════════════════════════════ KPI TAB ══════════════════════════════ */}
+      {tab === 'kpi' && (
+        <div className="pa-anim">
+          {/* KPI sub-tabs */}
+          <div style={{ display:'flex', gap:4, marginBottom:14, flexWrap:'wrap' }}>
+            {KPI_SUB_TABS.map(t => (
+              <button key={t.id} onClick={() => setKpiSubTab(t.id)}
+                style={{ padding:'5px 14px', borderRadius:16, fontSize:12, fontWeight:600, cursor:'pointer', background:kpiSubTab===t.id?'rgba(22,38,96,0.1)':'transparent', color:kpiSubTab===t.id?BRAND:'rgba(22,38,96,0.5)', border:kpiSubTab===t.id?'1px solid rgba(22,38,96,0.15)':'1px solid transparent' }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {kpiLoading ? <Loader/> : (
+            <>
+            {/* Overview */}
+            {kpiSubTab === 'overview' && (
+              <div className="pa-anim">
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16 }}>
+                  {[
+                    { label:'Total Reports', value:kpiReports.length, color:'#6366f1', icon:FileText },
+                    { label:'Pending Review', value:kpiPending.length, color:'#f59e0b', icon:Eye },
+                    { label:'Published', value:kpiPublished.length, color:'#10b981', icon:Award },
+                    { label:'Avg Score', value:avgScore, color:'#8b5cf6', icon:Target },
+                  ].map((s,i) => (
+                    <div key={i} style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.08)', borderRadius:14, padding:'14px 16px', display:'flex', alignItems:'center', gap:12, boxShadow:'0 2px 8px rgba(22,38,96,0.04)' }}>
+                      <div style={{ width:40, height:40, borderRadius:12, background:`${s.color}15`, display:'flex', alignItems:'center', justifyContent:'center' }}><s.icon size={16} color={s.color}/></div>
+                      <div><div style={{ fontSize:20, fontWeight:800, color:s.color }}>{s.value}</div><div style={{ fontSize:11, color:'rgba(22,38,96,0.5)' }}>{s.label}</div></div>
                     </div>
-                  </td>
-                </tr>
-              ))}</tbody>
-            </table>
+                  ))}
+                </div>
+
+                {activeCycle && (
+                  <div style={{ background:'linear-gradient(135deg,#162660,#1e40af)', borderRadius:14, padding:'16px 20px', color:'#fff', marginBottom:14, display:'flex', alignItems:'center', gap:16 }}>
+                    <Target size={26} style={{ opacity:0.7 }}/>
+                    <div>
+                      <div style={{ fontSize:10, opacity:0.7, fontWeight:700, letterSpacing:1 }}>ACTIVE CYCLE</div>
+                      <div style={{ fontSize:17, fontWeight:800 }}>{activeCycle.name}</div>
+                      <div style={{ fontSize:11, opacity:0.7 }}>{new Date(activeCycle.start_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})} — {new Date(activeCycle.end_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</div>
+                    </div>
+                    <div style={{ marginLeft:'auto', textAlign:'right' }}><div style={{ fontSize:26, fontWeight:800 }}>Q{activeCycle.quarter}</div><div style={{ fontSize:11, opacity:0.7 }}>{activeCycle.year}</div></div>
+                  </div>
+                )}
+
+                {groupedKpiReports.slice(0, 5).map(group => (
+                  <EmployeeKPIGroup key={group.emp_id} group={group} onAction={handleKPIAction} onAIInsights={id => handleAIInsights(id,false)} currentUser={user} />
+                ))}
+                {kpiReports.length === 0 && (
+                  <div style={{ textAlign:'center', padding:'48px 0', color:'#94a3b8' }}>
+                    <Target size={34} style={{ marginBottom:8, opacity:0.3 }}/><div style={{ fontWeight:600 }}>No KPI reports yet</div>
+                    <div style={{ fontSize:12, marginTop:4 }}>Create a report from the "Manage" tab</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* All Reports */}
+            {kpiSubTab === 'all' && (
+              <div className="pa-anim">
+                {groupedKpiReports.map(group => (
+                  <EmployeeKPIGroup key={group.emp_id} group={group} onAction={handleKPIAction} onAIInsights={id => handleAIInsights(id,false)} currentUser={user} />
+                ))}
+                {kpiReports.length === 0 && <div style={{ textAlign:'center', padding:'48px 0', color:'#94a3b8' }}>No reports.</div>}
+              </div>
+            )}
+
+            {/* Review Queue */}
+            {kpiSubTab === 'review' && (
+              <div className="pa-anim">
+                <div style={{ fontSize:12, color:'rgba(22,38,96,0.5)', marginBottom:10 }}>Reports requiring your review — expand to see and act on the approval tree.</div>
+                {kpiPending.length === 0 && (
+                  <div style={{ textAlign:'center', padding:'48px 0', color:'#94a3b8' }}>
+                    <Check size={32} style={{ marginBottom:8, opacity:0.3 }}/><div style={{ fontWeight:600 }}>No reports pending your review</div>
+                  </div>
+                )}
+                {kpiPending.map(r => <KPIReportCard key={r.id} report={r} onAction={handleKPIAction} onAIInsights={id => handleAIInsights(id,false)} currentUser={user}/>)}
+              </div>
+            )}
+
+            {/* Manage */}
+            {kpiSubTab === 'manage' && (
+              <div className="pa-anim">
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:BRAND }}>Draft / Returned Reports</div>
+                  {isMin('dept_head') && (
+                    <button onClick={() => setShowCreateReport(true)}
+                      style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:10, background:BRAND, color:'#fff', border:'none', fontWeight:700, fontSize:12, cursor:'pointer' }}>
+                      <Plus size={13}/> New Report
+                    </button>
+                  )}
+                </div>
+                {kpiMyDrafts.map(r => (
+                  <div key={r.id} style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.1)', borderRadius:14, overflow:'hidden', marginBottom:10 }}>
+                    <div style={{ padding:'12px 16px', display:'flex', alignItems:'center', gap:10 }}>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontWeight:700, color:BRAND }}>{r.emp_name}</div>
+                        <div style={{ fontSize:11, color:'rgba(22,38,96,0.5)' }}>{r.cycle_name} • {r.dept_name}</div>
+                      </div>
+                      {kpiStatusBadge(r.status)}
+                      <button onClick={() => setShowItemsEditor(r.id)}
+                        style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:8, background:'rgba(22,38,96,0.06)', color:BRAND, border:'none', fontSize:11, fontWeight:600, cursor:'pointer' }}>
+                        <Settings size={11}/> Edit Items
+                      </button>
+                      <button onClick={() => handleSubmitKPI(r.id)} disabled={submitLoading===r.id}
+                        style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:8, background:BRAND, color:'#fff', border:'none', fontSize:11, fontWeight:700, cursor:'pointer' }}>
+                        {submitLoading===r.id ? <RefreshCw size={11} style={{ animation:'pa-spin 1s linear infinite' }}/> : <Send size={11}/>} Submit
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {kpiMyDrafts.length === 0 && <div style={{ textAlign:'center', padding:'40px 0', color:'#94a3b8' }}><FileText size={30} style={{ marginBottom:8, opacity:0.3 }}/><div>No drafts. Create one above.</div></div>}
+              </div>
+            )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════ ANNUAL APAR TAB ══════════════════════════════ */}
+      {tab === 'apar' && (
+        <div className="pa-anim">
+          {/* Stats */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:16 }}>
+            {['Completed','Pending Reporting Officer','Pending Reviewing Officer'].map(s => (
+              <div key={s} style={{ background:'#fff', borderRadius:14, padding:'16px', textAlign:'center', border:'1px solid rgba(22,38,96,0.08)', boxShadow:'0 2px 8px rgba(22,38,96,0.04)' }}>
+                <div style={{ fontSize:26, fontWeight:800, color:s==='Completed'?'#10b981':'#d97706' }}>{aparData.filter(a=>a.status===s).length}</div>
+                <div style={{ fontSize:11, fontWeight:500, color:'rgba(22,38,96,0.55)', marginTop:2 }}>{s}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <span style={{ fontSize:15, fontWeight:700, color:BRAND }}>APAR Records</span>
+              <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)}
+                style={{ padding:'6px 10px', borderRadius:8, border:'1px solid rgba(22,38,96,0.15)', fontSize:12, color:BRAND, outline:'none', background:'#fff', color:'#1e293b' }}>
+                {FY_OPTIONS.map(y => <option key={y}>{y}</option>)}
+              </select>
+            </div>
+            {isMin('hr_staff') && (
+              <div style={{ display:'flex', gap: 8 }}>
+                <button onClick={() => setShowYearlyReport(true)}
+                  style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:10, background:'#10b981', color:'#fff', border:'none', fontWeight:700, fontSize:12, cursor:'pointer' }}>
+                  <Sparkles size={13}/> Generate Yearly Report
+                </button>
+              </div>
+            )}
+          </div>
+
+          {aparLoading ? <Loader/> : (
+            <div style={{ background:'#fff', borderRadius:16, overflow:'hidden', border:'1px solid rgba(22,38,96,0.1)', boxShadow:'0 4px 16px rgba(22,38,96,0.04)' }}>
+              <div style={{ overflowX:'auto' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
+                  <thead>
+                    <tr style={{ background:'rgba(22,38,96,0.03)', borderBottom:'1px solid rgba(22,38,96,0.08)' }}>
+                      {['Employee','Dept','Quarter','Reporting','Reviewing','Final','Status','Actions'].map(h => (
+                        <th key={h} style={{ padding:'10px 14px', textAlign:'left', fontSize:11, fontWeight:700, color:'rgba(22,38,96,0.55)', whiteSpace:'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {aparData.length === 0 && (
+                      <tr><td colSpan={9} style={{ padding:'40px', textAlign:'center', color:'#94a3b8' }}>No APAR records for {selectedYear}</td></tr>
+                    )}
+                    {aparData.map(a => (
+                      <tr key={a.id} style={{ borderBottom:'1px solid rgba(22,38,96,0.04)' }}
+                        onMouseEnter={e => e.currentTarget.style.background='rgba(22,38,96,0.02)'}
+                        onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                        <td style={{ padding:'10px 14px' }}>
+                          <div style={{ fontWeight:600, color:BRAND }}>{a.emp_name}</div>
+                          <div style={{ fontSize:11, color:'rgba(22,38,96,0.45)' }}>{a.emp_id}</div>
+                        </td>
+                        <td style={{ padding:'10px 14px', color:'rgba(22,38,96,0.6)', fontSize:12 }}>{a.dept_name}</td>
+                        <td style={{ padding:'10px 14px', color:'rgba(22,38,96,0.6)', fontSize:12 }}>{a.cycle_name}</td>
+                        <td style={{ padding:'10px 14px' }}><GradeTag val={a.reporting_grade}/></td>
+                        <td style={{ padding:'10px 14px' }}><GradeTag val={a.reviewing_grade}/></td>
+                        <td style={{ padding:'10px 14px' }}><GradeTag val={a.final_grade}/></td>
+                        <td style={{ padding:'10px 14px' }}><Badge text={a.status}/></td>
+                        <td style={{ padding:'10px 14px' }}>
+                          <div style={{ display:'flex', gap:5, flexWrap:'nowrap' }}>
+                            {a.status==='Pending Reporting Officer' && isMin('dept_head') && (
+                              <button onClick={() => { setSelected(a); setFillMode('reporting'); setAparForm({ grade:'', remarks:'' }); }}
+                                style={{ padding:'4px 10px', borderRadius:7, background:BRAND, color:'#fff', border:'none', fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>Report</button>
+                            )}
+                            {a.status==='Pending Reviewing Officer' && isMin('hr_manager') && (
+                              <button onClick={() => { setSelected(a); setFillMode('reviewing'); setAparForm({ grade:'', remarks:'' }); }}
+                                style={{ padding:'4px 10px', borderRadius:7, background:BRAND, color:'#fff', border:'none', fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>Review</button>
+                            )}
+                            {isMin('hr_manager') && a.reporting_grade && (
+                              <button onClick={() => handleAIInsights(a.id, true)}
+                                style={{ padding:'4px 10px', borderRadius:7, background:'rgba(124,58,237,0.08)', color:'#7c3aed', border:'1px solid rgba(124,58,237,0.2)', fontSize:11, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:3 }}>
+                                <Sparkles size={10}/> AI
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════ CYCLES TAB ══════════════════════════════ */}
+      {tab === 'cycles' && isMin('hr_manager') && (
+        <div className="pa-anim">
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <div style={{ fontSize:13, fontWeight:700, color:BRAND }}>KPI Cycles</div>
+            <button onClick={() => setShowCreateCycle(true)}
+              style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:10, background:BRAND, color:'#fff', border:'none', fontWeight:700, fontSize:12, cursor:'pointer' }}>
+              <Plus size={13}/> New Cycle
+            </button>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px,1fr))', gap:12 }}>
+            {kpiCycles.map(c => (
+              <div key={c.id} style={{ background:c.is_active?'linear-gradient(135deg,#162660,#1e40af)':'#fff', border:c.is_active?'none':'1px solid rgba(22,38,96,0.1)', borderRadius:14, padding:'16px 18px', color:c.is_active?'#fff':BRAND }}>
+                <div style={{ fontSize:10, fontWeight:700, opacity:0.7, letterSpacing:1 }}>Q{c.quarter} • {c.year}</div>
+                <div style={{ fontSize:16, fontWeight:800, marginTop:2 }}>{c.name}</div>
+                <div style={{ fontSize:11, opacity:0.65, marginTop:4 }}>
+                  {new Date(c.start_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})} — {new Date(c.end_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}
+                </div>
+                {c.is_active && <div style={{ marginTop:6, fontSize:10, fontWeight:700, background:'rgba(255,255,255,0.2)', borderRadius:10, padding:'2px 8px', display:'inline-block' }}>● ACTIVE</div>}
+              </div>
+            ))}
           </div>
         </div>
       )}
 
+      {/* ══════════════════════════════ MODALS ══════════════════════════════ */}
+
+      {/* AI Insights */}
+      {aiLoading && <Modal title="Generating AI Insights…" onClose={() => {}} theme="light"><Loader/></Modal>}
+      {aiInsights && !aiLoading && <AIInsightsModal insights={aiInsights} onClose={() => setAIInsights(null)}/>}
+
+      {/* Create KPI Report */}
+      {showCreateReport && (
+        <Modal title="Create KPI Report" onClose={() => setShowCreateReport(false)} theme="light">
+          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+            <div>
+              <label style={{ fontSize:11, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:4 }}>CYCLE *</label>
+              <select value={createReportForm.cycle_id} onChange={e => setCreateReportForm(p => ({...p, cycle_id:e.target.value}))}
+                style={{ width:'100%', padding:'8px 12px', borderRadius:10, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', background:'#fff', color:'#1e293b' }}>
+                <option value="">Select cycle…</option>
+                {kpiCycles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize:11, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:4 }}>EMPLOYEE *</label>
+              <select value={createReportForm.emp_id} onChange={e => setCreateReportForm(p => ({...p, emp_id:e.target.value}))}
+                style={{ width:'100%', padding:'8px 12px', borderRadius:10, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', background:'#fff', color:'#1e293b' }}>
+                <option value="">Select employee…</option>
+                {employees.map(e => <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name} ({e.emp_id})</option>)}
+              </select>
+            </div>
+            <button onClick={createKPIReport}
+              style={{ padding:'10px', borderRadius:10, background:'linear-gradient(135deg,#162660,#1e40af)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer' }}>
+              Create Report
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Create Cycle */}
+      {showCreateCycle && (
+        <Modal title="Create KPI Cycle" onClose={() => setShowCreateCycle(false)} theme="light">
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+              <div>
+                <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:3 }}>QUARTER *</label>
+                <select value={cycleForm.quarter} onChange={e => setCycleForm(p => ({...p, quarter:e.target.value}))}
+                  style={{ width:'100%', padding:'7px 10px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', background:'#fff', color:'#1e293b' }}>
+                  <option value="">Select…</option>
+                  {[1,2,3,4].map(q => <option key={q} value={q}>Q{q}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:3 }}>YEAR *</label>
+                <input type="number" value={cycleForm.year} onChange={e => setCycleForm(p => ({...p, year:e.target.value}))}
+                  style={{ width:'100%', padding:'7px 10px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+              <div>
+                <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:3 }}>START DATE</label>
+                <input type="date" value={cycleForm.start_date} onChange={e => setCycleForm(p => ({...p, start_date:e.target.value}))}
+                  style={{ width:'100%', padding:'7px 10px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
+              </div>
+              <div>
+                <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:3 }}>END DATE</label>
+                <input type="date" value={cycleForm.end_date} onChange={e => setCycleForm(p => ({...p, end_date:e.target.value}))}
+                  style={{ width:'100%', padding:'7px 10px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
+              </div>
+            </div>
+            <button onClick={createKPICycle}
+              style={{ padding:'10px', borderRadius:10, background:'linear-gradient(135deg,#162660,#1e40af)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', marginTop:4 }}>
+              Create Cycle
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* KPI Items Editor */}
+      {showItemsEditor && (
+        <Modal title="Edit KPI Items" onClose={() => setShowItemsEditor(null)} theme="light">
+          <ItemsEditor reportId={showItemsEditor} onSaved={() => { setShowItemsEditor(null); loadKPI(); }}/>
+        </Modal>
+      )}
+
+      {/* APAR Grade Fill */}
       {fillMode && selected && (
-        <Modal title={`Fill APAR — ${fillMode.charAt(0).toUpperCase()+fillMode.slice(1)} Assessment`} onClose={()=>{ setFillMode(null); setSelected(null); }} theme="light">
-          <p className="text-sm mb-4" style={{ color: 'rgba(22, 38, 96, 0.7)' }}>
-            Employee: <strong style={{ color: '#162660' }}>{selected.emp_name}</strong> | Year: <strong style={{ color: '#162660' }}>{selected.financial_year}</strong>
-          </p>
-          <div className="mb-4">
-            <label className="text-sm font-semibold block mb-2" style={{ color: '#162660' }}>Grade</label>
-            <div className="flex gap-2 flex-wrap">
-              {GRADES.map(g=>(
-                <button 
-                  key={g} 
-                  onClick={()=>setForm({...form,grade:g})}
-                  className="px-4 py-2 rounded-lg text-sm border font-semibold transition-all duration-200"
-                  style={form.grade===g?{background:COLOR[g],color:'#fff',borderColor:COLOR[g],boxShadow:`0 4px 12px ${COLOR[g]}40`}:{background:'#fff',borderColor:'rgba(22, 38, 96, 0.15)',color:'#162660'}}>
-                  {g}
-                </button>
+        <Modal title={`APAR — ${fillMode.charAt(0).toUpperCase()+fillMode.slice(1)} Assessment`} onClose={() => { setFillMode(null); setSelected(null); }} theme="light">
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <p style={{ fontSize:13, color:'rgba(22,38,96,0.7)', margin:0 }}>
+              Employee: <strong style={{ color:BRAND }}>{selected.emp_name}</strong> &nbsp;|&nbsp; Quarter: <strong style={{ color:BRAND }}>{selected.cycle_name}</strong>
+            </p>
+            {fillMode === 'reviewing' && (
+              <button onClick={handleAutoGenerateFinal}
+                style={{ padding:'5px 12px', borderRadius:8, background:'rgba(124,58,237,0.1)', color:'#7c3aed', border:'1px solid rgba(124,58,237,0.3)', fontSize:11, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
+                <Sparkles size={12}/> Auto-Generate Final Report
+              </button>
+            )}
+          </div>
+          <div style={{ marginBottom:14 }}>
+            <label style={{ fontSize:12, fontWeight:700, color:BRAND, display:'block', marginBottom:8 }}>Grade</label>
+            <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+              {GRADES.map(g => (
+                <button key={g} onClick={() => setAparForm({...aparForm, grade:g})}
+                  style={{ padding:'7px 14px', borderRadius:9, fontSize:13, border:'1px solid', fontWeight:600, cursor:'pointer', transition:'all 0.15s',
+                    background: aparForm.grade===g ? GRADE_COLOR[g] : '#fff',
+                    color: aparForm.grade===g ? '#fff' : '#162660',
+                    borderColor: aparForm.grade===g ? GRADE_COLOR[g] : 'rgba(22,38,96,0.15)',
+                    boxShadow: aparForm.grade===g ? `0 4px 12px ${GRADE_COLOR[g]}50` : 'none',
+                  }}>{g}</button>
               ))}
             </div>
           </div>
-          <div className="mb-4">
-            <label className="text-xs block mb-1 font-semibold" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>Remarks</label>
-            <textarea 
-              className="input" 
-              rows={3} 
-              value={form.remarks} 
-              onChange={e=>setForm({...form,remarks:e.target.value})}
-              style={{
-                background: '#fff',
-                border: '1px solid rgba(22, 38, 96, 0.15)',
-                color: '#162660'
-              }}
-            />
+          <div style={{ marginBottom:14 }}>
+            <label style={{ fontSize:11, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:4 }}>REMARKS</label>
+            <textarea rows={3} value={aparForm.remarks} onChange={e => setAparForm({...aparForm, remarks:e.target.value})}
+              style={{ width:'100%', borderRadius:10, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, padding:'8px 12px', resize:'vertical', fontFamily:'inherit', outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
           </div>
-          <button 
-            className="btn w-full font-semibold transition-all duration-200" 
-            disabled={!form.grade} 
-            onClick={submitFill}
-            style={{
-              background: '#162660',
-              color: '#FEFEFA',
-              boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
-            }}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.disabled) {
-                e.currentTarget.style.background = '#68aae8';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.3)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#162660';
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
-            }}
-          >
+          <button disabled={!aparForm.grade} onClick={submitAparFill}
+            style={{ width:'100%', padding:'11px', borderRadius:10, background:'linear-gradient(135deg,#162660,#1e40af)', color:'#fff', border:'none', fontWeight:700, fontSize:14, cursor:'pointer', opacity:aparForm.grade?1:0.5 }}>
             Submit
           </button>
         </Modal>
       )}
 
+      {/* APAR Initiate */}
       {showInit && (
-        <Modal title="Initiate APAR" onClose={()=>setShowInit(false)} theme="light">
-          <div className="grid grid-cols-2 gap-3">
+        <Modal title="Initiate APAR" onClose={() => setShowInit(false)} theme="light">
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:14 }}>
             <div>
-              <label className="text-xs block mb-1 font-semibold" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>Employee ID</label>
-              <input 
-                className="input" 
-                value={initForm.emp_id} 
-                onChange={e=>setInitForm({...initForm,emp_id:e.target.value})}
-                style={{
-                  background: '#fff',
-                  border: '1px solid rgba(22, 38, 96, 0.15)',
-                  color: '#162660'
-                }}
-              />
+              <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:4 }}>EMPLOYEE ID</label>
+              <input value={initForm.emp_id} onChange={e => setInitForm({...initForm, emp_id:e.target.value})}
+                style={{ width:'100%', padding:'8px 12px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
             </div>
             <div>
-              <label className="text-xs block mb-1 font-semibold" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>Financial Year</label>
-              <select 
-                className="input" 
-                value={initForm.financial_year} 
-                onChange={e=>setInitForm({...initForm,financial_year:e.target.value})}
-                style={{
-                  background: '#fff',
-                  border: '1px solid rgba(22, 38, 96, 0.15)',
-                  color: '#162660'
-                }}
-              >
-                <option value="" style={{ color: '#162660', background: '#fff' }}>Select</option>
-                {FY_OPTIONS.map(y=><option key={y} style={{ color: '#162660', background: '#fff' }}>{y}</option>)}
+              <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:4 }}>QUARTER</label>
+              <select value={initForm.cycle_name} onChange={e => setInitForm({...initForm, cycle_name:e.target.value})}
+                style={{ width:'100%', padding:'8px 12px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', background:'#fff', color:'#1e293b' }}>
+                <option value="">Select…</option>
+                {FY_OPTIONS.map(y => <option key={y}>{y}</option>)}
               </select>
             </div>
           </div>
-          <button 
-            className="btn w-full mt-4 font-semibold transition-all duration-200" 
-            onClick={initiate}
-            style={{
-              background: '#162660',
-              color: '#FEFEFA',
-              boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#68aae8';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#162660';
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
-            }}
-          >
+          <button onClick={initAPAR}
+            style={{ padding:'10px', borderRadius:10, background:'linear-gradient(135deg,#162660,#1e40af)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', marginTop:4 }}>
             Initiate APAR
           </button>
         </Modal>
       )}
 
-      {aiInsights && (
-        <Modal title="✨ AI KPI Insights" onClose={()=>setAiInsights(null)} theme="light">
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl" style={{ background: 'rgba(104, 170, 232, 0.08)', border: '1px solid rgba(104, 170, 232, 0.2)' }}>
-              <h4 className="font-semibold mb-2" style={{ color: '#162660' }}>Summary & Sentiment</h4>
-              <p className="text-sm" style={{ color: 'rgba(22, 38, 96, 0.8)' }}>{aiInsights.summary}</p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl" style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
-                <h4 className="font-semibold mb-2" style={{ color: '#065f46' }}>Key Strengths</h4>
-                <ul className="list-disc pl-4 text-sm space-y-1" style={{ color: '#065f46' }}>
-                  {aiInsights.key_strengths.map((s,i)=><li key={i}>{s}</li>)}
-                </ul>
+      {/* Yearly Report Modal */}
+      {showYearlyReport && (
+        <Modal title="Generate Yearly APAR Report" onClose={() => { setShowYearlyReport(false); setYearlyResult(null); }} theme="light">
+          {yearlyLoading ? (
+            <div style={{ display:'flex', justifyContent:'center', padding:40 }}><Loader/></div>
+          ) : !yearlyResult ? (
+            <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:14 }}>
+              <div>
+                <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:4 }}>EMPLOYEE *</label>
+                <select value={yearlyForm.emp_id} onChange={e => setYearlyForm({...yearlyForm, emp_id:e.target.value})}
+                  style={{ width:'100%', padding:'8px 12px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', background:'#fff', color:'#1e293b' }}>
+                  <option value="">Select Employee...</option>
+                  {employees.map(e => <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name} ({e.emp_id})</option>)}
+                </select>
               </div>
-              <div className="p-4 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.15)' }}>
-                <h4 className="font-semibold mb-2" style={{ color: '#92400e' }}>Areas for Improvement</h4>
-                <ul className="list-disc pl-4 text-sm space-y-1" style={{ color: '#92400e' }}>
-                  {aiInsights.areas_for_improvement.map((s,i)=><li key={i}>{s}</li>)}
-                </ul>
+              <div>
+                <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:4 }}>YEAR *</label>
+                <select value={yearlyForm.year} onChange={e => setYearlyForm({...yearlyForm, year:e.target.value})}
+                  style={{ width:'100%', padding:'8px 12px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', background:'#fff', color:'#1e293b' }}>
+                  <option value="">Select Year...</option>
+                  {Array.from(new Set(FY_OPTIONS.map(o => o.split(' ')[1]))).filter(Boolean).map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                <button disabled={!yearlyForm.emp_id || !yearlyForm.year} onClick={() => handleGenerateYearlyReport(false)}
+                  style={{ flex: 1, padding:'11px', borderRadius:10, background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', border:'none', fontWeight:700, fontSize:14, cursor:'pointer', opacity:yearlyForm.emp_id?1:0.5 }}>
+                  <Sparkles size={14} style={{ display:'inline', marginRight: 4, verticalAlign: 'middle' }}/> Generate with AI
+                </button>
+                <button disabled={!yearlyForm.emp_id || !yearlyForm.year} onClick={() => handleGenerateYearlyReport(true)}
+                  style={{ flex: 1, padding:'11px', borderRadius:10, background:'#e2e8f0', color:'#475569', border:'none', fontWeight:700, fontSize:14, cursor:'pointer', opacity:yearlyForm.emp_id?1:0.5 }}>
+                  Generate Manually
+                </button>
               </div>
             </div>
-
-            <div className="p-4 rounded-xl mt-4" style={{ background: 'rgba(22, 38, 96, 0.02)', border: '1px solid rgba(22, 38, 96, 0.08)' }}>
-              <p className="text-sm font-semibold mb-1" style={{ color: '#162660' }}>KPI Alignment</p>
-              <p className="text-sm mb-3" style={{ color: 'rgba(22, 38, 96, 0.7)' }}>{aiInsights.kpi_alignment}</p>
+          ) : (
+            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+              <div style={{ padding:16, background:'#f8fafc', borderRadius:12, border:'1px solid #e2e8f0' }}>
+                <div style={{ fontSize:11, fontWeight:700, color:'#64748b', marginBottom:4 }}>SUGGESTED ANNUAL GRADE</div>
+                <div style={{ fontSize:18, fontWeight:800, color:BRAND }}>
+                  {yearlyResult.suggested_annual_grade}
+                  {yearlyResult.average_percentage !== undefined && <span style={{ color:'#64748b', fontSize:14, marginLeft:8 }}>({yearlyResult.average_percentage}%)</span>}
+                </div>
+              </div>
+              {yearlyResult.quarterly_data && yearlyResult.quarterly_data.length > 0 && (
+                <div style={{ padding: 16, border: '1px solid #e2e8f0', borderRadius: 12, background: '#fff' }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:'#64748b', marginBottom:12 }}>PERFORMANCE TRAJECTORY (KPI SCORE / 100)</div>
+                  <div style={{ height: 240, width: '100%', marginTop: 8 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={yearlyResult.quarterly_data.map(d => ({ ...d, shortQuarter: d.quarter.split('-')[0] }))} margin={{ top: 10, right: 20, left: -20, bottom: 0 }} barSize={32}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="shortQuarter" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} dy={10} />
+                        <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                        <Tooltip 
+                          contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)', padding: '12px 16px', zIndex: 10 }}
+                          labelStyle={{ fontWeight: 700, color: '#1e293b', marginBottom: 4 }}
+                          itemStyle={{ fontWeight: 600, color: '#3b82f6' }}
+                          cursor={{ fill: '#f1f5f9' }}
+                          formatter={(value, name, props) => [`${value}/100 (${props.payload.grade})`, 'Score']}
+                        />
+                        <Bar dataKey="score" fill="#3b82f6" radius={[6, 6, 0, 0]}>
+                          {yearlyResult.quarterly_data.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.score > 80 ? '#22c55e' : entry.score > 50 ? '#3b82f6' : '#f59e0b'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
               
-              <p className="text-sm font-semibold mb-1" style={{ color: '#162660' }}>AI Recommendation</p>
-              <p className="text-sm" style={{ color: 'rgba(22, 38, 96, 0.7)' }}>{aiInsights.recommendation}</p>
+              {/* Annual Summary Text Removed */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginTop: 8 }}>
+                <div>
+                  <div style={{ fontSize:11, fontWeight:700, color:'#64748b', marginBottom:8 }}>KEY STRENGTHS</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                    {(yearlyResult.key_annual_strengths||[]).map((s,i) => (
+                      <span key={i} style={{ background:'#dcfce7', color:'#166534', padding:'4px 10px', borderRadius:20, fontSize:12, fontWeight:600 }}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize:11, fontWeight:700, color:'#64748b', marginBottom:8 }}>DEVELOPMENT AREAS</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                    {(yearlyResult.annual_development_areas||[]).map((s,i) => (
+                      <span key={i} style={{ background:'#fee2e2', color:'#991b1b', padding:'4px 10px', borderRadius:20, fontSize:12, fontWeight:600 }}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => { setShowYearlyReport(false); setYearlyResult(null); }}
+                style={{ marginTop:10, padding:'11px', borderRadius:10, background:'#cbd5e1', color:'#1e293b', border:'none', fontWeight:700, fontSize:14, cursor:'pointer' }}>
+                Close Report
+              </button>
             </div>
-          </div>
-          <button 
-            className="btn w-full mt-6 font-semibold transition-all duration-200" 
-            onClick={()=>setAiInsights(null)}
-            style={{
-              background: '#162660',
-              color: '#FEFEFA',
-              boxShadow: '0 4px 15px rgba(22, 38, 96, 0.2)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#68aae8';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#162660';
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.2)';
-            }}
-          >
-            Close
-          </button>
+          )}
         </Modal>
-      )}
-      
-      {loadingInsights && (
-        <div className="modal-overlay">
-          <div className="p-8 rounded-2xl flex flex-col items-center border" style={{ background: '#fff', borderColor: 'rgba(22, 38, 96, 0.12)', boxShadow: '0 20px 40px rgba(22, 38, 96, 0.15)' }}>
-            <div className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin mb-4" style={{ borderColor: '#162660', borderTopColor: 'transparent' }}></div>
-            <p className="font-medium animate-pulse" style={{ color: '#162660' }}>Analyzing Performance Data...</p>
-          </div>
-        </div>
       )}
     </Layout>
   );

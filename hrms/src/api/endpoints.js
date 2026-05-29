@@ -72,6 +72,7 @@ export const aparAPI = {
   fillReporting: (id, data) => API.put(`/apar/${id}/reporting`, data),
   fillReviewing: (id, data) => API.put(`/apar/${id}/reviewing`, data),
   aiInsights: (id) => API.get(`/apar/${id}/ai-insights`),
+  yearlyReportAI: (params) => API.get('/apar/yearly-report-ai', { params }),
 };
 
 // Service Book
@@ -168,3 +169,20 @@ export const notificationAPI = {
   markRead: (id) => API.put(`/notifications/${id}/read`),
   markAllRead: () => API.put('/notifications/read-all'),
 };
+
+// KPI
+export const kpiAPI = {
+  listCycles:       ()           => API.get('/kpi/cycles'),
+  createCycle:      (data)       => API.post('/kpi/cycles', data),
+  listReports:      (params)     => API.get('/kpi/reports', { params }),
+  createReport:     (data)       => API.post('/kpi/reports', data),
+  getReport:        (id)         => API.get(`/kpi/reports/${id}`),
+  saveItems:        (id, data)   => API.put(`/kpi/reports/${id}/items`, data),
+  submitReport:     (id)         => API.put(`/kpi/reports/${id}/submit`),
+  cpoAction:        (id, data)   => API.put(`/kpi/reports/${id}/cpo`, data),
+  cooAction:        (id, data)   => API.put(`/kpi/reports/${id}/coo`, data),
+  mdAction:         (id, data)   => API.put(`/kpi/reports/${id}/md`, data),
+  publishReport:    (id)         => API.put(`/kpi/reports/${id}/publish`),
+  aiInsights:       (id)         => API.get(`/kpi/reports/${id}/ai-insights`),
+};
+
