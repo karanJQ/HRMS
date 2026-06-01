@@ -56,3 +56,19 @@ exports.update = async (req, res) => {
     return success(res, result.rows[0]);
   } catch (err) { return error(res, err.message); }
 };
+
+exports.sendAlert = async (req, res) => {
+  const { empId } = req.params;
+  try {
+    const userRes = await query(`SELECT id FROM users WHERE emp_id = $1`, [empId]);
+    if (userRes.rowCount === 0) return error(res, 'User account not found for this employee.', 404);
+    
+    await query(
+      `INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)`,
+      [userRes.rows[0].id, 'Pre-Retirement Action Required', 'Action Required: Please review and complete your pending pre-retirement checklist items.', 'ALERT']
+    );
+    return success(res, null, 'Alert sent successfully');
+  } catch (err) { 
+    return error(res, err.message); 
+  }
+};

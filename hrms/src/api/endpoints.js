@@ -94,6 +94,7 @@ export const trainingAPI = {
 export const retirementAPI = {
   list: () => API.get('/retirement'),
   update: (empId, data) => API.put(`/retirement/${empId}`, data),
+  sendAlert: (empId) => API.post(`/retirement/${empId}/alert`),
 };
 
 // Grievances

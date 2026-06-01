@@ -34,7 +34,7 @@ export default function Reports() {
     <Layout title="Reports & Analytics" theme="light" bg="#F8F8FF">
       <div className="flex gap-2 mb-5 flex-wrap items-center justify-between">
         <div className="flex gap-2">
-          {['headcount','payroll','leave','categories'].map(t=>(
+          {['headcount','payroll','leave'].map(t=>(
             <button key={t} className={`tab ${tab===t?'active':''}`} onClick={()=>setTab(t)}>
               {t.charAt(0).toUpperCase()+t.slice(1)}
             </button>
@@ -78,27 +78,6 @@ export default function Reports() {
                     <YAxis tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 12 }} axisLine={false} tickLine={false}/>
                     <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid rgba(22,38,96,0.1)', borderRadius: '8px', color: '#162660' }}/>
                     <Bar dataKey="count" fill="#3b82f6" name="Employees" radius={[4,4,0,0]}/>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div 
-                className="hover-card animate-slide-up"
-                style={{ 
-                  background: '#fff', 
-                  borderRadius: '16px', 
-                  padding: '24px', 
-                  border: '1px solid rgba(22, 38, 96, 0.1)', 
-                  boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
-                }}
-              >
-                <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>By Grade</h3>
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={headcount.by_grade} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(22,38,96,0.06)" vertical={false}/>
-                    <XAxis type="number" tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 12 }} axisLine={false} tickLine={false}/>
-                    <YAxis dataKey="grade" type="category" tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 12 }} width={70} axisLine={false} tickLine={false}/>
-                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid rgba(22,38,96,0.1)', borderRadius: '8px', color: '#162660' }}/>
-                    <Bar dataKey="count" fill="#8b5cf6" name="Employees" radius={[0,4,4,0]}/>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -237,66 +216,6 @@ export default function Reports() {
           </div>
         )}
 
-        {tab==='categories' && headcount && (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-5">
-              <div 
-                className="hover-card animate-slide-up"
-                style={{ 
-                  background: '#fff', 
-                  borderRadius: '16px', 
-                  padding: '24px', 
-                  border: '1px solid rgba(22, 38, 96, 0.1)', 
-                  boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
-                }}
-              >
-                <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Category Distribution</h3>
-                <ResponsiveContainer width="100%" height={280}>
-                  <PieChart>
-                    <Pie data={headcount.by_category?.map(c=>({name:c.category,value:parseInt(c.count)}))} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({name,value})=>`${name}: ${value}`}>
-                      {headcount.by_category?.map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid rgba(22,38,96,0.1)', borderRadius: '8px', color: '#162660' }}/>
-                    <Legend/>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div 
-                className="hover-card animate-slide-up"
-                style={{ 
-                  background: '#fff', 
-                  borderRadius: '16px', 
-                  padding: '24px', 
-                  border: '1px solid rgba(22, 38, 96, 0.1)', 
-                  boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
-                }}
-              >
-                <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Reservation Compliance</h3>
-                <div className="space-y-4 mt-2">
-                  {[['SC','15%'],['ST','7.5%'],['OBC','27%'],['EWS','10%']].map(([cat,mandate])=>{
-                    const total = headcount.by_category?.reduce((s,c)=>s+parseInt(c.count),0)||1;
-                    const found = headcount.by_category?.find(c=>c.category===cat);
-                    const pct = found ? ((parseInt(found.count)/total)*100).toFixed(1) : 0;
-                    return (
-                      <div key={cat}>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="font-medium" style={{ color: '#162660' }}>{cat} (Mandate: {mandate})</span>
-                          <span className="font-bold" style={{ color: '#162660' }}>{pct}%</span>
-                        </div>
-                        <div className="bg-slate-100 rounded-full h-3">
-                          <div className="h-3 rounded-full bg-blue-500 transition-all" style={{width:`${Math.min(100,parseFloat(pct))}%`}}></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
-                  Based on current active employee data
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </>}
     </Layout>
   );

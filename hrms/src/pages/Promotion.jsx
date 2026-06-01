@@ -183,8 +183,7 @@ export default function Promotion() {
                     <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{p.emp_id}</div>
                   </td>
                   <td style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{p.dept_name}</td>
-                  <td style={{ color: 'rgba(22, 38, 96, 0.6)' }} className="text-sm">{p.from_designation_name||'—'}</td>
-                  <td className="font-medium text-indigo-600">{p.to_designation_name}</td>
+
                   <td>
                     <span 
                       className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold border"
@@ -232,7 +231,7 @@ export default function Promotion() {
             <table>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
-                  {['#', 'Employee', 'Dept', 'Designation', 'DOJ', 'Service Years', 'Grade', 'Category'].map(h => (
+                  {['#', 'Employee', 'Dept', 'DOJ', 'Service Years'].map(h => (
                     <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
                   ))}
                 </tr>
@@ -258,11 +257,8 @@ export default function Promotion() {
                     <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{e.emp_id}</div>
                   </td>
                   <td style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{e.dept_name}</td>
-                  <td style={{ color: '#162660' }}>{e.designation_name||'—'}</td>
                   <td style={{ color: '#162660' }}>{e.doj?.split('T')[0]}</td>
                   <td style={{ color: '#162660' }}>{e.service_years||0} yrs</td>
-                  <td><Badge text={e.grade||'—'}/></td>
-                  <td><Badge text={e.category}/></td>
                 </tr>
               ))}</tbody>
             </table>
@@ -275,8 +271,7 @@ export default function Promotion() {
           <div className="grid grid-cols-2 gap-3">
             {renderField("emp_id", "Employee ID")}
             {renderField("basis", "Basis", "text", ['DPC','Seniority','Merit','Seniority+DPC'])}
-            {renderField("from_designation_name", "Current Designation", "text", DESIGS)}
-            {renderField("to_designation_name", "Promoted To", "text", DESIGS)}
+
             {renderField("from_pay_level", "Current Pay Level", "number")}
             {renderField("to_pay_level", "New Pay Level", "number")}
             {renderField("dpc_meeting_date", "DPC Meeting Date", "date")}

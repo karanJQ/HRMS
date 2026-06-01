@@ -3,16 +3,15 @@ const bcrypt = require('bcryptjs');
 const { pool, query } = require('../config/database');
 
 const DEPTS = [
-  { name: 'Education', code: 'EDU' },
-  { name: 'Health', code: 'HLT' },
-  { name: 'Revenue', code: 'REV' },
-  { name: 'Police', code: 'POL' },
-  { name: 'Agriculture', code: 'AGR' },
-  { name: 'Water Supply', code: 'WSP' },
-  { name: 'Urban Development', code: 'UDV' },
-  { name: 'Finance', code: 'FIN' },
-  { name: 'Forest', code: 'FOR' },
-  { name: 'Transport', code: 'TRP' },
+  { name: 'development', code: 'DEV' },
+  { name: 'BA/BDE', code: 'BABDE' },
+  { name: 'management', code: 'MGT' },
+  { name: 'IT', code: 'IT' },
+  { name: 'QA', code: 'QA' },
+  { name: 'UI/UX', code: 'UIUX' },
+  { name: 'marketing', code: 'MKT' },
+  { name: 'sales', code: 'SALES' },
+  { name: 'HR', code: 'HR' },
 ];
 
 const DESIGS = [
@@ -71,16 +70,16 @@ async function seed() {
       `INSERT INTO users(username, email, password_hash, role, dept_id, is_active)
        VALUES('hr_manager', 'hr@hrms.gov.in', $1, 'hr_manager', $2, true)
        ON CONFLICT(email) DO NOTHING`,
-      [hrHash, deptMap['Finance']]
+      [hrHash, deptMap['HR']]
     );
 
     console.log('🌱 Seeding sample employees...');
     const sampleEmployees = [
-      { emp_id:'EMP00001', first_name:'Rajesh', last_name:'Kumar Patel', gender:'Male', dob:'1990-05-12', mobile:'9876543210', official_email:'rajesh@gov.in', dept:'Education', desig:'Senior Teacher', grade:'Grade-B', pay_level:8, basic_pay:45000, category:'General', district:'Ahmedabad', posting_station:'Govt High School, Naranpura', doj:'2023-03-15', pan_number:'ABCDE1234F', pf_number:'GJ/AHM/12345', bank_name:'SBI', account_number:'3721849300', ifsc_code:'SBIN0001234', blood_group:'B+', qualification:'M.Ed', nominee_name:'Priya Patel' },
-      { emp_id:'EMP00002', first_name:'Meena', last_name:'Sharma', gender:'Female', dob:'1992-11-22', mobile:'9765432109', official_email:'meena@gov.in', dept:'Health', desig:'Staff Nurse', grade:'Grade-C', pay_level:6, basic_pay:35000, category:'OBC', district:'Surat', posting_station:'Civil Hospital, Surat', doj:'2022-08-01', pan_number:'FGHIJ5678K', pf_number:'GJ/SRT/54321', bank_name:'BOB', account_number:'9876543210', ifsc_code:'BARB0SURATX', blood_group:'A+', qualification:'B.Sc Nursing', nominee_name:'Suresh Sharma' },
-      { emp_id:'EMP00003', first_name:'Amit', last_name:'Desai', gender:'Male', dob:'1988-07-30', mobile:'9654321098', official_email:'amit@gov.in', dept:'Revenue', desig:'Talati', grade:'Grade-D', pay_level:4, basic_pay:28000, category:'SC', district:'Vadodara', posting_station:'Vadodara Collectorate', doj:'2021-01-10', pan_number:'KLMNO9012P', pf_number:'GJ/VDR/98765', bank_name:'PNB', account_number:'1234567890', ifsc_code:'PUNB0VDRXXX', blood_group:'O+', qualification:'BA', nominee_name:'Rita Desai' },
-      { emp_id:'EMP00004', first_name:'Sunita', last_name:'Joshi', gender:'Female', dob:'1978-03-18', mobile:'9543210987', official_email:'sunita@gov.in', dept:'Education', desig:'Headmaster', grade:'Grade-A', pay_level:10, basic_pay:55000, category:'General', district:'Rajkot', posting_station:'Govt Primary School, Rajkot', doj:'2015-06-01', pan_number:'QRSTU3456V', pf_number:'GJ/RJK/11111', bank_name:'SBI', account_number:'5432198760', ifsc_code:'SBIN0002345', blood_group:'AB+', qualification:'M.Ed, M.Phil', nominee_name:'Mahesh Joshi' },
-      { emp_id:'EMP00005', first_name:'Vikram', last_name:'Singh', gender:'Male', dob:'1995-12-05', mobile:'9432109876', official_email:'vikram@gov.in', dept:'Police', desig:'Sub-Inspector', grade:'Grade-B', pay_level:7, basic_pay:40000, category:'OBC', district:'Bhavnagar', posting_station:'Bhavnagar Police Station', doj:'2020-09-15', pan_number:'VWXYZ7890A', pf_number:'GJ/BVN/22222', bank_name:'BOI', account_number:'6543219870', ifsc_code:'BKID0BHVNGR', blood_group:'B-', qualification:'BA, Police Training', nominee_name:'Kamla Singh' },
+      { emp_id:'EMP00001', first_name:'Rajesh', last_name:'Kumar Patel', gender:'Male', dob:'1990-05-12', mobile:'9876543210', official_email:'rajesh@gov.in', dept:'development', desig:'Senior Teacher', grade:'Grade-B', pay_level:8, basic_pay:45000, category:'General', district:'Ahmedabad', posting_station:'Govt High School, Naranpura', doj:'2023-03-15', pan_number:'ABCDE1234F', pf_number:'GJ/AHM/12345', bank_name:'SBI', account_number:'3721849300', ifsc_code:'SBIN0001234', blood_group:'B+', qualification:'M.Ed', nominee_name:'Priya Patel' },
+      { emp_id:'EMP00002', first_name:'Meena', last_name:'Sharma', gender:'Female', dob:'1992-11-22', mobile:'9765432109', official_email:'meena@gov.in', dept:'IT', desig:'Staff Nurse', grade:'Grade-C', pay_level:6, basic_pay:35000, category:'OBC', district:'Surat', posting_station:'Civil Hospital, Surat', doj:'2022-08-01', pan_number:'FGHIJ5678K', pf_number:'GJ/SRT/54321', bank_name:'BOB', account_number:'9876543210', ifsc_code:'BARB0SURATX', blood_group:'A+', qualification:'B.Sc Nursing', nominee_name:'Suresh Sharma' },
+      { emp_id:'EMP00003', first_name:'Amit', last_name:'Desai', gender:'Male', dob:'1988-07-30', mobile:'9654321098', official_email:'amit@gov.in', dept:'sales', desig:'Talati', grade:'Grade-D', pay_level:4, basic_pay:28000, category:'SC', district:'Vadodara', posting_station:'Vadodara Collectorate', doj:'2021-01-10', pan_number:'KLMNO9012P', pf_number:'GJ/VDR/98765', bank_name:'PNB', account_number:'1234567890', ifsc_code:'PUNB0VDRXXX', blood_group:'O+', qualification:'BA', nominee_name:'Rita Desai' },
+      { emp_id:'EMP00004', first_name:'Sunita', last_name:'Joshi', gender:'Female', dob:'1978-03-18', mobile:'9543210987', official_email:'sunita@gov.in', dept:'QA', desig:'Headmaster', grade:'Grade-A', pay_level:10, basic_pay:55000, category:'General', district:'Rajkot', posting_station:'Govt Primary School, Rajkot', doj:'2015-06-01', pan_number:'QRSTU3456V', pf_number:'GJ/RJK/11111', bank_name:'SBI', account_number:'5432198760', ifsc_code:'SBIN0002345', blood_group:'AB+', qualification:'M.Ed, M.Phil', nominee_name:'Mahesh Joshi' },
+      { emp_id:'EMP00005', first_name:'Vikram', last_name:'Singh', gender:'Male', dob:'1995-12-05', mobile:'9432109876', official_email:'vikram@gov.in', dept:'management', desig:'Sub-Inspector', grade:'Grade-B', pay_level:7, basic_pay:40000, category:'OBC', district:'Bhavnagar', posting_station:'Bhavnagar Police Station', doj:'2020-09-15', pan_number:'VWXYZ7890A', pf_number:'GJ/BVN/22222', bank_name:'BOI', account_number:'6543219870', ifsc_code:'BKID0BHVNGR', blood_group:'B-', qualification:'BA, Police Training', nominee_name:'Kamla Singh' },
     ];
 
     const desigRes = await client.query('SELECT id, name FROM designations');
@@ -168,7 +167,7 @@ await client.query(
        ('First Aid & Emergency Response', $3, '2025-04-01', '2025-04-03', 'Civil Hospital Ahmedabad', 30, true, 'Upcoming', $2),
        ('Revenue Record Management', $4, '2025-02-10', '2025-02-14', 'Mantralaya Gandhinagar', 40, false, 'Completed', $2)
        ON CONFLICT DO NOTHING`,
-      [deptMap['Education'], adminId, deptMap['Health'], deptMap['Revenue']]
+       [deptMap['development'], adminId, deptMap['IT'], deptMap['sales']]
     );
 
     // Sample grievance

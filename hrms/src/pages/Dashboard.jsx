@@ -148,7 +148,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold truncate" style={{ color: '#162660' }}>{b.first_name} {b.last_name}</p>
-                    <p className="text-[10px]" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{b.dept_name} • {b.designation_name || ''}</p>
+                    <p className="text-[10px]" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{b.dept_name}</p>
                   </div>
                   <span className="text-xs font-bold text-pink-500">{new Date(b.dob).getDate()} {MONTHS[new Date(b.dob).getMonth()]}</span>
                 </div>
@@ -179,7 +179,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold truncate" style={{ color: '#162660' }}>{a.first_name} {a.last_name}</p>
-                    <p className="text-[10px]" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{a.dept_name} • {a.designation_name || ''}</p>
+                    <p className="text-[10px]" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{a.dept_name}</p>
                   </div>
                   <span className="text-xs font-bold text-amber-500">{new Date(a.doj).getDate()} {MONTHS[new Date(a.doj).getMonth()]} • {a.years_completed} {parseInt(a.years_completed) === 1 ? 'Year' : 'Years'} 🎉</span>
                 </div>

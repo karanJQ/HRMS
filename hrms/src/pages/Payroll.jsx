@@ -465,12 +465,7 @@ export default function Payroll() {
                   <span class="info-value">${slip.dept_name || '—'}</span>
                 </div>
                 <div class="info-item">
-                  <span class="info-label">Designation:</span>
-                  <span class="info-value">${slip.designation_name || '—'}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Pay Level / Grade:</span>
-                  <span class="info-value">${slip.pay_level ? `Level ${slip.pay_level} (Grade ${slip.grade || '—'})` : '—'}</span>
+
                 </div>
               </div>
               <div>

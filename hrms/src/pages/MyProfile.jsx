@@ -57,7 +57,7 @@ export default function MyProfile() {
         { label: "Gender", value: profile?.gender },
         { label: "Date of Birth", value: profile?.dob?.split('T')[0] },
         { label: "Blood Group", value: profile?.blood_group },
-        { label: "Category", value: profile?.category },
+
       ]
     },
     {
@@ -66,8 +66,7 @@ export default function MyProfile() {
       fields: [
         { label: "Employee ID", value: profile?.emp_id, highlight: true },
         { label: "Department", value: profile?.dept_name },
-        { label: "Designation", value: profile?.designation_name || '—' },
-        { label: "Grade", value: profile?.grade || '—' },
+
         { label: "Date of Joining", value: profile?.doj?.split('T')[0] },
         { label: "Pay Level", value: profile?.pay_level ? `Level-${profile.pay_level}` : '—' },
         { label: "Basic Pay", value: profile?.basic_pay ? `₹${parseFloat(profile.basic_pay).toLocaleString()}` : '—' },
@@ -99,7 +98,7 @@ export default function MyProfile() {
       title: "Posting & Location",
       icon: MapPin,
       fields: [
-        { label: "District", value: profile?.district },
+
         { label: "Posting Station", value: profile?.posting_station },
       ]
     },
@@ -139,7 +138,7 @@ export default function MyProfile() {
               </div>
             </div>
             <p className="font-semibold text-sm" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>
-              {profile?.designation_name || 'Employee'} • {profile?.dept_name}
+              {profile?.dept_name}
             </p>
             <p className="text-xs mt-1" style={{ color: 'rgba(22, 38, 96, 0.4)' }}>
               ID: <span className="font-mono font-semibold" style={{ color: '#68aae8' }}>{profile?.emp_id}</span>

@@ -144,7 +144,8 @@ export default function Attendance() {
   };
   const submitRegularization = async () => {
     try {
-      await attendanceAPI.applyRegularization(regForm);
+      const payload = user?.role === 'employee' ? regForm : { ...regForm, emp_id: selectedEmpId };
+      await attendanceAPI.applyRegularization(payload);
       showMsg('Regularization request submitted'); setShowRegForm(false);
       setRegForm({ date: '', requested_in: '', requested_out: '', reason: '', half_day_type: '', regularization_type: 'full_day' });
       load();

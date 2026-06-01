@@ -44,6 +44,60 @@ export default function Retirement() {
     return (diff / (1000*60*60*24*365.25)).toFixed(1);
   };
 
+  const handleGenerateOrder = () => {
+    if (!selected) return;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Retirement Order - ${selected.emp_name}</title>
+          <style>
+            body { font-family: 'Times New Roman', serif; padding: 40px; line-height: 1.6; color: #000; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+            .title { font-size: 24px; font-weight: bold; text-decoration: underline; margin-bottom: 20px; text-align: center; }
+            .content { margin-top: 30px; font-size: 16px; text-align: justify; }
+            .footer { margin-top: 60px; text-align: right; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>Government of HRMS</h2>
+            <h3>Department of Personnel & Training</h3>
+          </div>
+          <div class="title">RETIREMENT / SUPERANNUATION ORDER</div>
+          <div class="content">
+            <p><strong>Order No:</strong> RET/${new Date().getFullYear()}/${selected.emp_id}</p>
+            <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+            <br/>
+            <p>Consequent upon attaining the age of superannuation, <strong>${selected.emp_name}</strong> (ID: ${selected.emp_id}), currently serving in the <strong>${selected.dept_name}</strong>, is hereby permitted to retire from government service with effect from the afternoon of <strong>${selected.retirement_date?.split('T')[0]}</strong>.</p>
+            <p>The Date of Birth as per the service records is <strong>${selected.dob?.split('T')[0]}</strong>.</p>
+            <br/>
+            <p>All outstanding dues, pension, and GPF settlements will be processed in accordance with the <strong>${selected.pension_type || 'NPS'}</strong> scheme.</p>
+          </div>
+          <div class="footer">
+            <p><strong>Authorized Signatory</strong></p>
+            <p>Competent Authority</p>
+            <p>Department of HR</p>
+          </div>
+          <script>
+            window.onload = () => window.print();
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const handleSendAlert = async () => {
+    if (!selected) return;
+    try {
+      await retirementAPI.sendAlert(selected.emp_id);
+      setMsg('Alert successfully sent to ' + selected.emp_name);
+    } catch (e) {
+      setMsg('Failed to send alert: ' + (e.response?.data?.message || e.message));
+    }
+  };
+
   return (
     <Layout title="Retirement & Superannuation" theme="light" bg="#F8F8FF">
       {msg && <div className="bg-red-900/50 text-red-200 border border-red-500/30 px-4 py-2 rounded-lg text-sm mb-4">{msg}</div>}
@@ -147,7 +201,7 @@ export default function Retirement() {
           <div className="grid grid-cols-2 gap-6">
             <div>
               <h4 className="font-semibold text-sm mb-3" style={{ color: '#162660' }}>Employee Details</h4>
-              {[['Department',selected.dept_name],['DOB',selected.dob?.split('T')[0]],['Retirement Date',selected.retirement_date?.split('T')[0]],['Years Remaining',`${yrsLeft(selected.retirement_date)} years`],['Designation',selected.designation_name]].map(([k,v])=>(
+              {[['Department',selected.dept_name],['DOB',selected.dob?.split('T')[0]],['Retirement Date',selected.retirement_date?.split('T')[0]],['Years Remaining',`${yrsLeft(selected.retirement_date)} years`]].map(([k,v])=>(
                 <div key={k} className="flex justify-between py-2 border-b text-sm" style={{ borderColor: 'rgba(22, 38, 96, 0.08)' }}><span style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{k}</span><span className="font-medium" style={{ color: '#162660' }}>{v||'—'}</span></div>
               ))}
               <div className="mt-3 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">Pension Scheme: {selected.pension_type||'NPS'}</div>
@@ -170,8 +224,8 @@ export default function Retirement() {
             </div>
           </div>
           <div className="flex gap-3 mt-5">
-            <button className="btn btn-primary flex-1">Generate Retirement Order</button>
-            <button className="btn btn-secondary flex-1" style={{ background: 'rgba(22, 38, 96, 0.05)', color: '#162660', border: '1px solid rgba(22, 38, 96, 0.1)' }}>Send Alert to Employee</button>
+            <button className="btn btn-primary flex-1" onClick={handleGenerateOrder}>Generate Retirement Order</button>
+            <button className="btn btn-secondary flex-1" style={{ background: 'rgba(22, 38, 96, 0.05)', color: '#162660', border: '1px solid rgba(22, 38, 96, 0.1)' }} onClick={handleSendAlert}>Send Alert to Employee</button>
           </div>
         </Modal>
       )}

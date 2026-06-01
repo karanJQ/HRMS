@@ -33,7 +33,7 @@ exports.processDocument = async (req, res) => {
     const idMatch = text.match(/ID[:\s]+(GUJ\/[A-Z]+\/\d+\/\d+)/i) || text.match(/EMP\d+/i);
     if (idMatch) extractedData.emp_id = idMatch[1] || idMatch[0];
 
-    const deptMatch = text.match(/(Revenue|Health|Education|Finance)\s+Department/i);
+    const deptMatch = text.match(/(development|BA\/BDE|management|IT|QA|UI\/UX|marketing|sales|HR)\s*Department/i);
     if (deptMatch) extractedData.department = deptMatch[0];
 
     // Example date match (e.g., 15-Apr-2024 or 15/04/2024)

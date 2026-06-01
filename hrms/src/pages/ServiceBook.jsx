@@ -102,7 +102,7 @@ export default function ServiceBook() {
                   <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold" style={{ background: 'rgba(104, 170, 232, 0.15)', color: '#162660' }}>{e.first_name?.[0]}</div>
                   <div className="flex-1">
                     <p className="font-semibold text-sm" style={{ color: '#162660' }}>{e.first_name} {e.last_name}</p>
-                    <p className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{e.emp_id} • {e.designation_name||e.dept_name}</p>
+                    <p className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{e.emp_id} • {e.dept_name}</p>
                   </div>
                   <BookOpen size={16} style={{ color: '#68aae8' }}/>
                 </div>

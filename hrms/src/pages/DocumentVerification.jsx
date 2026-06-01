@@ -247,7 +247,15 @@ export default function DocumentVerification() {
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-2 w-full md:w-auto">
+                          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto mt-2 md:mt-0">
+                            <a 
+                              href={doc.file_path ? `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '')}/uploads/${doc.file_path.split(/[\\/]/).pop()}` : '#'}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-3 py-1.5 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-medium transition-colors flex items-center gap-1.5 flex-1 md:flex-none justify-center"
+                            >
+                              <FileText size={16} /> View File
+                            </a>
                             <button 
                               onClick={() => setViewDoc(viewDoc === doc.id ? null : doc.id)}
                               className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors flex items-center gap-1.5 flex-1 md:flex-none justify-center"

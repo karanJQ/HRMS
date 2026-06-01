@@ -8,7 +8,7 @@ import { Plus, Eye, Edit2, Search } from 'lucide-react';
 import { empAPI, deptAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
-const blank = { first_name: '', last_name: '', father_name: '', gender: 'Male', dob: '', doj: '', mobile: '', alternate_mobile: '', official_email: '', personal_email: '', aadhaar_number: '', pan_number: '', dept_id: '', designation_id: '', grade: '', pay_level: '', basic_pay: '', category: 'General', district: '', posting_station: '', blood_group: '', qualification: '', subject_specialization: '', experience_years: 0, account_number: '', bank_name: '', ifsc_code: '', pf_number: '', nominee_name: '', nominee_relation: '', emergency_contact_name: '', emergency_contact_mobile: '', status: 'Active' };
+const blank = { first_name: '', last_name: '', father_name: '', gender: 'Male', dob: '', doj: '', mobile: '', alternate_mobile: '', official_email: '', personal_email: '', aadhaar_number: '', pan_number: '', dept_id: '', pay_level: '', basic_pay: '', posting_station: '', blood_group: '', qualification: '', subject_specialization: '', experience_years: 0, account_number: '', bank_name: '', ifsc_code: '', pf_number: '', nominee_name: '', nominee_relation: '', emergency_contact_name: '', emergency_contact_mobile: '', status: 'Active' };
 
 function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -199,9 +199,7 @@ export default function EmployeeMaster() {
     finally { setSaving(false); }
   };
 
-  const grades = ['Grade-A', 'Grade-B', 'Grade-C', 'Grade-D'];
-  const categories = ['General', 'OBC', 'SC', 'ST', 'EWS'];
-  const districts = ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhavnagar', 'Jamnagar', 'Gandhinagar', 'Anand', 'Mehsana', 'Kutch'];
+
 
 
 
@@ -301,10 +299,6 @@ export default function EmployeeMaster() {
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Emp ID</th>
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Name</th>
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Department</th>
-                    <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Designation</th>
-                    <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Grade</th>
-                    <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>District</th>
-                    <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Category</th>
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Status</th>
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Actions</th>
                   </tr>
@@ -335,10 +329,6 @@ export default function EmployeeMaster() {
                       <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{e.official_email}</div>
                     </td>
                     <td style={{ color: '#162660' }}>{e.dept_name}</td>
-                    <td style={{ color: '#162660' }}>{e.designation_name || '—'}</td>
-                    <td style={{ color: '#162660' }}>{e.grade || '—'}</td>
-                    <td style={{ color: '#162660' }}>{e.district || '—'}</td>
-                    <td><Badge text={e.category} /></td>
                     <td><Badge text={e.status} /></td>
                     <td>
                       <div className="flex gap-2">
@@ -441,11 +431,11 @@ export default function EmployeeMaster() {
           <Modal title={`${view.first_name} ${view.last_name} — Profile`} onClose={() => setView(null)} theme="light" wide>
             <div className="flex gap-4 mb-4 p-4 rounded-xl" style={{ background: '#162660', border: '1px solid rgba(208, 230, 253, 0.2)' }}>
               <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold" style={{ background: '#D0E6FD', color: '#162660' }}>{view.first_name?.[0]}</div>
-              <div><p className="font-bold text-lg text-white">{view.first_name} {view.last_name}</p><p className="text-sm text-slate-300">{view.designation_name} • {view.dept_name}</p><p className="text-xs text-slate-400">{view.emp_id} • Level-{view.pay_level}</p></div>
+              <div><p className="font-bold text-lg text-white">{view.first_name} {view.last_name}</p><p className="text-sm text-slate-300">{view.dept_name}</p><p className="text-xs text-slate-400">{view.emp_id} • Level-{view.pay_level}</p></div>
               <div className="ml-auto"><Badge text={view.status} /></div>
             </div>
             <div className="grid grid-cols-3 gap-x-6 gap-y-3">
-              {[['DOB', view.dob?.split('T')[0]], ['DOJ', view.doj?.split('T')[0]], ['Mobile', view.mobile], ['Email', view.official_email], ['District', view.district], ['Posting Station', view.posting_station], ['Category', view.category], ['Blood Group', view.blood_group], ['Qualification', view.qualification], ['PF No.', view.pf_number], ['PAN', view.pan_number], ['Bank', `${view.bank_name || ''} / ${view.ifsc_code || ''}`], ['Account No.', view.account_number], ['Nominee', view.nominee_name], ['Experience', `${view.experience_years} years`], ['Father Name', view.father_name], ['Basic Pay', view.basic_pay ? `₹${parseFloat(view.basic_pay).toLocaleString()}` : '—']].map(([k, v]) => (
+              {[['DOB', view.dob?.split('T')[0]], ['DOJ', view.doj?.split('T')[0]], ['Mobile', view.mobile], ['Email', view.official_email], ['Posting Station', view.posting_station], ['Blood Group', view.blood_group], ['Qualification', view.qualification], ['PF No.', view.pf_number], ['PAN', view.pan_number], ['Bank', `${view.bank_name || ''} / ${view.ifsc_code || ''}`], ['Account No.', view.account_number], ['Nominee', view.nominee_name], ['Experience', `${view.experience_years} years`], ['Father Name', view.father_name], ['Basic Pay', view.basic_pay ? `₹${parseFloat(view.basic_pay).toLocaleString()}` : '—']].map(([k, v]) => (
                 <div key={k}><p className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{k}</p><p className="text-sm font-medium" style={{ color: '#162660' }}>{v || '—'}</p></div>
               ))}
             </div>
@@ -463,10 +453,8 @@ export default function EmployeeMaster() {
                   <option value="">Select</option>{depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
-              <F form={form} setForm={setForm} k="grade" l="Grade" opts={grades} /><F form={form} setForm={setForm} k="pay_level" l="Pay Level" type="number" />
+              <F form={form} setForm={setForm} k="pay_level" l="Pay Level" type="number" />
               <F form={form} setForm={setForm} k="basic_pay" l="Basic Pay (₹)" type="number" />
-              <F form={form} setForm={setForm} k="category" l="Category" opts={categories} req />
-              <F form={form} setForm={setForm} k="district" l="District" opts={districts} />
               <F form={form} setForm={setForm} k="posting_station" l="Posting Station" full />
               <F form={form} setForm={setForm} k="mobile" l="Mobile" req /><F form={form} setForm={setForm} k="alternate_mobile" l="Alternate Mobile" /><F form={form} setForm={setForm} k="official_email" l="Official Email" type="email" />
               <F form={form} setForm={setForm} k="blood_group" l="Blood Group" opts={['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']} />

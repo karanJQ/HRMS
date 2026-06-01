@@ -1,12 +1,12 @@
 export const employees = [
-  { id:'EMP001', name:'Rajesh Kumar Patel', dept:'Education', designation:'Senior Teacher', grade:'Grade-B', payScale:'Level-8', doj:'2023-03-15', dob:'1990-05-12', mobile:'9876543210', email:'rajesh@gov.in', status:'Active', category:'General', district:'Ahmedabad', postingStation:'Govt High School, Naranpura', pfNo:'GJ/AHM/12345', panNo:'ABCDE1234F', accountNo:'3721849300', bankName:'SBI', ifsc:'SBIN0001234', nominee:'Priya Patel', bloodGroup:'B+', qualification:'M.Ed', experience:5 },
-  { id:'EMP002', name:'Meena Sharma', dept:'Health', designation:'Staff Nurse', grade:'Grade-C', payScale:'Level-6', doj:'2022-08-01', dob:'1992-11-22', mobile:'9765432109', email:'meena@gov.in', status:'Active', category:'OBC', district:'Surat', postingStation:'Civil Hospital, Surat', pfNo:'GJ/SRT/54321', panNo:'FGHIJ5678K', accountNo:'9876543210', bankName:'BOB', ifsc:'BARB0SURATX', nominee:'Suresh Sharma', bloodGroup:'A+', qualification:'B.Sc Nursing', experience:3 },
-  { id:'EMP003', name:'Amit Desai', dept:'Revenue', designation:'Talati', grade:'Grade-D', payScale:'Level-4', doj:'2021-01-10', dob:'1988-07-30', mobile:'9654321098', email:'amit@gov.in', status:'On Leave', category:'SC', district:'Vadodara', postingStation:'Vadodara Collectorate', pfNo:'GJ/VDR/98765', panNo:'KLMNO9012P', accountNo:'1234567890', bankName:'PNB', ifsc:'PUNB0VDRXXX', nominee:'Rita Desai', bloodGroup:'O+', qualification:'BA', experience:8 },
-  { id:'EMP004', name:'Sunita Joshi', dept:'Education', designation:'Headmaster', grade:'Grade-A', payScale:'Level-10', doj:'2015-06-01', dob:'1978-03-18', mobile:'9543210987', email:'sunita@gov.in', status:'Active', category:'General', district:'Rajkot', postingStation:'Govt Primary School, Rajkot', pfNo:'GJ/RJK/11111', panNo:'QRSTU3456V', accountNo:'5432198760', bankName:'SBI', ifsc:'SBIN0002345', nominee:'Mahesh Joshi', bloodGroup:'AB+', qualification:'M.Ed, M.Phil', experience:15 },
-  { id:'EMP005', name:'Vikram Singh', dept:'Police', designation:'Sub-Inspector', grade:'Grade-B', payScale:'Level-7', doj:'2020-09-15', dob:'1995-12-05', mobile:'9432109876', email:'vikram@gov.in', status:'Active', category:'OBC', district:'Bhavnagar', postingStation:'Bhavnagar Police Station', pfNo:'GJ/BVN/22222', panNo:'VWXYZ7890A', accountNo:'6543219870', bankName:'BOI', ifsc:'BKID0BHVNGR', nominee:'Kamla Singh', bloodGroup:'B-', qualification:'BA, Police Training', experience:4 }
+  { id:'EMP001', name:'Rajesh Kumar Patel', dept:'development', designation:'Senior Teacher', grade:'Grade-B', payScale:'Level-8', doj:'2023-03-15', dob:'1990-05-12', mobile:'9876543210', email:'rajesh@gov.in', status:'Active', category:'General', district:'Ahmedabad', postingStation:'Govt High School, Naranpura', pfNo:'GJ/AHM/12345', panNo:'ABCDE1234F', accountNo:'3721849300', bankName:'SBI', ifsc:'SBIN0001234', nominee:'Priya Patel', bloodGroup:'B+', qualification:'M.Ed', experience:5 },
+  { id:'EMP002', name:'Meena Sharma', dept:'IT', designation:'Staff Nurse', grade:'Grade-C', payScale:'Level-6', doj:'2022-08-01', dob:'1992-11-22', mobile:'9765432109', email:'meena@gov.in', status:'Active', category:'OBC', district:'Surat', postingStation:'Civil Hospital, Surat', pfNo:'GJ/SRT/54321', panNo:'FGHIJ5678K', accountNo:'9876543210', bankName:'BOB', ifsc:'BARB0SURATX', nominee:'Suresh Sharma', bloodGroup:'A+', qualification:'B.Sc Nursing', experience:3 },
+  { id:'EMP003', name:'Amit Desai', dept:'sales', designation:'Talati', grade:'Grade-D', payScale:'Level-4', doj:'2021-01-10', dob:'1988-07-30', mobile:'9654321098', email:'amit@gov.in', status:'On Leave', category:'SC', district:'Vadodara', postingStation:'Vadodara Collectorate', pfNo:'GJ/VDR/98765', panNo:'KLMNO9012P', accountNo:'1234567890', bankName:'PNB', ifsc:'PUNB0VDRXXX', nominee:'Rita Desai', bloodGroup:'O+', qualification:'BA', experience:8 },
+  { id:'EMP004', name:'Sunita Joshi', dept:'QA', designation:'Headmaster', grade:'Grade-A', payScale:'Level-10', doj:'2015-06-01', dob:'1978-03-18', mobile:'9543210987', email:'sunita@gov.in', status:'Active', category:'General', district:'Rajkot', postingStation:'Govt Primary School, Rajkot', pfNo:'GJ/RJK/11111', panNo:'QRSTU3456V', accountNo:'5432198760', bankName:'SBI', ifsc:'SBIN0002345', nominee:'Mahesh Joshi', bloodGroup:'AB+', qualification:'M.Ed, M.Phil', experience:15 },
+  { id:'EMP005', name:'Vikram Singh', dept:'management', designation:'Sub-Inspector', grade:'Grade-B', payScale:'Level-7', doj:'2020-09-15', dob:'1995-12-05', mobile:'9432109876', email:'vikram@gov.in', status:'Active', category:'OBC', district:'Bhavnagar', postingStation:'Bhavnagar Police Station', pfNo:'GJ/BVN/22222', panNo:'VWXYZ7890A', accountNo:'6543219870', bankName:'BOI', ifsc:'BKID0BHVNGR', nominee:'Kamla Singh', bloodGroup:'B-', qualification:'BA, Police Training', experience:4 }
 ];
 
-export const departments = ['Education','Health','Revenue','Police','Agriculture','Water Supply','Urban Development','Finance','Forest','Transport'];
+export const departments = ['development','BA/BDE','management','IT','QA','UI/UX','marketing','sales','HR'];
 export const designations = ['Clerk','Junior Assistant','Senior Assistant','Talati','Teacher','Senior Teacher','Headmaster','Inspector','Sub-Inspector','Staff Nurse','Supervisor','Officer','Senior Officer'];
 export const districts = ['Ahmedabad','Surat','Vadodara','Rajkot','Bhavnagar','Jamnagar','Gandhinagar','Anand','Mehsana','Kutch'];
 export const grades = ['Grade-A','Grade-B','Grade-C','Grade-D'];
@@ -36,14 +36,14 @@ export const leaveBalance = [
 ];
 
 export const transfers = [
-  { id:'TR001', empId:'EMP001', name:'Rajesh Kumar Patel', dept:'Education', from:'Mehsana', to:'Ahmedabad', type:'Admin Initiated', date:'2024-06-01', status:'Completed', orderNo:'EDU/TRF/2024/001' },
-  { id:'TR002', empId:'EMP005', name:'Vikram Singh', dept:'Police', from:'Ahmedabad', to:'Bhavnagar', type:'Mutual', date:'2023-09-15', status:'Completed', orderNo:'POL/TRF/2023/045' },
-  { id:'TR003', empId:'EMP002', name:'Meena Sharma', dept:'Health', from:'Ahmedabad', to:'Surat', type:'Request', date:'2025-03-01', status:'Pending Approval', orderNo:'' }
+  { id:'TR001', empId:'EMP001', name:'Rajesh Kumar Patel', dept:'development', from:'Mehsana', to:'Ahmedabad', type:'Admin Initiated', date:'2024-06-01', status:'Completed', orderNo:'EDU/TRF/2024/001' },
+  { id:'TR002', empId:'EMP005', name:'Vikram Singh', dept:'management', from:'Ahmedabad', to:'Bhavnagar', type:'Mutual', date:'2023-09-15', status:'Completed', orderNo:'POL/TRF/2023/045' },
+  { id:'TR003', empId:'EMP002', name:'Meena Sharma', dept:'IT', from:'Ahmedabad', to:'Surat', type:'Request', date:'2025-03-01', status:'Pending Approval', orderNo:'' }
 ];
 
 export const promotions = [
-  { id:'PR001', empId:'EMP004', name:'Sunita Joshi', dept:'Education', from:'Teacher', to:'Headmaster', date:'2022-06-01', basis:'Seniority+DPC', payOld:'Level-8', payNew:'Level-10', status:'Completed' },
-  { id:'PR002', empId:'EMP001', name:'Rajesh Kumar Patel', dept:'Education', from:'Junior Teacher', to:'Senior Teacher', date:'2025-04-01', basis:'DPC', payOld:'Level-6', payNew:'Level-8', status:'Pending DPC' }
+  { id:'PR001', empId:'EMP004', name:'Sunita Joshi', dept:'QA', from:'Teacher', to:'Headmaster', date:'2022-06-01', basis:'Seniority+DPC', payOld:'Level-8', payNew:'Level-10', status:'Completed' },
+  { id:'PR002', empId:'EMP001', name:'Rajesh Kumar Patel', dept:'development', from:'Junior Teacher', to:'Senior Teacher', date:'2025-04-01', basis:'DPC', payOld:'Level-6', payNew:'Level-8', status:'Pending DPC' }
 ];
 
 export const aparData = [
@@ -71,31 +71,31 @@ export const serviceBookEntries = {
 };
 
 export const trainings = [
-  { id:'TRN001', title:'DIKSHA Digital Teaching', dept:'Education', startDate:'2025-03-10', endDate:'2025-03-15', venue:'GCERT Gandhinagar', capacity:50, enrolled:45, status:'Upcoming', mandatory:true },
-  { id:'TRN002', title:'First Aid & Emergency Response', dept:'Health', startDate:'2025-04-01', endDate:'2025-04-03', venue:'Civil Hospital Ahmedabad', capacity:30, enrolled:28, status:'Upcoming', mandatory:true },
-  { id:'TRN003', title:'Revenue Record Management', dept:'Revenue', startDate:'2025-02-10', endDate:'2025-02-14', venue:'Mantralaya Gandhinagar', capacity:40, enrolled:40, status:'Completed', mandatory:false },
-  { id:'TRN004', title:'Cyber Crime Awareness', dept:'Police', startDate:'2025-05-05', endDate:'2025-05-07', venue:'Police Academy Karai', capacity:60, enrolled:12, status:'Upcoming', mandatory:true }
+  { id:'TRN001', title:'DIKSHA Digital Teaching', dept:'development', startDate:'2025-03-10', endDate:'2025-03-15', venue:'GCERT Gandhinagar', capacity:50, enrolled:45, status:'Upcoming', mandatory:true },
+  { id:'TRN002', title:'First Aid & Emergency Response', dept:'IT', startDate:'2025-04-01', endDate:'2025-04-03', venue:'Civil Hospital Ahmedabad', capacity:30, enrolled:28, status:'Upcoming', mandatory:true },
+  { id:'TRN003', title:'Revenue Record Management', dept:'sales', startDate:'2025-02-10', endDate:'2025-02-14', venue:'Mantralaya Gandhinagar', capacity:40, enrolled:40, status:'Completed', mandatory:false },
+  { id:'TRN004', title:'Cyber Crime Awareness', dept:'management', startDate:'2025-05-05', endDate:'2025-05-07', venue:'Police Academy Karai', capacity:60, enrolled:12, status:'Upcoming', mandatory:true }
 ];
 
 export const retirementList = [
-  { empId:'EMP004', name:'Sunita Joshi', dept:'Education', dob:'1978-03-18', retirementDate:'2038-03-31', yearsLeft:13.1, gratuity:850000, gpf:320000, status:'Active' },
-  { empId:'EMP003', name:'Amit Desai', dept:'Revenue', dob:'1988-07-30', retirementDate:'2048-07-31', yearsLeft:23.3, gratuity:450000, gpf:180000, status:'Active' }
+  { empId:'EMP004', name:'Sunita Joshi', dept:'QA', dob:'1978-03-18', retirementDate:'2038-03-31', yearsLeft:13.1, gratuity:850000, gpf:320000, status:'Active' },
+  { empId:'EMP003', name:'Amit Desai', dept:'sales', dob:'1988-07-30', retirementDate:'2048-07-31', yearsLeft:23.3, gratuity:450000, gpf:180000, status:'Active' }
 ];
 
 export const grievances = [
-  { id:'GRV001', empId:'EMP003', name:'Amit Desai', dept:'Revenue', type:'Service Matter', subject:'Increment not given for FY 2023-24', date:'2025-02-15', status:'Under Review', assignedTo:'HR Dept', priority:'High' },
-  { id:'GRV002', empId:'EMP002', name:'Meena Sharma', dept:'Health', type:'Workplace Issue', subject:'Request for medical equipment at posting station', date:'2025-03-01', status:'Resolved', assignedTo:'HOD Health', priority:'Medium' },
-  { id:'GRV003', empId:'EMP001', name:'Rajesh Kumar Patel', dept:'Education', type:'Transfer', subject:'Transfer to home district request', date:'2025-03-20', status:'Pending', assignedTo:'', priority:'Low' }
+  { id:'GRV001', empId:'EMP003', name:'Amit Desai', dept:'sales', type:'Service Matter', subject:'Increment not given for FY 2023-24', date:'2025-02-15', status:'Under Review', assignedTo:'HR Dept', priority:'High' },
+  { id:'GRV002', empId:'EMP002', name:'Meena Sharma', dept:'IT', type:'Workplace Issue', subject:'Request for medical equipment at posting station', date:'2025-03-01', status:'Resolved', assignedTo:'HOD Health', priority:'Medium' },
+  { id:'GRV003', empId:'EMP001', name:'Rajesh Kumar Patel', dept:'development', type:'Transfer', subject:'Transfer to home district request', date:'2025-03-20', status:'Pending', assignedTo:'', priority:'Low' }
 ];
 
 export const disciplinary = [
-  { id:'DSC001', empId:'EMP003', name:'Amit Desai', dept:'Revenue', charge:'Unauthorized absence for 15 days', startDate:'2024-11-01', inquiryOfficer:'R.K. Mehta, IAS', status:'Inquiry Ongoing', penalty:'' }
+  { id:'DSC001', empId:'EMP003', name:'Amit Desai', dept:'sales', charge:'Unauthorized absence for 15 days', startDate:'2024-11-01', inquiryOfficer:'R.K. Mehta, IAS', status:'Inquiry Ongoing', penalty:'' }
 ];
 
 export const onboardingRequests = [
-  { id:'ONB001', candidateId:'RECT2024001', name:'Priya Mehta', post:'Junior Clerk', dept:'Finance', selectedDate:'2025-03-10', joiningDate:'2025-04-01', status:'Documents Verified', documentsSubmitted:true, medicalCleared:true, policeVerification:'Pending' },
-  { id:'ONB002', candidateId:'RECT2024002', name:'Kamlesh Prajapati', post:'Teacher', dept:'Education', selectedDate:'2025-03-15', joiningDate:'2025-04-15', status:'Pending Documents', documentsSubmitted:false, medicalCleared:false, policeVerification:'Pending' },
-  { id:'ONB003', candidateId:'RECT2024003', name:'Rekha Trivedi', post:'Staff Nurse', dept:'Health', selectedDate:'2025-03-20', joiningDate:'2025-05-01', status:'Joining Formalities', documentsSubmitted:true, medicalCleared:true, policeVerification:'Cleared' }
+  { id:'ONB001', candidateId:'RECT2024001', name:'Priya Mehta', post:'Junior Clerk', dept:'HR', selectedDate:'2025-03-10', joiningDate:'2025-04-01', status:'Documents Verified', documentsSubmitted:true, medicalCleared:true, policeVerification:'Pending' },
+  { id:'ONB002', candidateId:'RECT2024002', name:'Kamlesh Prajapati', post:'Teacher', dept:'development', selectedDate:'2025-03-15', joiningDate:'2025-04-15', status:'Pending Documents', documentsSubmitted:false, medicalCleared:false, policeVerification:'Pending' },
+  { id:'ONB003', candidateId:'RECT2024003', name:'Rekha Trivedi', post:'Staff Nurse', dept:'IT', selectedDate:'2025-03-20', joiningDate:'2025-05-01', status:'Joining Formalities', documentsSubmitted:true, medicalCleared:true, policeVerification:'Cleared' }
 ];
 
 export const monthlyStats = [

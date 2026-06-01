@@ -102,7 +102,7 @@ exports.getCalendar = async (req, res) => {
       }
 
       const wh = row.working_hours;
-      if (!wh && row.punch_in && row.punch_out) {
+      if ((!wh || parseFloat(wh) === 0) && row.punch_in && row.punch_out) {
         const [ih, im] = row.punch_in.split(':');
         const [oh, om] = row.punch_out.split(':');
         const diff = (parseInt(oh)*60+parseInt(om)) - (parseInt(ih)*60+parseInt(im));
@@ -263,7 +263,7 @@ exports.punch = async (req, res) => {
 
 exports.applyRegularization = async (req, res) => {
   const { date, reason, requested_in, requested_out, half_day_type, regularization_type } = req.body;
-  const emp_id = req.user.emp_id;
+  const emp_id = req.user.role === 'employee' ? req.user.emp_id : (req.body.emp_id || req.user.emp_id);
   try {
     const existing = await query(`SELECT * FROM regularization_requests WHERE emp_id = $1 AND date = $2 AND status = 'Pending'`, [emp_id, date]);
     if (existing.rows.length > 0) return error(res, 'A pending regularization request already exists for this date', 400);
@@ -311,22 +311,27 @@ exports.reviewRegularization = async (req, res) => {
     if (status === 'Approved') {
       const attStatus = r.half_day_type ? 'Half Day' : 'Present';
       const existing = await query(`SELECT * FROM attendance_records WHERE emp_id = $1 AND date = $2`, [r.emp_id, r.date]);
+      
+      const finalIn = r.requested_in || existing?.rows[0]?.punch_in;
+      const finalOut = r.requested_out || existing?.rows[0]?.punch_out;
+      
+      let working_hours = null;
+      if (finalIn && finalOut) {
+        const [ih, im] = finalIn.split(':');
+        const [oh, om] = finalOut.split(':');
+        const diff = (parseInt(oh)*60+parseInt(om)) - (parseInt(ih)*60+parseInt(im));
+        working_hours = Math.max(0, diff / 60).toFixed(1);
+      }
+
       if (existing.rows.length > 0) {
-        if (r.half_day_type) {
-          await query(
-            `UPDATE attendance_records SET punch_in = COALESCE($1, punch_in), punch_out = COALESCE($2, punch_out), status = $3, is_regularized = true, updated_at = NOW() WHERE id = $4`,
-            [r.requested_in, r.requested_out, attStatus, existing.rows[0].id]
-          );
-        } else {
-          await query(
-            `UPDATE attendance_records SET punch_in = COALESCE($1, punch_in), punch_out = COALESCE($2, punch_out), status = $3, is_regularized = true, updated_at = NOW() WHERE id = $4`,
-            [r.requested_in, r.requested_out, 'Present', existing.rows[0].id]
-          );
-        }
+        await query(
+          `UPDATE attendance_records SET punch_in = COALESCE($1, punch_in), punch_out = COALESCE($2, punch_out), working_hours = $3, status = $4, is_regularized = true, updated_at = NOW() WHERE id = $5`,
+          [r.requested_in, r.requested_out, working_hours, attStatus, existing.rows[0].id]
+        );
       } else {
         await query(
-          `INSERT INTO attendance_records (emp_id, date, punch_in, punch_out, status, biometric_sync, is_regularized) VALUES ($1, $2, $3, $4, $5, false, true)`,
-          [r.emp_id, r.date, r.requested_in, r.requested_out, attStatus]
+          `INSERT INTO attendance_records (emp_id, date, punch_in, punch_out, working_hours, status, biometric_sync, is_regularized) VALUES ($1, $2, $3, $4, $5, $6, false, true)`,
+          [r.emp_id, r.date, r.requested_in, r.requested_out, working_hours, attStatus]
         );
       }
     }
