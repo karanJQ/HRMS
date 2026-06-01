@@ -76,10 +76,10 @@ export default function Landing() {
   const initialLogs = [
     { id: 1, time: '09:41', user: 'superadmin', what: 'logged in', detail: 'IP: 117.210.32.91 · Browser: Chrome 124', pill: 'login', pillText: 'LOGIN' },
     { id: 2, time: '09:44', user: 'hr_manager', what: 'updated employee record', detail: 'EMP00142 · Pay grade revised to Level-10', pill: 'edit', pillText: 'EDIT' },
-    { id: 3, time: '10:02', user: 'hr_staff', what: 'created onboarding record', detail: 'New employee: EMP00287 · Revenue Dept.', pill: 'create', pillText: 'CREATE' },
-    { id: 4, time: '10:18', user: 'dept_head', what: 'approved leave request', detail: 'EMP00093 · 5 days CL · 20–24 May 2025', pill: 'edit', pillText: 'APPROVE' },
-    { id: 5, time: '10:31', user: 'superadmin', what: 'deleted test user', detail: 'USR_TEST_004 · Reason: Demo cleanup', pill: 'delete', pillText: 'DELETE' },
-    { id: 6, time: '10:45', user: 'hr_manager', what: 'initiated APAR for FY 2024–25', detail: '14 employee records · Revenue Dept.', pill: 'create', pillText: 'INITIATE' },
+    { id: 3, time: '10:02', user: 'hr_staff', what: 'created onboarding record', detail: 'New employee: EMP00287 · development Dept.', pill: 'create', pillText: 'CREATE' },
+    { id: 4, time: '10:15', user: 'system', what: 'auto-approved leave', detail: 'EMP00192 · CL balance updated', pill: 'info', pillText: 'SYSTEM' },
+    { id: 5, time: '10:30', user: 'payroll_admin', what: 'generated pay slips', detail: 'management Dept. · 1,204 records', pill: 'update', pillText: 'UPDATE' },
+    { id: 6, time: '10:45', user: 'hr_manager', what: 'initiated APAR for FY 2024–25', detail: '14 employee records · development Dept.', pill: 'create', pillText: 'INITIATE' },
   ].reverse(); // reverse so newest is at the top (idx 0)
   
   useEffect(() => {
@@ -223,17 +223,17 @@ export default function Landing() {
                 <div style={{fontSize:12,color:'var(--muted)',marginBottom:10}}>Department Headcount</div>
                 <div className="chart-rows">
                   <div className="chart-row">
-                    <div className="chart-row-label">Revenue</div>
+                    <div className="chart-row-label">development</div>
                     <div className="chart-bar-wrap"><div className="chart-bar-fill" style={{width:'82%',background:'linear-gradient(90deg,#68aae8,#68aae8)'}}></div></div>
                     <div className="chart-row-val">820</div>
                   </div>
                   <div className="chart-row">
-                    <div className="chart-row-label">Health</div>
+                    <div className="chart-row-label">IT</div>
                     <div className="chart-bar-wrap"><div className="chart-bar-fill" style={{width:'65%',background:'linear-gradient(90deg,#162660,#68aae8)'}}></div></div>
                     <div className="chart-row-val">650</div>
                   </div>
                   <div className="chart-row">
-                    <div className="chart-row-label">Education</div>
+                    <div className="chart-row-label">management</div>
                     <div className="chart-bar-wrap"><div className="chart-bar-fill" style={{width:'74%',background:'linear-gradient(90deg,#0891b2,#06b6d4)'}}></div></div>
                     <div className="chart-row-val">740</div>
                   </div>
@@ -438,7 +438,7 @@ export default function Landing() {
                   </div>
                   <div className="ocr-field">
                     <div className="ocr-field-label">Department</div>
-                    <div className="ocr-field-value">Revenue Department</div>
+                    <div className="ocr-field-value">development Department</div>
                     <div className="ocr-confidence med">89%</div>
                   </div>
                   <div className="ocr-field">
@@ -516,9 +516,9 @@ export default function Landing() {
               <div className="donut-wrap">
                 <div className="donut" id="donut-chart"></div>
                 <div className="donut-labels">
-                  <div className="donut-label"><div className="donut-dot" style={{background:'#68aae8'}}></div><div className="donut-label-text">Revenue</div><div className="donut-label-pct" style={{color:'#68aae8'}}>42%</div></div>
-                  <div className="donut-label"><div className="donut-dot" style={{background:'#162660'}}></div><div className="donut-label-text">Education</div><div className="donut-label-pct" style={{color:'#68aae8'}}>26%</div></div>
-                  <div className="donut-label"><div className="donut-dot" style={{background:'#10b981'}}></div><div className="donut-label-text">Health</div><div className="donut-label-pct" style={{color:'#34d399'}}>13%</div></div>
+                  <div className="donut-label"><div className="donut-dot" style={{background:'#68aae8'}}></div><div className="donut-label-text">development</div><div className="donut-label-pct" style={{color:'#68aae8'}}>42%</div></div>
+                  <div className="donut-label"><div className="donut-dot" style={{background:'#162660'}}></div><div className="donut-label-text">management</div><div className="donut-label-pct" style={{color:'#68aae8'}}>26%</div></div>
+                  <div className="donut-label"><div className="donut-dot" style={{background:'#10b981'}}></div><div className="donut-label-text">IT</div><div className="donut-label-pct" style={{color:'#34d399'}}>13%</div></div>
                   <div className="donut-label"><div className="donut-dot" style={{background:'#f59e0b'}}></div><div className="donut-label-text">Others</div><div className="donut-label-pct" style={{color:'#fbbf24'}}>19%</div></div>
                 </div>
               </div>

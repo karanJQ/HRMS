@@ -21,8 +21,8 @@ export const payrollData = [
 ];
 
 export const leaveData = [
-  { id:'LV001', empId:'EMP001', name:'Rajesh Kumar Patel', type:'CL', from:'2025-03-10', to:'2025-03-12', days:3, reason:'Family Function', status:'Approved', approver:'HOD Education' },
-  { id:'LV002', empId:'EMP003', name:'Amit Desai', type:'ML', from:'2025-03-01', to:'2025-03-31', days:30, reason:'Medical Treatment', status:'Approved', approver:'HOD Revenue' },
+  { id:'LV001', empId:'EMP001', name:'Rajesh Kumar Patel', type:'CL', from:'2025-03-10', to:'2025-03-12', days:3, reason:'Family Function', status:'Approved', approver:'HOD development' },
+  { id:'LV002', empId:'EMP003', name:'Amit Desai', type:'ML', from:'2025-03-01', to:'2025-03-31', days:30, reason:'Medical Treatment', status:'Approved', approver:'HOD management' },
   { id:'LV003', empId:'EMP002', name:'Meena Sharma', type:'EL', from:'2025-04-05', to:'2025-04-10', days:6, reason:'Personal', status:'Pending', approver:'' },
   { id:'LV004', empId:'EMP005', name:'Vikram Singh', type:'CL', from:'2025-04-15', to:'2025-04-16', days:2, reason:'Personal work', status:'Pending', approver:'' }
 ];
@@ -55,14 +55,14 @@ export const aparData = [
 
 export const serviceBookEntries = {
   EMP001: [
-    { date:'2023-03-15', event:'Joining', details:'Joined as Junior Teacher at Govt School Mehsana', by:'HOD Education' },
+    { date:'2023-03-15', event:'Joining', details:'Joined as Junior Teacher at Govt School Mehsana', by:'HOD development' },
     { date:'2023-06-01', event:'Increment', details:'Annual Increment - Pay revised to Level-7 Step-2', by:'PAO' },
     { date:'2024-01-10', event:'Transfer', details:'Transferred to Ahmedabad - Order EDU/TRF/2024/001', by:'Dept Admin' },
     { date:'2024-06-01', event:'Increment', details:'Annual Increment - Pay revised to Level-8 Step-1', by:'PAO' },
     { date:'2025-01-15', event:'Training', details:'Completed DIKSHA Training - Cert: DK2025001', by:'Training Cell' }
   ],
   EMP004: [
-    { date:'2015-06-01', event:'Joining', details:'Joined as Teacher at Govt School Mehsana', by:'HOD Education' },
+    { date:'2015-06-01', event:'Joining', details:'Joined as Teacher at Govt School Mehsana', by:'HOD development' },
     { date:'2016-06-01', event:'Increment', details:'Annual Increment', by:'PAO' },
     { date:'2018-04-01', event:'Promotion', details:'Promoted to Senior Teacher - DPC Order 2018', by:'DPC Committee' },
     { date:'2022-06-01', event:'Promotion', details:'Promoted to Headmaster - DPC Order 2022', by:'DPC Committee' },
@@ -84,7 +84,7 @@ export const retirementList = [
 
 export const grievances = [
   { id:'GRV001', empId:'EMP003', name:'Amit Desai', dept:'sales', type:'Service Matter', subject:'Increment not given for FY 2023-24', date:'2025-02-15', status:'Under Review', assignedTo:'HR Dept', priority:'High' },
-  { id:'GRV002', empId:'EMP002', name:'Meena Sharma', dept:'IT', type:'Workplace Issue', subject:'Request for medical equipment at posting station', date:'2025-03-01', status:'Resolved', assignedTo:'HOD Health', priority:'Medium' },
+  { id:'GRV002', empId:'EMP002', name:'Meena Sharma', dept:'IT', type:'Workplace Issue', subject:'Request for medical equipment at posting station', date:'2025-03-01', status:'Resolved', assignedTo:'HOD IT', priority:'Medium' },
   { id:'GRV003', empId:'EMP001', name:'Rajesh Kumar Patel', dept:'development', type:'Transfer', subject:'Transfer to home district request', date:'2025-03-20', status:'Pending', assignedTo:'', priority:'Low' }
 ];
 
