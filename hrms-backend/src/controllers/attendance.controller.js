@@ -1,4 +1,6 @@
 const { query } = require('../config/database');
+const fs = require('fs');
+const path = require('path');
 const { success, error } = require('../utils/response');
 
 const DAYS_IN_MONTH = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -44,7 +46,7 @@ exports.getCalendar = async (req, res) => {
 
     const recordsRes = await query(
       `SELECT to_char(d.date, 'YYYY-MM-DD') as date,
-              a.status, a.punch_in, a.punch_out, a.biometric_sync, a.is_regularized, a.working_hours,
+              a.status, a.punch_in, a.punch_out, a.biometric_sync, a.is_regularized, a.working_hours, a.location, a.photo_url,
               l.leave_type, l.half_day_type, l.status as leave_status,
               w.status as wfh_status,
               CASE WHEN h.id IS NOT NULL THEN true ELSE false END as is_holiday,
@@ -117,6 +119,8 @@ exports.getCalendar = async (req, res) => {
         biometric_sync: row.biometric_sync,
         is_regularized: row.is_regularized,
         working_hours: row.working_hours,
+        location: row.location,
+        photo_url: row.photo_url,
         is_holiday: row.is_holiday,
         holiday_name: row.holiday_name,
         leave_type: row.leave_type,
@@ -131,7 +135,6 @@ exports.getCalendar = async (req, res) => {
     return error(res, err.message, 500);
   }
 };
-
 exports.getMonthlyStats = async (req, res) => {
   const { month, year, emp_id } = req.query;
   try {
@@ -169,6 +172,20 @@ exports.syncBiometrics = async (req, res) => {
     const emp_id = req.user.role === 'employee' ? req.user.emp_id : (req.body.emp_id || req.user.emp_id);
     if (!emp_id) return error(res, 'Employee ID is required', 400);
 
+    const { location, photo } = req.body;
+    let photoUrl = null;
+    let locStr = null;
+    if (location) locStr = typeof location === 'string' ? location : JSON.stringify(location);
+    
+    if (photo) {
+      const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
+      const filename = `punch_${emp_id}_${Date.now()}.webp`;
+      const uploadsDir = path.join(__dirname, '../../uploads/attendance');
+      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+      fs.writeFileSync(path.join(uploadsDir, filename), base64Data, 'base64');
+      photoUrl = `/uploads/attendance/${filename}`;
+    }
+
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
     const existing = await query(`SELECT * FROM attendance_records WHERE emp_id = $1 AND date = $2`, [emp_id, todayStr]);
@@ -177,8 +194,8 @@ exports.syncBiometrics = async (req, res) => {
       if (!existing.rows[0].punch_out) {
         if (!existing.rows[0].punch_in) {
           const result = await query(
-            `UPDATE attendance_records SET punch_in = CURRENT_TIME, status = 'Present', biometric_sync = true, updated_at = NOW() WHERE id = $1 RETURNING *`,
-            [existing.rows[0].id]
+            `UPDATE attendance_records SET punch_in = CURRENT_TIME, status = 'Present', biometric_sync = true, location = COALESCE($2, location), photo_url = COALESCE($3, photo_url), updated_at = NOW() WHERE id = $1 RETURNING *`,
+            [existing.rows[0].id, locStr, photoUrl]
           );
           return success(res, result.rows[0], 'Biometric sync: Punched in successfully');
         }
@@ -193,8 +210,8 @@ exports.syncBiometrics = async (req, res) => {
         const outStatus = workingHours < 9 ? 'Half Day' : 'Present';
 
         const result = await query(
-          `UPDATE attendance_records SET punch_out = $1, working_hours = $2, status = $3, updated_at = NOW() WHERE id = $4 RETURNING *`,
-          [outTime, workingHours.toFixed(1), outStatus, existing.rows[0].id]
+          `UPDATE attendance_records SET punch_out = $1, working_hours = $2, status = $3, location = COALESCE($5, location), photo_url = COALESCE($6, photo_url), updated_at = NOW() WHERE id = $4 RETURNING *`,
+          [outTime, workingHours.toFixed(1), outStatus, existing.rows[0].id, locStr, photoUrl]
         );
         return success(res, result.rows[0], 'Biometric sync: Punched out successfully');
       }
@@ -202,16 +219,15 @@ exports.syncBiometrics = async (req, res) => {
     }
 
     const result = await query(
-      `INSERT INTO attendance_records (emp_id, date, punch_in, status, biometric_sync)
-       VALUES ($1, $2, CURRENT_TIME, 'Present', true) RETURNING *`,
-      [emp_id, todayStr]
+      `INSERT INTO attendance_records (emp_id, date, punch_in, status, biometric_sync, location, photo_url)
+       VALUES ($1, $2, CURRENT_TIME, 'Present', true, $3, $4) RETURNING *`,
+      [emp_id, todayStr, locStr, photoUrl]
     );
     return success(res, result.rows[0], 'Biometric sync: Punched in successfully');
   } catch (err) {
     return error(res, err.message, 500);
   }
 };
-
 exports.punch = async (req, res) => {
   const emp_id = req.user.emp_id;
   try {

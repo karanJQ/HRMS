@@ -10,6 +10,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { reportsAPI, leaveAPI, onboardingAPI, attendanceAPI, empAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
+import PunchModal from '../components/PunchModal';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [punchLoading, setPunchLoading] = useState(false);
+  const [showPunchModal, setShowPunchModal] = useState(false);
 
   useEffect(() => {
     const currentMonth = new Date().getMonth() + 1;
@@ -52,11 +54,11 @@ export default function Dashboard() {
 
   const hasEmpId = !!user?.emp_id;
 
-  const handleQuickPunch = async () => {
+  const submitPunch = async (payload) => {
     if (!hasEmpId) return;
     try {
       setPunchLoading(true);
-      const response = await attendanceAPI.sync({ emp_id: user.emp_id });
+      const response = await attendanceAPI.sync({ emp_id: user.emp_id, ...payload });
       setMsg(response.data?.message || 'Biometric punch synced successfully!');
       setTimeout(() => setMsg(''), 5000);
     } catch (e) {
@@ -114,17 +116,19 @@ export default function Dashboard() {
             {hasEmpId ? (
               <button
                 className="w-full btn btn-success flex items-center justify-center gap-2 py-2 font-bold text-white rounded-lg transition-all"
-                onClick={handleQuickPunch}
+                onClick={() => setShowPunchModal(true)}
                 disabled={punchLoading}
                 style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none' }}
               >
-                {punchLoading ? <span>Syncing...</span> : <><Fingerprint size={16} /><span>Simulate Punch</span></>}
+                {punchLoading ? <span>Syncing...</span> : <><Fingerprint size={16} /><span>Punch In/Out</span></>}
               </button>
             ) : (
               <p className="text-xs text-center py-1.5" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>Not available for admin accounts</p>
             )}
           </div>
         </div>
+
+        <PunchModal isOpen={showPunchModal} onClose={() => setShowPunchModal(false)} onPunch={submitPunch} />
 
         {/* Birthdays Card */}
         <div className="p-4 transition-all duration-300"

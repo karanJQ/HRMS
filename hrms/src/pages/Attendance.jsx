@@ -501,9 +501,28 @@ export default function Attendance() {
                         </span>
                       )}
                       {dd.biometric_sync && (
-                        <span className="text-emerald-600">Biometric verified</span>
+                        <span className="text-emerald-600 font-medium flex items-center gap-1">
+                          <Fingerprint size={12}/> Biometric verified
+                        </span>
                       )}
                     </div>
+                    {(dd.photo_url || dd.location) && (
+                      <div className="mt-3 flex items-center gap-3">
+                        {dd.photo_url && (
+                          <a href={`http://localhost:5000${dd.photo_url}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                            <Smartphone size={14}/> View Photo
+                          </a>
+                        )}
+                        {dd.location && (() => {
+                          const loc = typeof dd.location === 'string' ? JSON.parse(dd.location) : dd.location;
+                          return loc?.lat ? (
+                            <a href={`https://www.google.com/maps?q=${loc.lat},${loc.lng}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-emerald-600 hover:underline">
+                              <MapPin size={14}/> View Map
+                            </a>
+                          ) : null;
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   <p className="text-xs font-semibold mb-3" style={{ color:'rgba(22,38,96,0.5)' }}>QUICK ACTIONS</p>
