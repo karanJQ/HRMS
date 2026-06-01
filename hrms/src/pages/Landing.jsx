@@ -61,9 +61,9 @@ export default function Landing() {
       });
       navLinks.forEach(a => {
         if(a.getAttribute('href') === `#${current}`) {
-          a.style.color = '#fff';
+          a.style.color = '#162660';
         } else {
-          a.style.color = '';
+          a.style.color = '#162660';
         }
       });
     };
@@ -176,11 +176,11 @@ export default function Landing() {
             <h2 className="section-title">One Platform.<br/>All HR Operations.</h2>
             <div style={{marginTop:32, display:'flex', flexDirection:'column', gap:14}}>
               <div style={{display:'flex',gap:12,alignItems:'center',fontSize:14,color:'var(--muted)'}}>
-                <span style={{width:28,height:28,borderRadius:8,background:'rgba(37,99,235,.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>✅</span>
+                <span style={{width:28,height:28,borderRadius:8,background:'rgba(104, 170, 232,.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>✅</span>
                 Fully operational demo platform — not just a presentation
               </div>
               <div style={{display:'flex',gap:12,alignItems:'center',fontSize:14,color:'var(--muted)'}}>
-                <span style={{width:28,height:28,borderRadius:8,background:'rgba(124,58,237,.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#a78bfa',flexShrink:0}}>
+                <span style={{width:28,height:28,borderRadius:8,background:'rgba(22, 38, 96,.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#68aae8',flexShrink:0}}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6" rx="1" ry="1"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="15" x2="23" y2="15"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="15" x2="4" y2="15"></line></svg>
                 </span>
                 AI/ML models production-ready and actively integrated
@@ -224,12 +224,12 @@ export default function Landing() {
                 <div className="chart-rows">
                   <div className="chart-row">
                     <div className="chart-row-label">Revenue</div>
-                    <div className="chart-bar-wrap"><div className="chart-bar-fill" style={{width:'82%',background:'linear-gradient(90deg,#2563eb,#3b82f6)'}}></div></div>
+                    <div className="chart-bar-wrap"><div className="chart-bar-fill" style={{width:'82%',background:'linear-gradient(90deg,#68aae8,#68aae8)'}}></div></div>
                     <div className="chart-row-val">820</div>
                   </div>
                   <div className="chart-row">
                     <div className="chart-row-label">Health</div>
-                    <div className="chart-bar-wrap"><div className="chart-bar-fill" style={{width:'65%',background:'linear-gradient(90deg,#7c3aed,#a78bfa)'}}></div></div>
+                    <div className="chart-bar-wrap"><div className="chart-bar-fill" style={{width:'65%',background:'linear-gradient(90deg,#162660,#68aae8)'}}></div></div>
                     <div className="chart-row-val">650</div>
                   </div>
                   <div className="chart-row">
@@ -249,7 +249,7 @@ export default function Landing() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
                 </div>
                 <div style={{fontSize:12}}>
-                  <div style={{color:'#a78bfa',fontWeight:600,marginBottom:2}}>AI Insight</div>
+                  <div style={{color:'#68aae8',fontWeight:600,marginBottom:2}}>AI Insight</div>
                   <div style={{color:'var(--muted)'}}>3 employees flagged for retirement planning within 90 days</div>
                 </div>
               </div>
@@ -371,7 +371,7 @@ export default function Landing() {
                     <h4>Document OCR & Data Extraction</h4>
                     <p>Transformer-based OCR pipeline with NLP post-processing extracts structured data from scanned government documents, forms, and certificates with 95%+ field accuracy.</p>
                     <div className="ai-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#a78bfa' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#68aae8' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
                       ML Active
                     </div>
                   </div>
@@ -382,7 +382,7 @@ export default function Landing() {
                     <h4>Performance Anomaly & Bias Detection</h4>
                     <p>ML classifiers flag statistically anomalous APAR ratings and potential reviewer bias patterns using historical appraisal data across departments.</p>
                     <div className="ai-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#a78bfa' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#68aae8' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
                       ML Active
                     </div>
                   </div>
@@ -393,7 +393,7 @@ export default function Landing() {
                     <h4>Predictive Retirement & Succession Planning</h4>
                     <p>Automated identification of employees approaching retirement with intelligent succession gap analysis and proactive HR alerts.</p>
                     <div className="ai-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#a78bfa' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#68aae8' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
                       ML Active
                     </div>
                   </div>
@@ -404,7 +404,7 @@ export default function Landing() {
                     <h4>Attrition Risk & Workforce Forecasting</h4>
                     <p>Regression models predict department-level attrition risk and headcount needs based on transfer patterns, leave history, and role tenure.</p>
                     <div className="ai-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#a78bfa' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#68aae8' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"></path></svg>
                       ML Active
                     </div>
                   </div>
@@ -450,7 +450,7 @@ export default function Landing() {
                 <div className="ocr-status">7 fields extracted · Auto-populated into Service Book · Awaiting HR verification</div>
                 <div style={{marginTop:12,display:'flex',gap:8,flexWrap:'wrap'}}>
                   <div style={{background:'rgba(16,185,129,.1)',border:'1px solid rgba(16,185,129,.2)',color:'#34d399',fontSize:11,padding:'4px 12px',borderRadius:100}}>✓ Duplicate Check Passed</div>
-                  <div style={{background:'rgba(37,99,235,.1)',border:'1px solid rgba(37,99,235,.2)',color:'#60a5fa',fontSize:11,padding:'4px 12px',borderRadius:100}}>✓ Data Mapped to Profile</div>
+                  <div style={{background:'rgba(104, 170, 232,.1)',border:'1px solid rgba(104, 170, 232,.2)',color:'#68aae8',fontSize:11,padding:'4px 12px',borderRadius:100}}>✓ Data Mapped to Profile</div>
                   <div style={{background:'rgba(245,158,11,.1)',border:'1px solid rgba(245,158,11,.2)',color:'#fbbf24',fontSize:11,padding:'4px 12px',borderRadius:100}}>⏳ Pending HR Approval</div>
                 </div>
               </div>
@@ -470,7 +470,7 @@ export default function Landing() {
           <div className="metrics-row reveal">
             <div className="metric-card" id="metric-employees">
               <div className="metric-icon">👥</div>
-              <div className="metric-value" style={{color:'#60a5fa'}}>4,284</div>
+              <div className="metric-value" style={{color:'#68aae8'}}>4,284</div>
               <div className="metric-label">Total Employees</div>
               <div className="metric-change up">↑ 2.3% this quarter</div>
             </div>
@@ -497,14 +497,14 @@ export default function Landing() {
             <div className="chart-widget" id="chart-attendance-trend">
               <div className="chart-widget-title">Monthly Attendance Rate <span>Apr 2024 – Mar 2025</span></div>
               <div className="bar-chart">
-                <div className="bar-wrap"><div className="bar" style={{height:'78%',background:'linear-gradient(0deg,#2563eb,#60a5fa)'}}></div><div className="bar-label">Apr</div></div>
-                <div className="bar-wrap"><div className="bar" style={{height:'83%',background:'linear-gradient(0deg,#2563eb,#60a5fa)'}}></div><div className="bar-label">May</div></div>
-                <div className="bar-wrap"><div className="bar" style={{height:'74%',background:'linear-gradient(0deg,#2563eb,#60a5fa)'}}></div><div className="bar-label">Jun</div></div>
-                <div className="bar-wrap"><div className="bar" style={{height:'88%',background:'linear-gradient(0deg,#2563eb,#60a5fa)'}}></div><div className="bar-label">Jul</div></div>
-                <div className="bar-wrap"><div className="bar" style={{height:'91%',background:'linear-gradient(0deg,#2563eb,#60a5fa)'}}></div><div className="bar-label">Aug</div></div>
-                <div className="bar-wrap"><div className="bar" style={{height:'85%',background:'linear-gradient(0deg,#7c3aed,#a78bfa)'}}></div><div className="bar-label">Sep</div></div>
-                <div className="bar-wrap"><div className="bar" style={{height:'80%',background:'linear-gradient(0deg,#7c3aed,#a78bfa)'}}></div><div className="bar-label">Oct</div></div>
-                <div className="bar-wrap"><div className="bar" style={{height:'93%',background:'linear-gradient(0deg,#7c3aed,#a78bfa)'}}></div><div className="bar-label">Nov</div></div>
+                <div className="bar-wrap"><div className="bar" style={{height:'78%',background:'linear-gradient(0deg,#68aae8,#68aae8)'}}></div><div className="bar-label">Apr</div></div>
+                <div className="bar-wrap"><div className="bar" style={{height:'83%',background:'linear-gradient(0deg,#68aae8,#68aae8)'}}></div><div className="bar-label">May</div></div>
+                <div className="bar-wrap"><div className="bar" style={{height:'74%',background:'linear-gradient(0deg,#68aae8,#68aae8)'}}></div><div className="bar-label">Jun</div></div>
+                <div className="bar-wrap"><div className="bar" style={{height:'88%',background:'linear-gradient(0deg,#68aae8,#68aae8)'}}></div><div className="bar-label">Jul</div></div>
+                <div className="bar-wrap"><div className="bar" style={{height:'91%',background:'linear-gradient(0deg,#68aae8,#68aae8)'}}></div><div className="bar-label">Aug</div></div>
+                <div className="bar-wrap"><div className="bar" style={{height:'85%',background:'linear-gradient(0deg,#162660,#68aae8)'}}></div><div className="bar-label">Sep</div></div>
+                <div className="bar-wrap"><div className="bar" style={{height:'80%',background:'linear-gradient(0deg,#162660,#68aae8)'}}></div><div className="bar-label">Oct</div></div>
+                <div className="bar-wrap"><div className="bar" style={{height:'93%',background:'linear-gradient(0deg,#162660,#68aae8)'}}></div><div className="bar-label">Nov</div></div>
                 <div className="bar-wrap"><div className="bar" style={{height:'88%',background:'linear-gradient(0deg,#059669,#10b981)'}}></div><div className="bar-label">Dec</div></div>
                 <div className="bar-wrap"><div className="bar" style={{height:'76%',background:'linear-gradient(0deg,#059669,#10b981)'}}></div><div className="bar-label">Jan</div></div>
                 <div className="bar-wrap"><div className="bar" style={{height:'92%',background:'linear-gradient(0deg,#059669,#10b981)'}}></div><div className="bar-label">Feb</div></div>
@@ -516,8 +516,8 @@ export default function Landing() {
               <div className="donut-wrap">
                 <div className="donut" id="donut-chart"></div>
                 <div className="donut-labels">
-                  <div className="donut-label"><div className="donut-dot" style={{background:'#3b82f6'}}></div><div className="donut-label-text">Revenue</div><div className="donut-label-pct" style={{color:'#60a5fa'}}>42%</div></div>
-                  <div className="donut-label"><div className="donut-dot" style={{background:'#7c3aed'}}></div><div className="donut-label-text">Education</div><div className="donut-label-pct" style={{color:'#a78bfa'}}>26%</div></div>
+                  <div className="donut-label"><div className="donut-dot" style={{background:'#68aae8'}}></div><div className="donut-label-text">Revenue</div><div className="donut-label-pct" style={{color:'#68aae8'}}>42%</div></div>
+                  <div className="donut-label"><div className="donut-dot" style={{background:'#162660'}}></div><div className="donut-label-text">Education</div><div className="donut-label-pct" style={{color:'#68aae8'}}>26%</div></div>
                   <div className="donut-label"><div className="donut-dot" style={{background:'#10b981'}}></div><div className="donut-label-text">Health</div><div className="donut-label-pct" style={{color:'#34d399'}}>13%</div></div>
                   <div className="donut-label"><div className="donut-dot" style={{background:'#f59e0b'}}></div><div className="donut-label-text">Others</div><div className="donut-label-pct" style={{color:'#fbbf24'}}>19%</div></div>
                 </div>
@@ -563,7 +563,7 @@ export default function Landing() {
                 <div className="audit-title">🔍 System Audit Log — Live Feed</div>
                 <div className="audit-log" id="audit-log-container">
                   {logs.map((log) => (
-                    <div key={log.id} className="audit-entry" style={log.id > 6 ? {background: 'rgba(37,99,235,.05)'} : {}}>
+                    <div key={log.id} className="audit-entry" style={log.id > 6 ? {background: 'rgba(104, 170, 232,.05)'} : {}}>
                       <div className="audit-time">{log.time}</div>
                       <div className="audit-action">
                         <div><span className="user">{log.user}</span> <span className="what">{log.what}</span></div>
@@ -616,19 +616,19 @@ export default function Landing() {
           </div>
           <div style={{marginTop:48, display:'flex', justifyContent:'center', gap:48, flexWrap:'wrap'}}>
             <div style={{textAlign:'center'}}>
-              <div style={{fontSize:28,fontWeight:800,background:'linear-gradient(135deg,#60a5fa,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>15+</div>
+              <div style={{fontSize:28,fontWeight:800,background:'linear-gradient(135deg,#68aae8,#68aae8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>15+</div>
               <div style={{fontSize:13,color:'var(--muted)',marginTop:4}}>Modules Delivered</div>
             </div>
             <div style={{textAlign:'center'}}>
-              <div style={{fontSize:28,fontWeight:800,background:'linear-gradient(135deg,#60a5fa,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>7</div>
+              <div style={{fontSize:28,fontWeight:800,background:'linear-gradient(135deg,#68aae8,#68aae8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>7</div>
               <div style={{fontSize:13,color:'var(--muted)',marginTop:4}}>AI/ML Models Integrated</div>
             </div>
             <div style={{textAlign:'center'}}>
-              <div style={{fontSize:28,fontWeight:800,background:'linear-gradient(135deg,#60a5fa,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>100%</div>
+              <div style={{fontSize:28,fontWeight:800,background:'linear-gradient(135deg,#68aae8,#68aae8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>100%</div>
               <div style={{fontSize:13,color:'var(--muted)',marginTop:4}}>EOI Scope Covered</div>
             </div>
             <div style={{textAlign:'center'}}>
-              <div style={{fontSize:28,fontWeight:800,background:'linear-gradient(135deg,#60a5fa,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Ready</div>
+              <div style={{fontSize:28,fontWeight:800,background:'linear-gradient(135deg,#68aae8,#68aae8)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Ready</div>
               <div style={{fontSize:13,color:'var(--muted)',marginTop:4}}>Working Demo Available</div>
             </div>
           </div>
