@@ -53,9 +53,9 @@ export default function Attendance() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedDayData, setSelectedDayData] = useState(null);
   const [showBalanceEdit, setShowBalanceEdit] = useState(false);
-  const [editBalance, setEditBalance] = useState({ emp_id: '', emp_name: '', year: new Date().getFullYear(), cl_entitled: 0, cl_used: 0, el_entitled: 0, el_used: 0, ml_entitled: 0, ml_used: 0 });
+  const [editBalance, setEditBalance] = useState({ emp_id: '', emp_name: '', year: new Date().getFullYear(), sl_entitled: 0, sl_used: 0, ml_entitled: 0, ml_used: 0, el_entitled: 0, el_used: 0, dl_entitled: 0, dl_used: 0 });
   const [msg, setMsg] = useState('');
-  const [form, setForm] = useState({ emp_id:'', leave_type:'CL', from_date:'', to_date:'', reason:'', half_day_type:'', contact_number:'', leave_address:'' });
+  const [form, setForm] = useState({ emp_id:'', leave_type:'SL', from_date:'', to_date:'', reason:'', half_day_type:'', contact_number:'', leave_address:'' });
   const [regForm, setRegForm] = useState({ date: '', requested_in: '', requested_out: '', reason: '', half_day_type: '', regularization_type: 'full_day' });
   const [wfhForm, setWfhForm] = useState({ date: '', reason: '' });
   const [employees, setEmployees] = useState([]);
@@ -142,7 +142,7 @@ export default function Attendance() {
       const payload = user.role==='employee' ? { ...form, emp_id: user.emp_id } : form;
       await leaveAPI.apply(payload);
       showMsg('Leave application submitted'); setShowForm(false);
-      setForm({ emp_id:'', leave_type:'CL', from_date:'', to_date:'', reason:'', half_day_type:'', contact_number:'', leave_address:'' });
+      setForm({ emp_id:'', leave_type:'SL', from_date:'', to_date:'', reason:'', half_day_type:'', contact_number:'', leave_address:'' });
       load();
     } catch(e) { showMsg('Error: '+e.response?.data?.message); }
   };
@@ -741,7 +741,7 @@ export default function Attendance() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom:'1px solid rgba(22,38,96,0.08)', background:'rgba(22,38,96,0.02)' }}>
-                  {['Employee','CL','EL','ML','Used CL','Used EL','Used ML','CL Left','EL Left','ML Left', ...(isMin('hr_staff') ? ['Action'] : [])].map(h => (
+                  {['Employee','SL','ML','EL','DL','Used SL','Used ML','Used EL','Used DL','SL Left','ML Left','EL Left','DL Left', ...(isMin('hr_staff') ? ['Action'] : [])].map(h => (
                     <th key={h} className="p-3 text-left text-xs font-semibold" style={{ color:'rgba(22,38,96,0.5)' }}>{h}</th>
                   ))}
                 </tr>
@@ -749,15 +749,18 @@ export default function Attendance() {
               <tbody>{balances.map((b,i)=>(
                 <tr key={b.id} className="hover:bg-gray-50/50" style={{ borderBottom:'1px solid rgba(22,38,96,0.04)' }}>
                   <td className="p-3"><div className="font-medium text-sm" style={{ color:'#162660' }}>{b.emp_name}</div></td>
-                  <td className="p-3 font-semibold text-emerald-600">{b.cl_entitled}</td>
-                  <td className="p-3 font-semibold text-blue-600">{b.el_entitled}</td>
+                  <td className="p-3 font-semibold text-emerald-600">{b.sl_entitled}</td>
                   <td className="p-3 font-semibold text-purple-600">{b.ml_entitled}</td>
-                  <td className="p-3 text-red-500 font-medium">{b.cl_used}</td>
-                  <td className="p-3 text-red-500 font-medium">{b.el_used}</td>
+                  <td className="p-3 font-semibold text-blue-600">{b.el_entitled}</td>
+                  <td className="p-3 font-semibold text-amber-600">{b.dl_entitled}</td>
+                  <td className="p-3 text-red-500 font-medium">{b.sl_used}</td>
                   <td className="p-3 text-red-500 font-medium">{b.ml_used}</td>
-                  <td className="p-3 font-bold" style={{ color:(b.cl_entitled-b.cl_used)>0?'#065f46':'#991b1b' }}>{b.cl_entitled-b.cl_used}</td>
-                  <td className="p-3 font-bold" style={{ color:(b.el_entitled-b.el_used)>0?'#065f46':'#991b1b' }}>{b.el_entitled-b.el_used}</td>
+                  <td className="p-3 text-red-500 font-medium">{b.el_used}</td>
+                  <td className="p-3 text-red-500 font-medium">{b.dl_used}</td>
+                  <td className="p-3 font-bold" style={{ color:(b.sl_entitled-b.sl_used)>0?'#065f46':'#991b1b' }}>{b.sl_entitled-b.sl_used}</td>
                   <td className="p-3 font-bold" style={{ color:(b.ml_entitled-b.ml_used)>0?'#065f46':'#991b1b' }}>{b.ml_entitled-b.ml_used}</td>
+                  <td className="p-3 font-bold" style={{ color:(b.el_entitled-b.el_used)>0?'#065f46':'#991b1b' }}>{b.el_entitled-b.el_used}</td>
+                  <td className="p-3 font-bold" style={{ color:(b.dl_entitled-b.dl_used)>0?'#065f46':'#991b1b' }}>{b.dl_entitled-b.dl_used}</td>
                   {isMin('hr_staff') && <td className="p-3">
                     <button className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
                       style={{ background:'rgba(22,38,96,0.06)', color:'#162660' }}
@@ -1027,7 +1030,7 @@ export default function Attendance() {
               <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Type</label>
               <select className="input w-full" value={form.leave_type} onChange={e=>setForm({...form,leave_type:e.target.value})}
                 style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}>
-                {['CL','EL','ML','Maternity','Paternity','CCL','Study Leave','LWP','Compensatory','WFH','Outdoor Duty'].map(t => (
+                {['SL','ML','EL','DL'].map(t => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
@@ -1173,8 +1176,8 @@ export default function Attendance() {
 
       {showBalanceEdit && (
         <Modal title={`Edit Leave Balance — ${editBalance.emp_name}`} onClose={()=>setShowBalanceEdit(false)} theme="light" wide>
-          <div className="grid grid-cols-3 gap-4">
-            {['cl_entitled','cl_used','el_entitled','el_used','ml_entitled','ml_used'].map(f => (
+          <div className="grid grid-cols-4 gap-4">
+            {['sl_entitled','sl_used','ml_entitled','ml_used','el_entitled','el_used','dl_entitled','dl_used'].map(f => (
               <div key={f}>
                 <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>{f.replace('_',' ').toUpperCase()}</label>
                 <input type="number" step="0.5" className="input w-full" value={editBalance[f]||0}

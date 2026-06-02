@@ -8,7 +8,7 @@ import { Plus, Eye, Edit2, Search } from 'lucide-react';
 import { empAPI, deptAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
-const blank = { first_name: '', last_name: '', father_name: '', gender: 'Male', dob: '', doj: '', mobile: '', alternate_mobile: '', official_email: '', personal_email: '', aadhaar_number: '', pan_number: '', dept_id: '', pay_level: '', basic_pay: '', posting_station: '', blood_group: '', qualification: '', subject_specialization: '', experience_years: 0, account_number: '', bank_name: '', ifsc_code: '', pf_number: '', nominee_name: '', nominee_relation: '', emergency_contact_name: '', emergency_contact_mobile: '', status: 'Active' };
+const blank = { first_name: '', last_name: '', father_name: '', gender: 'Male', dob: '', doj: '', mobile: '', alternate_mobile: '', official_email: '', personal_email: '', aadhaar_number: '', pan_number: '', dept_id: '', pay_level: '', basic_pay: '', posting_station: '', blood_group: '', qualification: '', subject_specialization: '', experience_years: 0, account_number: '', bank_name: '', ifsc_code: '', pf_number: '', nominee_name: '', nominee_relation: '', emergency_contact_name: '', emergency_contact_mobile: '', status: 'Active', probation_days: 90 };
 
 function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -435,7 +435,7 @@ export default function EmployeeMaster() {
               <div className="ml-auto"><Badge text={view.status} /></div>
             </div>
             <div className="grid grid-cols-3 gap-x-6 gap-y-3">
-              {[['DOB', view.dob?.split('T')[0]], ['DOJ', view.doj?.split('T')[0]], ['Mobile', view.mobile], ['Email', view.official_email], ['Posting Station', view.posting_station], ['Blood Group', view.blood_group], ['Qualification', view.qualification], ['PF No.', view.pf_number], ['PAN', view.pan_number], ['Bank', `${view.bank_name || ''} / ${view.ifsc_code || ''}`], ['Account No.', view.account_number], ['Nominee', view.nominee_name], ['Experience', `${view.experience_years} years`], ['Father Name', view.father_name], ['Basic Pay', view.basic_pay ? `₹${parseFloat(view.basic_pay).toLocaleString()}` : '—']].map(([k, v]) => (
+              {[['DOB', view.dob?.split('T')[0]], ['DOJ', view.doj?.split('T')[0]], ['Probation', view.probation_days > 0 ? `${view.probation_days} days (${view.probation_status || 'Pending'})` : 'None'], ['Mobile', view.mobile], ['Email', view.official_email], ['Posting Station', view.posting_station], ['Blood Group', view.blood_group], ['Qualification', view.qualification], ['PF No.', view.pf_number], ['PAN', view.pan_number], ['Bank', `${view.bank_name || ''} / ${view.ifsc_code || ''}`], ['Account No.', view.account_number], ['Nominee', view.nominee_name], ['Experience', `${view.experience_years} years`], ['Father Name', view.father_name], ['Basic Pay', view.basic_pay ? `₹${parseFloat(view.basic_pay).toLocaleString()}` : '—']].map(([k, v]) => (
                 <div key={k}><p className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{k}</p><p className="text-sm font-medium" style={{ color: '#162660' }}>{v || '—'}</p></div>
               ))}
             </div>
@@ -455,6 +455,7 @@ export default function EmployeeMaster() {
               </div>
               <F form={form} setForm={setForm} k="pay_level" l="Pay Level" type="number" />
               <F form={form} setForm={setForm} k="basic_pay" l="Basic Pay (₹)" type="number" />
+              <F form={form} setForm={setForm} k="probation_days" l="Probation (Days)" type="number" />
               <F form={form} setForm={setForm} k="posting_station" l="Posting Station" full />
               <F form={form} setForm={setForm} k="mobile" l="Mobile" req /><F form={form} setForm={setForm} k="alternate_mobile" l="Alternate Mobile" /><F form={form} setForm={setForm} k="official_email" l="Official Email" type="email" />
               <F form={form} setForm={setForm} k="blood_group" l="Blood Group" opts={['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']} />
