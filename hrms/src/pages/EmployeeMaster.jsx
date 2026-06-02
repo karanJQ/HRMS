@@ -256,7 +256,7 @@ export default function EmployeeMaster() {
               onChange={val => setFilter({ ...filter, status: val })} 
               options={[
                 { value: "", label: "All Status" },
-                ...['Active', 'On Leave', 'Retired', 'Suspended', 'Resigned'].map(s => ({ value: s, label: s }))
+                ...['Active', 'On Probation', 'On Leave', 'Retired', 'Suspended', 'Resigned'].map(s => ({ value: s, label: s }))
               ]} 
               placeholder="All Status" 
               width={130} 
@@ -299,7 +299,6 @@ export default function EmployeeMaster() {
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Emp ID</th>
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Name</th>
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Department</th>
-                    <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Monthly CTC</th>
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Status</th>
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Actions</th>
                   </tr>
@@ -330,7 +329,6 @@ export default function EmployeeMaster() {
                       <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{e.official_email}</div>
                     </td>
                     <td style={{ color: '#162660' }}>{e.dept_name}</td>
-                    <td style={{ color: '#162660' }}>₹{parseFloat(e.ctc || 0).toLocaleString()}</td>
                     <td><Badge text={e.status} /></td>
                     <td>
                       <div className="flex gap-2">
@@ -456,7 +454,7 @@ export default function EmployeeMaster() {
                 </select>
               </div>
               <F form={form} setForm={setForm} k="pay_level" l="Pay Level" type="number" />
-              <F form={form} setForm={setForm} k="ctc" l="Monthly CTC (₹)" type="number" />
+              <F form={form} setForm={setForm} k="ctc" l="Monthly Gross Salary (₹)" type="number" />
               <F form={form} setForm={setForm} k="probation_days" l="Probation (Days)" type="number" />
               <F form={form} setForm={setForm} k="posting_station" l="Posting Station" full />
               <F form={form} setForm={setForm} k="mobile" l="Mobile" req /><F form={form} setForm={setForm} k="alternate_mobile" l="Alternate Mobile" /><F form={form} setForm={setForm} k="official_email" l="Official Email" type="email" />

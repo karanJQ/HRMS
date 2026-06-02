@@ -981,7 +981,7 @@ export default function Payroll() {
                       <span>{k}</span><span className="font-medium">₹{parseFloat(v || 0).toLocaleString()}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-sm py-2 font-bold text-emerald-700"><span>Total Gross (A)</span><span>₹{parseFloat(slip.gross_pay || 0).toLocaleString()}</span></div>
+                  <div className="flex justify-between text-sm py-2 font-bold text-emerald-700"><span>Total Gross</span><span>₹{parseFloat(slip.gross_pay || 0).toLocaleString()}</span></div>
                   <div className="mt-2"></div>
                   {[['Employer PF', slip.pf_employer], ['Employer ESIC', slip.esic_employer]].map(([k, v]) => (
                     <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
@@ -992,20 +992,24 @@ export default function Payroll() {
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-sm mb-2 text-rose-600">Employee Contribution</p>
-                  {[['Employee PF', slip.pf_employee], ['Employee ESIC', slip.esic_employee], ['Professional Tax', slip.professional_tax], ['Income Tax (TDS)', slip.tds]].map(([k, v]) => (
-                    <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
-                      <span>{k}</span><span className="font-medium text-rose-600">₹{parseFloat(v || 0).toLocaleString()}</span>
-                    </div>
-                  ))}
+                  {[['Employee PF', slip.pf_employee], ['Employee ESIC', slip.esic_employee], ['Professional Tax', slip.professional_tax], ['Income Tax (TDS)', slip.tds], ['LWP Deduction', slip.lwp_amount]].map(([k, v]) => {
+                    if (k === 'LWP Deduction' && !v) return null;
+                    return (
+                      <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
+                        <span>{k} {k === 'LWP Deduction' && slip.lwp_days > 0 ? `(${slip.lwp_days} days)` : ''}</span>
+                        <span className="font-medium text-rose-600">₹{parseFloat(v || 0).toLocaleString()}</span>
+                      </div>
+                    );
+                  })}
                   <div className="flex justify-between text-sm py-2 font-bold text-rose-600"><span>Total Deductions</span><span>₹{parseFloat(slip.total_deductions || 0).toLocaleString()}</span></div>
                 </div>
               </div>
               <div className="border rounded-lg p-3 mt-3 flex justify-between items-center bg-amber-50 border-amber-200">
-                <span className="font-bold text-amber-800">Total CTC (A+B)</span>
+                <span className="font-bold text-amber-800">Total CTC </span>
                 <span className="font-bold text-amber-800 text-lg">₹{(parseFloat(slip.gross_pay||0) + parseFloat(slip.pf_employer||0) + parseFloat(slip.esic_employer||0)).toLocaleString()}</span>
               </div>
               <div className="border rounded-lg p-3 mt-3 flex justify-between items-center" style={{ background: 'rgba(16, 185, 129, 0.06)', borderColor: 'rgba(16, 185, 129, 0.15)' }}>
-                <span className="font-bold text-emerald-800">Net Payable (Take Home)</span>
+                <span className="font-bold text-emerald-800">Net Payable </span>
                 <span className="font-bold text-emerald-800 text-lg">₹{parseFloat(slip.net_pay || 0).toLocaleString()}</span>
               </div>
             </div>
@@ -1195,13 +1199,13 @@ export default function Payroll() {
             <div className="grid grid-cols-2 gap-4">
               {/* Earnings Column */}
               <div className="space-y-3 bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10 col-span-2">
-                <p className="text-xs font-bold text-emerald-400 uppercase border-b border-emerald-500/10 pb-1.5 mb-2">CTC Detail</p>
+                <p className="text-xs font-bold text-emerald-400 uppercase border-b border-emerald-500/10 pb-1.5 mb-2">Gross Salary Detail</p>
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">Monthly CTC (₹)<span className="text-red-400">*</span></label>
+                  <label className="text-xs text-slate-400 block mb-1">Monthly Gross Salary (₹)<span className="text-red-400">*</span></label>
                   <input type="number" className="input text-xs" value={formObj.ctc || formObj.basic_pay} onChange={e => setFormObj({ ...formObj, ctc: parseFloat(e.target.value) || '' })} />
                 </div>
                 <div className="pt-2 text-xs text-slate-500">
-                  <p>* Basic, HRA, Conveyance, PF and ESIC will be auto-calculated upon save based on this CTC.</p>
+                  <p>* Basic, HRA, Conveyance, PF and ESIC will be auto-calculated upon save based on this Gross Salary.</p>
                 </div>
               </div>
 
@@ -1218,9 +1222,15 @@ export default function Payroll() {
                     <input type="number" className="input text-xs" value={formObj.tds} onChange={e => setFormObj({ ...formObj, tds: parseFloat(e.target.value) || 0 })} />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Other Deductions (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.other_deductions} onChange={e => setFormObj({ ...formObj, other_deductions: parseFloat(e.target.value) || 0 })} />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">Other Deductions (₹)</label>
+                    <input type="number" className="input text-xs" value={formObj.other_deductions} onChange={e => setFormObj({ ...formObj, other_deductions: parseFloat(e.target.value) || 0 })} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">Leave Without Pay (Days)</label>
+                    <input type="number" step="0.5" className="input text-xs" value={formObj.lwp_days} onChange={e => setFormObj({ ...formObj, lwp_days: parseFloat(e.target.value) || 0 })} />
+                  </div>
                 </div>
               </div>
             </div>

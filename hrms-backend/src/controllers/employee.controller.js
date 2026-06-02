@@ -17,7 +17,11 @@ exports.list = async (req, res) => {
   let idx = 1;
 
   if (dept) { conditions.push(`e.dept_id = $${idx++}`); params.push(dept); }
-  if (status) { conditions.push(`e.status = $${idx++}`); params.push(status); }
+  if (status === 'On Probation') { 
+    conditions.push(`e.probation_status = 'Pending' AND e.status = 'Active'`); 
+  } else if (status) { 
+    conditions.push(`e.status = $${idx++}`); params.push(status); 
+  }
   if (category) { conditions.push(`e.category = $${idx++}`); params.push(category); }
   if (search) {
     conditions.push(`(e.first_name ILIKE $${idx} OR e.last_name ILIKE $${idx} OR e.emp_id ILIKE $${idx} OR e.mobile ILIKE $${idx})`);

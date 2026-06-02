@@ -59,7 +59,7 @@ exports.getSlip = async (req, res) => {
 
 exports.process = async (req, res) => {
   const { emp_id, month, year, ctc: rawCtc, basic_pay: fallbackCtc,
-          professional_tax=200, tds=0, other_deductions=0, payment_mode='Bank Transfer', status='Processed' } = req.body;
+          professional_tax=200, tds=0, other_deductions=0, lwp_days=0, payment_mode='Bank Transfer', status='Processed' } = req.body;
   
   const ctc = parseFloat(rawCtc || fallbackCtc || 0);
   if (!emp_id||!month||!year||!ctc) return error(res,'emp_id, month, year, and ctc required.',400);
@@ -70,44 +70,74 @@ exports.process = async (req, res) => {
       return error(res, `Employee with ID '${emp_id}' does not exist.`, 404);
     }
 
-    let gross = 0;
-    if (ctc / 1.08125 >= 30000) {
-      gross = Math.round((ctc - 1950) / 1.01625);
-    } else {
-      gross = Math.round(ctc / 1.08125);
+    const gross = ctc; // the input field is re-purposed as Monthly Gross Salary
+    const basic = Math.round(gross / 2);
+    const hra = Math.round(basic * 0.40);
+    const conveyance = Math.round(basic * 0.60);
+
+    const pf_er = Math.round(Math.min(basic * 0.13, 1950));
+    const pf_emp = basic > 14999 ? 1800 : Math.round(basic * 0.12);
+    
+    // ESIC applies only if Basic <= 21000, calculated on Basic
+    const esic_emp = basic > 21000 ? 0 : Math.round(basic * 0.0075);
+    const esic_er = basic > 21000 ? 0 : Math.round(basic * 0.0325);
+
+    const pt = 200;
+    const total_ded = pf_emp + esic_emp + pt + parseFloat(tds) + parseFloat(other_deductions);
+    
+    // Calculate initial Net
+    let net = gross - total_ded;
+    
+    // Auto-LWP from Leave Balances
+    let auto_lwp_days = 0;
+    const lbRes = await query('SELECT * FROM leave_balances WHERE emp_id=$1 AND year=$2', [emp_id, year]);
+    if (lbRes.rows.length > 0) {
+       const lb = lbRes.rows[0];
+       const types = ['cl', 'el', 'ml', 'ccl', 'sl', 'dl'];
+       let toUpdate = [];
+       for (let t of types) {
+           const entitled = parseFloat(lb[`${t}_entitled`] || 0);
+           const used = parseFloat(lb[`${t}_used`] || 0);
+           if (used > entitled) {
+               auto_lwp_days += (used - entitled);
+               toUpdate.push(`${t}_entitled = ${used}`);
+           }
+       }
+       if (toUpdate.length > 0) {
+           await query(`UPDATE leave_balances SET ${toUpdate.join(', ')}, updated_at=NOW() WHERE id=$1`, [lb.id]);
+       }
     }
+    
+    const final_lwp_days = parseFloat(lwp_days || 0) + auto_lwp_days;
+    
+    // LWP Calculation
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const lwp_amount = Math.round((net / daysInMonth) * final_lwp_days);
+    
+    // Final Net after LWP
+    net = net - lwp_amount;
+    const final_total_ded = total_ded + lwp_amount; // LWP is part of deductions
 
-    const basic = Math.round(gross * 0.5);
-    const hra = Math.round(basic * 0.4);
-    const conveyance = gross - basic - hra;
-
-    const pf_wage = Math.min(basic, 15000);
-    const pf_er = Math.round(0.13 * pf_wage);
-    const esic_er = Math.round(0.0325 * basic);
-
-    const pf_emp = Math.round(0.12 * pf_wage);
-    const esic_emp = Math.round(0.0075 * basic);
-
-    const total_ded = pf_emp + esic_emp + parseFloat(professional_tax) + parseFloat(tds) + parseFloat(other_deductions);
-    const net = gross - total_ded;
+    const real_ctc = gross + pf_er; // User's formula: CTC = Gross salary + Employer PF
 
     const result = await query(
       `INSERT INTO payroll_records(emp_id,month,year,ctc,basic_pay,hra_amount,ta_amount,
         gross_pay,pf_employee,esic_employee,pf_employer,esic_employer,professional_tax,tds,
-        other_deductions,total_deductions,net_pay,payment_mode,status,processed_by)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+        other_deductions,lwp_days,lwp_amount,total_deductions,net_pay,payment_mode,status,processed_by)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
        ON CONFLICT(emp_id,month,year) DO UPDATE SET
          ctc=EXCLUDED.ctc, basic_pay=EXCLUDED.basic_pay, hra_amount=EXCLUDED.hra_amount,
          ta_amount=EXCLUDED.ta_amount, gross_pay=EXCLUDED.gross_pay,
          pf_employee=EXCLUDED.pf_employee, esic_employee=EXCLUDED.esic_employee,
          pf_employer=EXCLUDED.pf_employer, esic_employer=EXCLUDED.esic_employer,
          professional_tax=EXCLUDED.professional_tax, tds=EXCLUDED.tds,
-         other_deductions=EXCLUDED.other_deductions, total_deductions=EXCLUDED.total_deductions,
+         other_deductions=EXCLUDED.other_deductions, lwp_days=EXCLUDED.lwp_days, lwp_amount=EXCLUDED.lwp_amount, 
+         total_deductions=EXCLUDED.total_deductions,
          net_pay=EXCLUDED.net_pay, payment_mode=EXCLUDED.payment_mode, status=EXCLUDED.status,
          processed_by=EXCLUDED.processed_by, updated_at=NOW()
        RETURNING *`,
-      [emp_id, month, year, ctc, basic, hra, conveyance, gross, pf_emp, esic_emp, pf_er, esic_er,
-       professional_tax, tds, other_deductions, total_ded, net, payment_mode, status, req.user.id]
+      [emp_id, month, year, real_ctc, basic, hra, conveyance, gross, pf_emp, esic_emp, pf_er, esic_er,
+       pt, tds, other_deductions, final_lwp_days, lwp_amount, final_total_ded, net, payment_mode, status, req.user.id]
     );
     return success(res, result.rows[0], 'Payroll processed');
   } catch (err) { return error(res, err.message); }
@@ -123,43 +153,67 @@ exports.processAll = async (req, res) => {
       const ctc = parseFloat(e.ctc || e.basic_pay || 0);
       if (!ctc) continue;
 
-      let gross = 0;
-      if (ctc / 1.08125 >= 30000) {
-        gross = Math.round((ctc - 1950) / 1.01625);
-      } else {
-        gross = Math.round(ctc / 1.08125);
+      const gross = ctc; // Input is treated as Gross Salary
+      const basic = Math.round(gross / 2);
+      const hra = Math.round(basic * 0.40);
+      const conveyance = Math.round(basic * 0.60);
+
+      const pf_er = Math.round(Math.min(basic * 0.13, 1950));
+      const pf_emp = basic > 14999 ? 1800 : Math.round(basic * 0.12);
+
+      const esic_emp = basic > 21000 ? 0 : Math.round(basic * 0.0075);
+      const esic_er = basic > 21000 ? 0 : Math.round(basic * 0.0325);
+      
+      const pt = 200;
+      const tds_val = gross > 50000 ? Math.round((gross - 50000) * 0.1) : 0;
+      
+      const total_ded = pf_emp + esic_emp + pt + tds_val;
+      let net = gross - total_ded;
+
+      let auto_lwp_days = 0;
+      const lbRes = await query('SELECT * FROM leave_balances WHERE emp_id=$1 AND year=$2', [e.emp_id, year]);
+      if (lbRes.rows.length > 0) {
+         const lb = lbRes.rows[0];
+         const types = ['cl', 'el', 'ml', 'ccl', 'sl', 'dl'];
+         let toUpdate = [];
+         for (let t of types) {
+             const entitled = parseFloat(lb[`${t}_entitled`] || 0);
+             const used = parseFloat(lb[`${t}_used`] || 0);
+             if (used > entitled) {
+                 auto_lwp_days += (used - entitled);
+                 toUpdate.push(`${t}_entitled = ${used}`);
+             }
+         }
+         if (toUpdate.length > 0) {
+             await query(`UPDATE leave_balances SET ${toUpdate.join(', ')}, updated_at=NOW() WHERE id=$1`, [lb.id]);
+         }
       }
 
-      const basic = Math.round(gross * 0.5);
-      const hra = Math.round(basic * 0.4);
-      const conveyance = gross - basic - hra;
-
-      const pf_wage = Math.min(basic, 15000);
-      const pf_er = Math.round(0.13 * pf_wage);
-      const esic_er = Math.round(0.0325 * basic);
-
-      const pf_emp = Math.round(0.12 * pf_wage);
-      const esic_emp = Math.round(0.0075 * basic);
-      const pt = 200;
-      const tds = gross > 50000 ? Math.round((gross - 50000) * 0.1) : 0;
+      // Calculate LWP for processAll
+      const final_lwp_days = auto_lwp_days;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const lwp_amount = Math.round((net / daysInMonth) * final_lwp_days);
       
-      const total_ded = pf_emp + esic_emp + pt + tds;
-      const net = gross - total_ded;
+      net = net - lwp_amount;
+      const final_total_ded = total_ded + lwp_amount;
+
+      const real_ctc = gross + pf_er;
 
       await query(
         `INSERT INTO payroll_records(emp_id,month,year,ctc,basic_pay,hra_amount,ta_amount,
           gross_pay,pf_employee,esic_employee,pf_employer,esic_employer,professional_tax,tds,
-          total_deductions,net_pay,status,processed_by)
-         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'Processed',$17)
+          other_deductions,lwp_days,lwp_amount,total_deductions,net_pay,status,processed_by)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'Processed',$20)
          ON CONFLICT(emp_id,month,year) DO UPDATE SET
            ctc=EXCLUDED.ctc, basic_pay=EXCLUDED.basic_pay, hra_amount=EXCLUDED.hra_amount,
            ta_amount=EXCLUDED.ta_amount, gross_pay=EXCLUDED.gross_pay,
            pf_employee=EXCLUDED.pf_employee, esic_employee=EXCLUDED.esic_employee,
            pf_employer=EXCLUDED.pf_employer, esic_employer=EXCLUDED.esic_employer,
            professional_tax=EXCLUDED.professional_tax, tds=EXCLUDED.tds,
+           other_deductions=EXCLUDED.other_deductions, lwp_days=EXCLUDED.lwp_days, lwp_amount=EXCLUDED.lwp_amount,
            total_deductions=EXCLUDED.total_deductions, net_pay=EXCLUDED.net_pay,
            status='Processed', updated_at=NOW()`,
-        [e.emp_id, month, year, ctc, basic, hra, conveyance, gross, pf_emp, esic_emp, pf_er, esic_er, pt, tds, total_ded, net, req.user.id]
+        [e.emp_id, month, year, real_ctc, basic, hra, conveyance, gross, pf_emp, esic_emp, pf_er, esic_er, pt, tds_val, 0, final_lwp_days, lwp_amount, final_total_ded, net, req.user.id]
       );
       processed++;
     }
