@@ -23,6 +23,10 @@ export default function Dashboard() {
   const [birthdays, setBirthdays] = useState([]);
   const [anniversaries, setAnniversaries] = useState([]);
   const [holidays, setHolidays] = useState([]);
+  const [probationAlerts, setProbationAlerts] = useState([]);
+  const [probationModal, setProbationModal] = useState(null); // { emp_id, action, name }
+  const [probationNotes, setProbationNotes] = useState('');
+  const [extendDays, setExtendDays] = useState(30);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [punchLoading, setPunchLoading] = useState(false);
@@ -40,7 +44,8 @@ export default function Dashboard() {
       empAPI.birthdays({ month: currentMonth }).catch(() => ({ data: { data: [] } })),
       empAPI.anniversaries({ month: currentMonth }).catch(() => ({ data: { data: [] } })),
       attendanceAPI.getHolidays({ year: currentYear }).catch(() => ({ data: { data: [] } })),
-    ]).then(([s, h, l, o, b, a, hol]) => {
+      reportsAPI.probationAlerts().catch(() => ({ data: { data: [] } })),
+    ]).then(([s, h, l, o, b, a, hol, prob]) => {
       setStats(s?.data?.data || null);
       setHeadcount(h?.data?.data || null);
       setLeaves((l?.data?.data || []).slice(0, 5));
@@ -49,6 +54,7 @@ export default function Dashboard() {
       setBirthdays(b?.data?.data?.slice(0, 6) || []);
       setAnniversaries(a?.data?.data?.slice(0, 6) || []);
       setHolidays(hol?.data?.data?.slice(0, 6) || []);
+      setProbationAlerts(prob?.data?.data || []);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -66,6 +72,29 @@ export default function Dashboard() {
       setTimeout(() => setMsg(''), 5000);
     } finally {
       setPunchLoading(false);
+    }
+  };
+
+  const submitProbationAction = async () => {
+    if (!probationModal) return;
+    try {
+      setLoading(true);
+      await empAPI.probationAction(probationModal.emp_id, {
+        action: probationModal.action,
+        days: extendDays,
+        notes: probationNotes
+      });
+      setMsg(`Probation ${probationModal.action}ed successfully.`);
+      setProbationModal(null);
+      setProbationNotes('');
+      // Refresh alerts
+      const res = await reportsAPI.probationAlerts();
+      setProbationAlerts(res.data?.data || []);
+    } catch (e) {
+      setMsg('Error: ' + (e.response?.data?.message || e.message));
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMsg(''), 5000);
     }
   };
 
@@ -315,6 +344,96 @@ export default function Dashboard() {
             </div>}
         </div>
       </div>
+
+      {/* Probation Alerts Row */}
+      {probationAlerts.length > 0 && (
+        <div className="mb-6 flex flex-col p-6 hover-card animate-slide-up"
+          style={{
+            background: '#fff', border: '1px solid rgba(239, 68, 68, 0.2)',
+            borderRadius: '16px', boxShadow: '0 8px 24px rgba(239, 68, 68, 0.05)',
+          }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle size={20} className="text-red-500" />
+            <h3 className="text-lg font-semibold text-red-600">Probation Ending Soon / Overdue</h3>
+          </div>
+          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
+            <table>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
+                  <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Employee</th>
+                  <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Department</th>
+                  <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>End Date</th>
+                  <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>{probationAlerts.map(p => {
+                const isOverdue = new Date(p.probation_end_date) < new Date();
+                return (
+                  <tr key={p.emp_id} style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.05)', background: isOverdue ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
+                    <td>
+                      <div className="font-semibold text-slate-800">{p.first_name} {p.last_name}</div>
+                      <div className="text-xs text-slate-500">{p.emp_id}</div>
+                    </td>
+                    <td className="text-slate-600">{p.dept_name}</td>
+                    <td>
+                      <div className={`font-semibold ${isOverdue ? 'text-red-600' : 'text-amber-600'}`}>
+                        {new Date(p.probation_end_date).toLocaleDateString()}
+                      </div>
+                      <div className="text-xs text-slate-500">{isOverdue ? 'Overdue' : 'Ending soon'}</div>
+                    </td>
+                    <td>
+                      <div className="flex gap-2">
+                        <button onClick={() => setProbationModal({ emp_id: p.emp_id, name: p.first_name, action: 'accept' })} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-semibold hover:bg-emerald-200">Accept</button>
+                        <button onClick={() => setProbationModal({ emp_id: p.emp_id, name: p.first_name, action: 'extend' })} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-xs font-semibold hover:bg-amber-200">Extend</button>
+                        <button onClick={() => setProbationModal({ emp_id: p.emp_id, name: p.first_name, action: 'reject' })} className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold hover:bg-red-200">Reject</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}</tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Probation Action Modal */}
+      {probationModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-slide-up">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-bold text-lg text-slate-800 capitalize">{probationModal.action} Probation</h3>
+              <button onClick={() => setProbationModal(null)} className="text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-slate-600">You are about to <strong>{probationModal.action}</strong> the probation for <strong>{probationModal.name}</strong>.</p>
+              
+              {probationModal.action === 'extend' && (
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">Extension Days</label>
+                  <input type="number" className="input w-full" value={extendDays} onChange={e => setExtendDays(e.target.value)} />
+                </div>
+              )}
+              
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Review Notes / Reason (Required)</label>
+                <textarea className="input w-full h-24 resize-none" value={probationNotes} onChange={e => setProbationNotes(e.target.value)} placeholder={`Enter reason for ${probationModal.action}...`} />
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 flex justify-end gap-3 border-t">
+              <button onClick={() => setProbationModal(null)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg">Cancel</button>
+              <button 
+                onClick={submitProbationAction} 
+                disabled={!probationNotes.trim()}
+                className={`px-4 py-2 text-sm font-semibold text-white rounded-lg ${!probationNotes.trim() ? 'bg-slate-400 cursor-not-allowed' : probationModal.action === 'reject' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </Layout>
   );
 }

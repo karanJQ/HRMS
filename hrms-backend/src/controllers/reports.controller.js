@@ -87,3 +87,20 @@ exports.retirementReport = async (req, res) => {
     return success(res, { upcoming_1yr: upcoming1yr.rows });
   } catch (err) { return error(res, err.message); }
 };
+
+exports.getProbationAlerts = async (req, res) => {
+  try {
+    const alerts = await query(
+      `SELECT e.emp_id, e.first_name, e.last_name, e.doj, e.probation_days, e.probation_end_date,
+              d.name as dept_name, des.name as designation_name
+       FROM employees e
+       JOIN departments d ON d.id=e.dept_id
+       LEFT JOIN designations des ON des.id=e.designation_id
+       WHERE e.probation_status = 'Pending' 
+         AND e.status = 'Active'
+         AND e.probation_end_date <= CURRENT_DATE + INTERVAL '7 days'
+       ORDER BY e.probation_end_date ASC`
+    );
+    return success(res, alerts.rows);
+  } catch (err) { return error(res, err.message); }
+};

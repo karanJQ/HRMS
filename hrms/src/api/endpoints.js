@@ -27,6 +27,7 @@ export const empAPI = {
   me: () => API.get('/employees/me'),
   birthdays: (params) => API.get('/employees/birthdays', { params }),
   anniversaries: (params) => API.get('/employees/anniversaries', { params }),
+  probationAction: (empId, data) => API.post(`/employees/${empId}/probation`, data),
 };
 
 // Payroll
@@ -131,6 +132,7 @@ export const reportsAPI = {
   payroll: (params) => API.get('/reports/payroll', { params }),
   leave: (params) => API.get('/reports/leave', { params }),
   retirement: () => API.get('/reports/retirement'),
+  probationAlerts: () => API.get('/reports/probation-alerts'),
 };
 
 // Attendance & Biometrics

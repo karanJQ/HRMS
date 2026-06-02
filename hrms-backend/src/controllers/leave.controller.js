@@ -104,7 +104,8 @@ exports.review = async (req, res) => {
     if (status==='Approved') {
       if (!['WFH', 'Outdoor Duty'].includes(app.leave_type)) {
         const yr = new Date(app.from_date).getFullYear();
-        const col = app.leave_type==='CL'?'cl_used':app.leave_type==='EL'?'el_used':app.leave_type==='ML'?'ml_used':'cl_used';
+        const typesMap = { 'CL': 'cl_used', 'EL': 'el_used', 'ML': 'ml_used', 'SL': 'sl_used', 'DL': 'dl_used', 'CCL': 'ccl_used' };
+        const col = typesMap[app.leave_type] || 'cl_used';
         await query(
           `INSERT INTO leave_balances(emp_id,year,cl_entitled,ml_entitled) VALUES($1,$2,12,6) ON CONFLICT DO NOTHING`, [app.emp_id, yr]
         );
@@ -173,7 +174,7 @@ exports.myLeaveBalances = async (req, res) => {
 
 exports.updateBalance = async (req, res) => {
   const { empId } = req.params;
-  const { year, cl_entitled, cl_used, el_entitled, el_used, ml_entitled, ml_used, ccl_entitled, ccl_used } = req.body;
+  const { year, cl_entitled, cl_used, el_entitled, el_used, ml_entitled, ml_used, ccl_entitled, ccl_used, sl_entitled, sl_used, dl_entitled, dl_used } = req.body;
   const yr = parseInt(year) || new Date().getFullYear();
   try {
     await query(
@@ -186,9 +187,11 @@ exports.updateBalance = async (req, res) => {
         el_entitled=COALESCE($3,el_entitled), el_used=COALESCE($4,el_used),
         ml_entitled=COALESCE($5,ml_entitled), ml_used=COALESCE($6,ml_used),
         ccl_entitled=COALESCE($7,ccl_entitled), ccl_used=COALESCE($8,ccl_used),
+        sl_entitled=COALESCE($9,sl_entitled), sl_used=COALESCE($10,sl_used),
+        dl_entitled=COALESCE($11,dl_entitled), dl_used=COALESCE($12,dl_used),
         updated_at=NOW()
-       WHERE emp_id=$9 AND year=$10 RETURNING *`,
-      [cl_entitled, cl_used, el_entitled, el_used, ml_entitled, ml_used, ccl_entitled, ccl_used, empId, yr]
+       WHERE emp_id=$13 AND year=$14 RETURNING *`,
+      [cl_entitled, cl_used, el_entitled, el_used, ml_entitled, ml_used, ccl_entitled, ccl_used, sl_entitled, sl_used, dl_entitled, dl_used, empId, yr]
     );
     if (!result.rows.length) return error(res, 'Balance not found.', 404);
     return success(res, result.rows[0], 'Leave balance updated');

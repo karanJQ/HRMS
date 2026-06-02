@@ -10,5 +10,6 @@ router.get('/', auth, minRole('hr_staff'), ctrl.list);
 router.get('/:empId', auth, ctrl.get);
 router.post('/', auth, allow('super_admin','hr_manager','hr_staff'), ctrl.create);
 router.put('/:empId', auth, minRole('hr_staff'), ctrl.update);
+router.post('/:empId/probation', auth, allow('super_admin','hr_manager','hr_staff'), ctrl.handleProbationAction);
 
 module.exports = router;
