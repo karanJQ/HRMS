@@ -229,15 +229,56 @@ export default function Payroll() {
     }
   };
 
-  const fetchAnnualSummary = () => {
+  const fetchAnnualSummary = async () => {
     setAnnualLoading(true);
-    payrollAPI.list({ month: 'all', year })
-      .then(r => {
-        setAnnualSummary(r.data.data);
-        setShowAnnualModal(true);
-      })
-      .catch(e => setMsg('Error: ' + (e.response?.data?.message || e.message)))
-      .finally(() => setAnnualLoading(false));
+    try {
+      const res = await api.get(`/payroll?year=${year}&month=all`);
+      setAnnualSummary(res.data.data);
+    } catch (err) {
+      setMsg(`Error fetching summary: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setAnnualLoading(false);
+    }
+  };
+
+  const exportToCSV = () => {
+    if (!records || records.length === 0) {
+      setMsg("Error: No records to export for this month");
+      return;
+    }
+    const headers = [
+      "Emp ID", "Employee Name", "Department", "Payment Mode", 
+      "Status", "Gross Salary", "Basic Pay", "HRA", "Conveyance", 
+      "LWP Days", "LWP Deduction", "Total Deductions", "Net Payable"
+    ];
+    
+    const rows = records.map(p => [
+      p.emp_id,
+      `"${p.emp_name}"`,
+      `"${p.dept_name || ''}"`,
+      p.payment_mode || 'Bank Transfer',
+      p.status,
+      p.gross_pay || 0,
+      p.basic_pay || 0,
+      p.hra_amount || 0,
+      p.ta_amount || 0,
+      p.lwp_days || 0,
+      p.lwp_amount || 0,
+      p.total_deductions || 0,
+      p.net_pay || 0
+    ]);
+    
+    let csvContent = "data:text/csv;charset=utf-8," 
+      + headers.join(",") + "\n"
+      + rows.map(e => e.join(",")).join("\n");
+      
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Payroll_Export_${months[month-1]}_${year}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const load = () => {
@@ -736,6 +777,7 @@ export default function Payroll() {
             e.currentTarget.style.transform = 'none';
             e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
           }}
+          onClick={exportToCSV}
         >
           <Download size={15} />Export
         </button>
