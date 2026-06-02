@@ -5,7 +5,12 @@
 ALTER TABLE apar_records DROP CONSTRAINT IF EXISTS apar_records_emp_id_financial_year_key;
 
 -- 2. Rename financial_year to cycle_name
-ALTER TABLE apar_records RENAME COLUMN financial_year TO cycle_name;
+DO $$ 
+BEGIN
+  IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='apar_records' AND column_name='financial_year') THEN
+    ALTER TABLE apar_records RENAME COLUMN financial_year TO cycle_name;
+  END IF;
+END $$;
 ALTER TABLE apar_records ALTER COLUMN cycle_name TYPE VARCHAR(50);
 
 -- 3. Drop self-assessment columns
@@ -14,6 +19,7 @@ ALTER TABLE apar_records DROP COLUMN IF EXISTS self_remarks;
 ALTER TABLE apar_records DROP COLUMN IF EXISTS self_date;
 
 -- 4. Add new constraints
+ALTER TABLE apar_records DROP CONSTRAINT IF EXISTS apar_records_emp_id_cycle_name_key;
 ALTER TABLE apar_records ADD CONSTRAINT apar_records_emp_id_cycle_name_key UNIQUE (emp_id, cycle_name);
 
 -- 5. Update status of any 'Pending Self-Assessment' to 'Pending Reporting Officer'

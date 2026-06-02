@@ -1,6 +1,6 @@
-require('dotenv').config();
-const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+const fs = require('fs');
 const { pool } = require('../config/database');
 
 async function runMigration() {
@@ -12,6 +12,7 @@ async function runMigration() {
   const sqlFile6 = path.join(__dirname, '006_kpi.sql');
   const sqlFile7 = path.join(__dirname, '007_apar_quarterly.sql');
   const sqlFile8 = path.join(__dirname, '008_attendance_photo.sql');
+  const sqlFile9 = path.join(__dirname, '009_fixes.sql');
   const sql1 = fs.readFileSync(sqlFile1, 'utf8');
   const sql2 = fs.readFileSync(sqlFile2, 'utf8');
   const sql3 = fs.readFileSync(sqlFile3, 'utf8');
@@ -20,6 +21,7 @@ async function runMigration() {
   const sql6 = fs.readFileSync(sqlFile6, 'utf8');
   const sql7 = fs.readFileSync(sqlFile7, 'utf8');
   const sql8 = fs.readFileSync(sqlFile8, 'utf8');
+  const sql9 = fs.readFileSync(sqlFile9, 'utf8');
   const client = await pool.connect();
   try {
     await client.query(sql1);
@@ -30,6 +32,7 @@ async function runMigration() {
     await client.query(sql6);
     await client.query(sql7);
     await client.query(sql8);
+    await client.query(sql9);
     console.log('✅ Migration completed successfully');
   } catch (err) {
     console.error('❌ Migration failed:', err.message);

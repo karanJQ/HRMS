@@ -6,22 +6,25 @@ import Loader from '../components/common/Loader';
 import {
   Calendar, Plus, Check, X, Fingerprint, Clock, Settings, Home,
   ChevronLeft, ChevronRight, FileText, Activity, Sun, LogIn, LogOut,
-  Coffee, MapPin, Smartphone
+  Coffee, MapPin, Smartphone, AlertCircle, AlertTriangle, CheckCircle2,
+  XCircle, CoffeeIcon, CalendarDays, Watch
 } from 'lucide-react';
 import { leaveAPI, empAPI, attendanceAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
+// Status → visual config
 const STATUS_STYLES = {
-  Present:    { bg: 'bg-emerald-50', dot: 'bg-emerald-500', text: 'text-emerald-700', label: 'Present',  border: 'border-emerald-200', badge: 'bg-emerald-500', bgHex: '#ecfdf5', textHex: '#047857', borderHex: '#a7f3d0' },
-  Absent:     { bg: 'bg-red-50',     dot: 'bg-red-500',     text: 'text-red-700',     label: 'Absent',   border: 'border-red-200',     badge: 'bg-red-500',     bgHex: '#fef2f2', textHex: '#b91c1c', borderHex: '#fecaca' },
-  'Half Day': { bg: 'bg-purple-50',  dot: 'bg-purple-500',  text: 'text-purple-700',  label: 'Half Day', border: 'border-purple-200', badge: 'bg-purple-500', bgHex: '#faf5ff', textHex: '#7e22ce', borderHex: '#e9d5ff' },
-  WFH:        { bg: 'bg-amber-50',   dot: 'bg-amber-500',   text: 'text-amber-700',   label: 'WFH',      border: 'border-amber-200',   badge: 'bg-amber-500',  bgHex: '#fffbeb', textHex: '#b45309', borderHex: '#fde68a' },
-  Leave:      { bg: 'bg-blue-50',    dot: 'bg-blue-500',    text: 'text-blue-700',    label: 'Leave',    border: 'border-blue-200',    badge: 'bg-blue-500',   bgHex: '#eff6ff', textHex: '#1d4ed8', borderHex: '#bfdbfe' },
-  Late:       { bg: 'bg-orange-50',  dot: 'bg-orange-500',  text: 'text-orange-700',  label: 'Late',     border: 'border-orange-200',  badge: 'bg-orange-500', bgHex: '#fff7ed', textHex: '#c2410c', borderHex: '#fed7aa' },
-  Holiday:    { bg: 'bg-pink-50',    dot: 'bg-pink-500',    text: 'text-pink-700',    label: 'Holiday',  border: 'border-pink-200',    badge: 'bg-pink-500',   bgHex: '#fdf2f8', textHex: '#be185d', borderHex: '#fbcfe8' },
-  Weekend:    { bg: 'bg-gray-50',    dot: 'bg-gray-300',    text: 'text-gray-400',    label: 'Weekend',  border: 'border-gray-100',    badge: 'bg-gray-300',   bgHex: '#f9fafb', textHex: '#9ca3af', borderHex: '#f3f4f6' },
-  'No Record':{ bg: 'bg-white',      dot: 'bg-gray-200',    text: 'text-gray-300',    label: '—',        border: 'border-gray-50',    badge: 'bg-gray-200',   bgHex: '#ffffff', textHex: '#d1d5db', borderHex: '#f9fafb' },
-  Upcoming:   { bg: 'bg-white',      dot: 'bg-transparent', text: 'text-gray-400',    label: '',         border: 'border-transparent', badge: 'bg-transparent', bgHex: '#ffffff', textHex: '#9ca3af', borderHex: 'transparent' },
+  Present:    { bg: 'bg-emerald-50', dot: 'bg-emerald-500', text: 'text-emerald-700', label: 'Present',  border: 'border-emerald-200', bgHex: '#ecfdf5', textHex: '#047857', borderHex: '#a7f3d0' },
+  Absent:     { bg: 'bg-red-50',     dot: 'bg-red-500',     text: 'text-red-700',     label: 'Absent',   border: 'border-red-200',     bgHex: '#fef2f2', textHex: '#b91c1c', borderHex: '#fecaca' },
+  'Half Day': { bg: 'bg-purple-50',  dot: 'bg-purple-500',  text: 'text-purple-700',  label: 'Half Day', border: 'border-purple-200', bgHex: '#faf5ff', textHex: '#7e22ce', borderHex: '#e9d5ff' },
+  WFH:        { bg: 'bg-amber-50',   dot: 'bg-amber-500',   text: 'text-amber-700',   label: 'WFH',      border: 'border-amber-200',   bgHex: '#fffbeb', textHex: '#b45309', borderHex: '#fde68a' },
+  Leave:      { bg: 'bg-blue-50',    dot: 'bg-blue-500',    text: 'text-blue-700',    label: 'Leave',    border: 'border-blue-200',    bgHex: '#eff6ff', textHex: '#1d4ed8', borderHex: '#bfdbfe' },
+  Late:       { bg: 'bg-orange-50',  dot: 'bg-orange-500',  text: 'text-orange-700',  label: 'Late',     border: 'border-orange-200',  bgHex: '#fff7ed', textHex: '#c2410c', borderHex: '#fed7aa' },
+  Holiday:    { bg: 'bg-pink-50',    dot: 'bg-pink-500',    text: 'text-pink-700',    label: 'Holiday',  border: 'border-pink-200',    bgHex: '#fdf2f8', textHex: '#be185d', borderHex: '#fbcfe8' },
+  Weekend:    { bg: 'bg-gray-50',    dot: 'bg-gray-300',    text: 'text-gray-400',    label: 'Weekend',  border: 'border-gray-100',    bgHex: '#f9fafb', textHex: '#9ca3af', borderHex: '#f3f4f6' },
+  'Miss Punch':{bg: 'bg-orange-50',  dot: 'bg-orange-500',  text: 'text-orange-700',  label: 'Miss Punch', border: 'border-orange-200', bgHex: '#fff7ed', textHex: '#c2410c', borderHex: '#fed7aa' },
+  'No Record':{ bg: 'bg-white',      dot: 'bg-gray-200',    text: 'text-gray-300',    label: '—',        border: 'border-gray-50',    bgHex: '#ffffff', textHex: '#d1d5db', borderHex: '#f9fafb' },
+  Upcoming:   { bg: 'bg-white',      dot: 'bg-transparent', text: 'text-gray-400',    label: '',         border: 'border-transparent', bgHex: '#ffffff', textHex: '#9ca3af', borderHex: 'transparent' },
 };
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -359,7 +362,6 @@ export default function Attendance() {
               </button>
             )}
           </div>
-
           {/* Stats Cards */}
           <div className="grid grid-cols-6 gap-3 mb-5">
             {statsArr.map((s,i) => (
@@ -376,13 +378,12 @@ export default function Attendance() {
                   <span className="text-[11px] font-medium" style={{ color:'rgba(22,38,96,0.5)' }}>{s.label}</span>
                 </div>
                 <div className="text-2xl font-bold ml-1" style={{ color:s.color }}>{s.value}</div>
-                <div className="absolute -bottom-2 -right-2 w-16 h-16 rounded-full opacity-[0.04]" style={{ background:s.color }}/>
               </div>
             ))}
           </div>
 
           {/* Calendar Grid */}
-          <div className="rounded-2xl overflow-hidden shadow-lg" style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.08)' }}>
+          <div className="rounded-2xl overflow-hidden shadow-sm" style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.08)' }}>
             {/* Day headers */}
             <div className="grid grid-cols-7">
               {DAYS.map(d => (
@@ -433,9 +434,9 @@ export default function Attendance() {
 
                         {/* Punch times */}
                         {day.data?.punch_in && (
-                          <span className="text-[9px]" style={{ color:'rgba(22,38,96,0.4)' }}>
+                          <span className="text-[9px]" style={{ color:'rgba(22,38,96,0.5)' }}>
                             {day.data.punch_in.slice(0,5)}
-                            {day.data.punch_out ? `-${day.data.punch_out.slice(0,5)}` : ''}
+                            {day.data.punch_out ? ` - ${day.data.punch_out.slice(0,5)}` : ''}
                           </span>
                         )}
 
@@ -448,7 +449,7 @@ export default function Attendance() {
 
                         {/* WFH indicator */}
                         {st === 'WFH' && (
-                          <span className="text-[9px]">🏠 WFH</span>
+                          <span className="text-[9px] flex items-center gap-1"><Home size={9}/> WFH</span>
                         )}
 
                         {/* Half day type */}
@@ -463,11 +464,11 @@ export default function Attendance() {
                     {/* Hover effect */}
                     {hasData && (
                       <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
-                        style={{ boxShadow:'inset 0 0 0 2px rgba(22,38,96,0.08)' }}/>
+                        style={{ boxShadow:'inset 0 0 0 2px rgba(22,38,96,0.08)'}}/>
                     )}
 
-                    {/* Weekend/Holiday subtle indicator */}
-                    {(st === 'Weekend' || st === 'Holiday') && !isPrevNext && (
+                    {/* Miss Punch / Weekend dot */}
+                    {(st === 'Weekend' || st === 'Holiday' || st === 'Miss Punch') && !isPrevNext && (
                       <div className="absolute bottom-1.5 right-1.5">
                         <div className={`w-1.5 h-1.5 rounded-full ${style.dot}`}/>
                       </div>
@@ -484,7 +485,7 @@ export default function Attendance() {
               { label:'Present', color:'#10b981' }, { label:'Absent', color:'#ef4444' },
               { label:'Half Day', color:'#a855f7' }, { label:'WFH', color:'#f59e0b' },
               { label:'Leave', color:'#3b82f6' }, { label:'Late', color:'#f97316' },
-              { label:'Holiday', color:'#ec4899' }, { label:'Weekend', color:'#d1d5db' },
+              { label:'Holiday', color:'#ec4899' }, { label:'Miss Punch', color:'#ea580c' },
             ].map(({label,color}) => (
               <div key={label} className="flex items-center gap-1.5 text-xs font-medium" style={{ color:'rgba(22,38,96,0.6)' }}>
                 <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor:color }}/>
@@ -501,15 +502,17 @@ export default function Attendance() {
           {showDateAction && selectedDate && (
             <Modal title={formatDate(selectedDate)} onClose={()=>setShowDateAction(false)} theme="light">
               {selectedDayData && selectedDayData.status && (() => {
-                const st = STATUS_STYLES[selectedDayData.status] || STATUS_STYLES.Upcoming;
+                const cfg = STATUS_STYLES[selectedDayData.status] || STATUS_STYLES.Upcoming;
                 const today = new Date();
                 const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
                 const dd = selectedDayData.data || {};
                 return (
                 <>
-                  <div className="mb-4 p-4 rounded-xl" style={{ background: st.bgHex, border: `1px solid ${st.borderHex}` }}>
+                  <div className="mb-4 p-4 rounded-xl" style={{ background: cfg.bgHex, border: `1px solid ${cfg.borderHex}` }}>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="font-bold text-base" style={{ color: st.textHex }}>{st.label || dd.status}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-base" style={{ color: cfg.textHex }}>{cfg.label || dd.status}</span>
+                      </div>
                       <span className="text-xs" style={{ color:'rgba(22,38,96,0.4)' }}>{['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dd.dayOfWeek]}</span>
                     </div>
 
@@ -573,31 +576,54 @@ export default function Attendance() {
                     )}
                   </div>
 
+                  {/* Miss Punch alert */}
+                  {selectedDayData.status === 'Miss Punch' && (
+                    <div className="mb-3 p-3 rounded-xl flex items-start gap-2"
+                      style={{ background:'#fff7ed', border:'1px solid #fed7aa' }}>
+                      <AlertCircle className="text-orange-500 mt-0.5" size={16}/>
+                      <div>
+                        <div className="text-sm font-bold" style={{ color:'#c2410c' }}>Miss Punch Detected</div>
+                        <div className="text-xs mt-0.5" style={{ color:'#9a3412' }}>
+                          You punched in at <strong>{dd.punch_in?.slice(0,5)}</strong> but no punch-out was recorded. Please submit a regularization request.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <p className="text-xs font-semibold mb-3" style={{ color:'rgba(22,38,96,0.5)' }}>QUICK ACTIONS</p>
                   <div className="space-y-2.5">
-                    <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5"
-                      style={{ background:'linear-gradient(135deg,#162660,#1e3a8a)', color:'#fff' }}
-                      onClick={()=>handleDateAction('leave')}>Apply Full Day Leave</button>
+                    {/* Miss Punch: show Regularize prominently first */}
+                    {selectedDayData.status === 'Miss Punch' && (
+                      <button className="w-full text-sm font-bold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                        style={{ background:'#ea580c', color:'#fff' }}
+                        onClick={()=>handleDateAction('regularize')}>
+                        <Activity size={16}/> Regularize This Day
+                      </button>
+                    )}
+                    <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                      style={{ background:'#162660', color:'#fff' }}
+                      onClick={()=>handleDateAction('leave')}><Calendar size={16}/> Apply Full Day Leave</button>
                     
                     <div className="grid grid-cols-2 gap-2.5">
                       <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
-                        style={{ background:'linear-gradient(135deg,#a855f7,#7c3aed)', color:'#fff' }}
+                        style={{ background:'#8b5cf6', color:'#fff' }}
                         onClick={()=>handleDateAction('first_half')}>First Half Leave</button>
                       <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
-                        style={{ background:'linear-gradient(135deg,#a855f7,#7c3aed)', color:'#fff' }}
+                        style={{ background:'#8b5cf6', color:'#fff' }}
                         onClick={()=>handleDateAction('second_half')}>Second Half Leave</button>
                     </div>
 
-                    <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5"
-                      style={{ background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff' }}
-                      onClick={()=>handleDateAction('wfh')}><Home size={15} className="inline mr-1.5"/>Apply Work From Home</button>
+                    <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                      style={{ background:'#f59e0b', color:'#fff' }}
+                      onClick={()=>handleDateAction('wfh')}><Home size={16}/> Apply Work From Home</button>
 
-                    {selectedDate <= todayStr && (
+                    {selectedDate <= todayStr && selectedDayData.status !== 'Miss Punch' && (
                       <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md"
                         style={{ background:'rgba(22,38,96,0.04)', color:'#162660', border:'1px solid rgba(22,38,96,0.12)' }}
                         onClick={()=>handleDateAction('regularize')}>Request Regularization</button>
                     )}
                   </div>
+
                 </>
               )})()}
             </Modal>

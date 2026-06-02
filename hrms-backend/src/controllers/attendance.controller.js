@@ -70,7 +70,9 @@ exports.getCalendar = async (req, res) => {
 
       let computedStatus;
       if (row.punch_in) {
-        if (row.working_hours !== null && parseFloat(row.working_hours) < 9) {
+        if (!row.punch_out && dateStr < todayStr) {
+          computedStatus = 'Miss Punch';
+        } else if (row.working_hours !== null && parseFloat(row.working_hours) < 9) {
           computedStatus = 'Half Day';
         } else {
           computedStatus = 'Present';
