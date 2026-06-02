@@ -6,6 +6,7 @@ export default function PunchModal({ isOpen, onClose, onPunch }) {
   const [location, setLocation] = useState(null);
   const [locError, setLocError] = useState(null);
   const [capturing, setCapturing] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export default function PunchModal({ isOpen, onClose, onPunch }) {
     if (stream) {
       stream.getTracks().forEach(t => t.stop());
       setStream(null);
+      setIsVideoReady(false);
     }
   };
 
@@ -70,7 +72,7 @@ export default function PunchModal({ isOpen, onClose, onPunch }) {
   };
 
   const handleCapture = async () => {
-    if (!videoRef.current || !location) return;
+    if (!videoRef.current || !location || !isVideoReady) return;
     setCapturing(true);
     const canvas = document.createElement('canvas');
     canvas.width = videoRef.current.videoWidth;
@@ -109,9 +111,10 @@ export default function PunchModal({ isOpen, onClose, onPunch }) {
               autoPlay 
               playsInline 
               muted 
-              className={`w-full h-full object-cover ${!stream ? 'hidden' : ''}`} 
+              onLoadedMetadata={() => setIsVideoReady(true)}
+              className={`w-full h-full object-cover ${(!stream || !isVideoReady) ? 'hidden' : ''}`} 
             />
-            {!stream && <p className="text-slate-400 text-sm">Waiting for camera...</p>}
+            {(!stream || !isVideoReady) && <p className="text-slate-400 text-sm">Waiting for camera...</p>}
           </div>
 
           <div className="flex items-center gap-2 p-3 rounded-lg bg-white border border-slate-200 shadow-sm mb-2">
@@ -131,7 +134,7 @@ export default function PunchModal({ isOpen, onClose, onPunch }) {
           </button>
           <button 
             onClick={handleCapture}
-            disabled={capturing || !stream || !location}
+            disabled={capturing || !stream || !location || !isVideoReady}
             className="flex-1 py-2.5 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
             style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}
           >

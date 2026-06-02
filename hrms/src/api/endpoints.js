@@ -152,6 +152,7 @@ export const attendanceAPI = {
   getHolidays: (params) => API.get('/attendance/holidays', { params }),
   addHoliday: (data) => API.post('/attendance/holidays', data),
   deleteHoliday: (id) => API.delete(`/attendance/holidays/${id}`),
+  exportCSV: (params) => API.get('/attendance/export', { params, responseType: 'blob' }),
 };
 
 // Tasks

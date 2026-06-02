@@ -537,3 +537,232 @@ exports.getTeamCalendar = async (req, res) => {
     return error(res, err.message, 500);
   }
 };
+
+
+exports.exportCSV = async (req, res) => {
+  const { month, year, emp_id } = req.query;
+  try {
+    const m = parseInt(month) || new Date().getMonth() + 1;
+    const y = parseInt(year) || new Date().getFullYear();
+    const daysInMonth = getDaysInMonth(y, m);
+    const startDate = `${y}-${String(m).padStart(2,'0')}-01`;
+    const endDate = `${y}-${String(m).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`;
+
+    let eId = null;
+    if (req.user.role === 'employee') {
+      eId = req.user.emp_id;
+    } else if (emp_id) {
+      eId = emp_id;
+    }
+
+    let recordsRes;
+    if (eId) {
+      recordsRes = await query(
+        `SELECT 
+            e.emp_id, e.first_name, e.last_name, e.mobile, to_char(e.doj, 'DD-MM-YYYY') as doj, e.posting_station as branch,
+            d_dept.name as department, desig.name as designation,
+            to_char(d.date, 'YYYY-MM-DD') as date,
+            a.status, a.punch_in, a.punch_out, a.working_hours,
+            l.leave_type, l.status as leave_status,
+            w.status as wfh_status,
+            CASE WHEN h.id IS NOT NULL THEN h.name ELSE '' END as holiday_name
+         FROM generate_series($1::DATE, $2::DATE, '1 day'::INTERVAL) AS d(date)
+         CROSS JOIN (SELECT emp_id, first_name, last_name, mobile, doj, posting_station, dept_id, designation_id FROM employees WHERE emp_id = $3) e
+         LEFT JOIN departments d_dept ON e.dept_id = d_dept.id
+         LEFT JOIN designations desig ON e.designation_id = desig.id
+         LEFT JOIN attendance_records a ON a.emp_id = e.emp_id AND a.date = d.date
+         LEFT JOIN leave_applications l ON l.emp_id = e.emp_id AND d.date BETWEEN l.from_date AND l.to_date AND l.status = 'Approved'
+         LEFT JOIN wfh_requests w ON w.emp_id = e.emp_id AND w.date = d.date AND w.status = 'Approved'
+         LEFT JOIN holidays h ON h.date = d.date
+         ORDER BY d.date`,
+        [startDate, endDate, eId]
+      );
+    } else {
+      recordsRes = await query(
+        `SELECT 
+            e.emp_id, e.first_name, e.last_name, e.mobile, to_char(e.doj, 'DD-MM-YYYY') as doj, e.posting_station as branch,
+            d_dept.name as department, desig.name as designation,
+            to_char(d.date, 'YYYY-MM-DD') as date,
+            a.status, a.punch_in, a.punch_out, a.working_hours,
+            l.leave_type, l.status as leave_status,
+            w.status as wfh_status,
+            CASE WHEN h.id IS NOT NULL THEN h.name ELSE '' END as holiday_name
+         FROM employees e
+         CROSS JOIN generate_series($1::DATE, $2::DATE, '1 day'::INTERVAL) AS d(date)
+         LEFT JOIN departments d_dept ON e.dept_id = d_dept.id
+         LEFT JOIN designations desig ON e.designation_id = desig.id
+         LEFT JOIN attendance_records a ON a.emp_id = e.emp_id AND a.date = d.date
+         LEFT JOIN leave_applications l ON l.emp_id = e.emp_id AND d.date BETWEEN l.from_date AND l.to_date AND l.status = 'Approved'
+         LEFT JOIN wfh_requests w ON w.emp_id = e.emp_id AND w.date = d.date AND w.status = 'Approved'
+         LEFT JOIN holidays h ON h.date = d.date
+         WHERE e.status = 'Active'
+         ORDER BY e.emp_id, d.date`,
+        [startDate, endDate]
+      );
+    }
+
+    const empData = {};
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    recordsRes.rows.forEach(row => {
+      if (!empData[row.emp_id]) {
+        empData[row.emp_id] = {
+          emp_id: row.emp_id,
+          name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
+          mobile: row.mobile || '',
+          doj: row.doj || '',
+          branch: row.branch || '',
+          department: row.department || '',
+          designation: row.designation || '',
+          days: {},
+          totals: {
+            present: 0, absent: 0, half_day: 0, miss_punch: 0, week_off: 0, holiday: 0, leave: 0
+          }
+        };
+      }
+
+      const dateStr = row.date;
+      const isWeekend = new Date(dateStr + 'T00:00:00').getDay() === 0 || new Date(dateStr + 'T00:00:00').getDay() === 6;
+      const isFuture = dateStr > todayStr;
+
+      let code = '';
+      if (row.punch_in) {
+        if (row.working_hours !== null && parseFloat(row.working_hours) < 9) {
+          code = 'HD';
+        } else {
+          code = 'P';
+        }
+      } else if (row.holiday_name) {
+        code = 'H';
+      } else if (isFuture) {
+        if (row.leave_status === 'Approved') code = row.leave_type;
+        else if (row.wfh_status === 'Approved') code = 'WFH';
+        else code = '';
+      } else if (row.leave_status === 'Approved') {
+        code = row.leave_type;
+      } else if (row.wfh_status === 'Approved') {
+        code = 'WFH';
+      } else if (isWeekend) {
+        code = 'WO';
+      } else if (dateStr < todayStr) {
+        code = 'A';
+      } else {
+        code = '';
+      }
+
+      let inTime = '';
+      let outTime = '';
+      const [year, month, day] = dateStr.split('-');
+      const formattedDate = `${day}-${month}-${year}`;
+
+      if (row.punch_in) {
+        inTime = `${formattedDate} ${row.punch_in.slice(0, 8)}`;
+      }
+      if (row.punch_out) {
+        outTime = `${formattedDate} ${row.punch_out.slice(0, 8)}`;
+      }
+
+      const wh = row.working_hours;
+      let finalWh = '';
+      if ((!wh || parseFloat(wh) === 0) && row.punch_in && row.punch_out) {
+        const [ih, im] = row.punch_in.split(':');
+        const [oh, om] = row.punch_out.split(':');
+        const diff = (parseInt(oh)*60+parseInt(om)) - (parseInt(ih)*60+parseInt(im));
+        const hrs = Math.floor(diff / 60);
+        const mins = diff % 60;
+        finalWh = `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}`;
+      } else if (wh && parseFloat(wh) > 0) {
+        const hrs = Math.floor(parseFloat(wh));
+        const mins = Math.round((parseFloat(wh) - hrs) * 60);
+        finalWh = `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}`;
+      }
+
+      empData[row.emp_id].days[dateStr] = {
+        status: code,
+        punch_in: inTime,
+        punch_out: outTime,
+        working_hours: finalWh
+      };
+
+      if (!isFuture && dateStr <= todayStr) {
+        if (code === 'P') empData[row.emp_id].totals.present++;
+        else if (code === 'A') empData[row.emp_id].totals.absent++;
+        else if (code === 'HD') empData[row.emp_id].totals.half_day++;
+        else if (code === 'WO') empData[row.emp_id].totals.week_off++;
+        else if (code === 'H') empData[row.emp_id].totals.holiday++;
+        else if (code !== '') empData[row.emp_id].totals.leave++;
+        
+        if (row.punch_in && !row.punch_out && dateStr < todayStr) {
+          empData[row.emp_id].totals.miss_punch++;
+        }
+      }
+    });
+
+    const escapeCsv = (str) => {
+      if (str === null || str === undefined) return '';
+      const s = String(str);
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+
+    const dateHeaders = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      dateHeaders.push(`${String(d).padStart(2,'0')}-${String(m).padStart(2,'0')}-${y}`);
+    }
+
+    const headers = [
+      'Sr No.', 'Employee Code', 'Employee Name', 'Employee Number', 'Joining Date', 
+      'Branch', 'Department', 'Designation', 'Division', 'Working Area', 'Project',
+      'Present', 'Absent', 'Half Day', 'Miss Punch', 'Week Off', 'Holiday', 
+      'Approved Leave', 'Pending Leave', 'Approved OutDuty', 'Pending OutDuty', ' '
+    ];
+
+    let csvContent = headers.concat(dateHeaders).map(escapeCsv).join(',') + '\n';
+
+    let srNo = 1;
+    for (const emp_id in empData) {
+      const emp = empData[emp_id];
+      const emptyBase = Array(21).fill('');
+      
+      const statusRow = [
+        srNo++, emp.emp_id, emp.name, emp.mobile, emp.doj,
+        emp.branch, emp.department, emp.designation, '', '', '',
+        emp.totals.present, emp.totals.absent, emp.totals.half_day, emp.totals.miss_punch, 
+        emp.totals.week_off, emp.totals.holiday, emp.totals.leave, 0, 0, 0, 'Status'
+      ];
+      
+      const inRow = [...emptyBase];
+      inRow[21] = 'IN';
+      
+      const outRow = [...emptyBase];
+      outRow[21] = 'OUT';
+      
+      const whRow = [...emptyBase];
+      whRow[21] = 'Working Hours';
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dayData = emp.days[dateStr] || { status: '', punch_in: '', punch_out: '', working_hours: '' };
+        
+        statusRow.push(dayData.status);
+        inRow.push(dayData.punch_in);
+        outRow.push(dayData.punch_out);
+        whRow.push(dayData.working_hours);
+      }
+
+      csvContent += statusRow.map(escapeCsv).join(',') + '\n';
+      csvContent += inRow.map(escapeCsv).join(',') + '\n';
+      csvContent += outRow.map(escapeCsv).join(',') + '\n';
+      csvContent += whRow.map(escapeCsv).join(',') + '\n';
+    }
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=Attendance_Report_${y}_${String(m).padStart(2,'0')}.csv`);
+    return res.send(csvContent);
+  } catch (err) {
+    console.error('Export CSV Error:', err);
+    return error(res, err.message, 500);
+  }
+};

@@ -10,6 +10,7 @@ router.use(auth);
 
 // Core attendance routes
 router.get('/', attendanceController.getAttendance);
+router.get('/export', attendanceController.exportCSV);
 router.get('/calendar', attendanceController.getCalendar);
 router.get('/stats', attendanceController.getMonthlyStats);
 router.get('/team-calendar', attendanceController.getTeamCalendar);

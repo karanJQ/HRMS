@@ -183,6 +183,43 @@ export default function Attendance() {
     catch(e) { showMsg('Error: '+e.response?.data?.message); }
   };
 
+  const downloadCSV = async () => {
+    try {
+      const eId = user?.role === 'employee' ? user.emp_id : selectedEmpId;
+      const params = { month: currentMonth + 1, year: currentYear };
+      if (eId) params.emp_id = eId;
+      
+      const response = await attendanceAPI.exportCSV(params);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Attendance_Report_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      showMsg('Export successful');
+    } catch (e) {
+      showMsg('Error exporting CSV: ' + (e.response?.data?.message || e.message));
+    }
+  };
+
+  const downloadAllCSV = async () => {
+    try {
+      const params = { month: currentMonth + 1, year: currentYear };
+      const response = await attendanceAPI.exportCSV(params);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Attendance_Report_All_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      showMsg('Export All successful');
+    } catch (e) {
+      showMsg('Error exporting CSV: ' + (e.response?.data?.message || e.message));
+    }
+  };
+
   const handleDateClick = (day) => {
     if (!day.date || day.status === 'prev' || day.status === 'next') return;
     setSelectedDate(day.date);
@@ -287,7 +324,6 @@ export default function Attendance() {
               <select className="text-xs rounded-lg px-3 py-2 outline-none font-semibold"
                 style={{ border:'1px solid rgba(22,38,96,0.15)', background:'#fff', color:'#162660' }}
                 value={selectedEmpId} onChange={e=>{ setSelectedEmpId(e.target.value); load(e.target.value); }}>
-                <option value="">All Employees</option>
                 {employees.map(e => (
                   <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name}</option>
                 ))}
@@ -310,6 +346,18 @@ export default function Attendance() {
               onClick={()=>{ setCurrentMonth(new Date().getMonth()); setCurrentYear(new Date().getFullYear()); }}>
               Today
             </button>
+            <button className="text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:shadow-md ml-2 flex items-center gap-1.5"
+              style={{ background:'#162660', color:'#fff' }}
+              onClick={downloadCSV}>
+              <FileText size={14}/> Export CSV
+            </button>
+            {user?.role !== 'employee' && (
+              <button className="text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:shadow-md ml-2 flex items-center gap-1.5"
+                style={{ background:'linear-gradient(135deg, #10b981, #059669)', color:'#fff' }}
+                onClick={downloadAllCSV}>
+                <FileText size={14}/> Export All
+              </button>
+            )}
           </div>
 
           {/* Stats Cards */}
