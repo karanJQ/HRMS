@@ -63,11 +63,11 @@ exports.create = async (req, res) => {
     const result = await query(
       `INSERT INTO employees(emp_id,first_name,last_name,father_name,mother_name,gender,dob,dor,mobile,alternate_mobile,
         official_email,personal_email,aadhaar_number,pan_number,voter_id,dept_id,designation_id,grade,pay_level,pay_step,
-        basic_pay,category,religion,caste,is_divyang,divyang_type,divyang_percentage,district,posting_station,
+        basic_pay,ctc,category,religion,caste,is_divyang,divyang_type,divyang_percentage,district,posting_station,
         present_address,permanent_address,blood_group,qualification,subject_specialization,experience_years,doj,
         account_number,bank_name,ifsc_code,bank_branch,pf_number,nps_id,nominee_name,nominee_relation,nominee_dob,
         emergency_contact_name,emergency_contact_mobile,status,created_by)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$50,$22,$23,$24,$25,$26,$27,
               $28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49)
        RETURNING *`,
       [emp_id, b.first_name, b.last_name, b.father_name||null, b.mother_name||null, b.gender, b.dob, dor.toISOString().split('T')[0],
@@ -79,7 +79,7 @@ exports.create = async (req, res) => {
        b.subject_specialization||null, b.experience_years||0, b.doj, b.account_number||null, b.bank_name||null,
        b.ifsc_code||null, b.bank_branch||null, b.pf_number||null, b.nps_id||null, b.nominee_name||null,
        b.nominee_relation||null, b.nominee_dob||null, b.emergency_contact_name||null, b.emergency_contact_mobile||null,
-       b.status||'Active', req.user.id]
+       b.status||'Active', req.user.id, b.ctc||null]
     );
     // Create leave balance for current year
     const yr = new Date().getFullYear();
@@ -129,7 +129,7 @@ exports.update = async (req, res) => {
         nominee_dob=COALESCE(NULLIF($40,'')::date,nominee_dob),
         emergency_contact_name=COALESCE($41,emergency_contact_name),
         emergency_contact_mobile=COALESCE($42,emergency_contact_mobile),
-        status=COALESCE($43,status), updated_by=$44, updated_at=NOW()
+        status=COALESCE($43,status), ctc=COALESCE($46,ctc), updated_by=$44, updated_at=NOW()
        WHERE emp_id=$45 RETURNING *`,
       [b.first_name, b.last_name, b.father_name, b.mother_name, b.gender, b.dob,
        b.mobile, b.alternate_mobile, b.official_email, b.personal_email,
@@ -141,7 +141,7 @@ exports.update = async (req, res) => {
        b.account_number, b.bank_name, b.ifsc_code, b.bank_branch,
        b.pf_number, b.nps_id, b.nominee_name, b.nominee_relation, b.nominee_dob,
        b.emergency_contact_name, b.emergency_contact_mobile,
-       b.status, req.user.id, empId]
+       b.status, req.user.id, empId, b.ctc]
     );
     if (!result.rows.length) return error(res, 'Employee not found.', 404);
     return success(res, result.rows[0], 'Updated successfully');

@@ -493,52 +493,51 @@ export default function Payroll() {
             </div>
             
             <div class="details-table">
-              <!-- Earnings -->
+              <!-- Earnings & Employer Contrib -->
               <div class="table-column">
-                <div class="table-column-header earnings">Earnings</div>
+                <div class="table-column-header earnings" style="background:#fef08a; color:#854d0e;">(A) Earning Gross</div>
                 <div class="row">
-                  <span>Basic Pay</span>
+                  <span>Basic</span>
                   <span>₹${parseFloat(slip.basic_pay || 0).toLocaleString()}</span>
-                </div>
-                <div class="row">
-                  <span>Dearness Allowance (DA)</span>
-                  <span>₹${parseFloat(slip.da_amount || 0).toLocaleString()}</span>
                 </div>
                 <div class="row">
                   <span>HRA</span>
                   <span>₹${parseFloat(slip.hra_amount || 0).toLocaleString()}</span>
                 </div>
                 <div class="row">
-                  <span>Transport Allowance (TA)</span>
+                  <span>Conveyance</span>
                   <span>₹${parseFloat(slip.ta_amount || 0).toLocaleString()}</span>
                 </div>
-                ${parseFloat(slip.medical_allowance || 0) > 0 ? `
-                <div class="row">
-                  <span>Medical Allowance</span>
-                  <span>₹${parseFloat(slip.medical_allowance || 0).toLocaleString()}</span>
-                </div>` : ''}
-                ${parseFloat(slip.special_allowance || 0) > 0 ? `
-                <div class="row">
-                  <span>Special Allowance</span>
-                  <span>₹${parseFloat(slip.special_allowance || 0).toLocaleString()}</span>
-                </div>` : ''}
-                ${parseFloat(slip.other_allowances || 0) > 0 ? `
-                <div class="row">
-                  <span>Other Allowances</span>
-                  <span>₹${parseFloat(slip.other_allowances || 0).toLocaleString()}</span>
-                </div>` : ''}
-                <div class="total-row earnings">
-                  <span>Gross Pay</span>
+                <div class="total-row earnings" style="background:#fef08a; color:#854d0e; border-top: 1px solid #fde047;">
+                  <span>Total Gross (A)</span>
                   <span>₹${parseFloat(slip.gross_pay || 0).toLocaleString()}</span>
+                </div>
+
+                <div class="table-column-header earnings" style="margin-top:20px; background:#fef08a; color:#854d0e;">(B) Employer Contribution</div>
+                <div class="row">
+                  <span>Employer PF</span>
+                  <span>₹${parseFloat(slip.pf_employer || 0).toLocaleString()}</span>
+                </div>
+                <div class="row">
+                  <span>Employer ESIC</span>
+                  <span>₹${parseFloat(slip.esic_employer || 0).toLocaleString()}</span>
+                </div>
+                <div class="total-row earnings" style="background:#fef08a; color:#854d0e; border-top: 1px solid #fde047;">
+                  <span>Total</span>
+                  <span>₹${(parseFloat(slip.pf_employer||0) + parseFloat(slip.esic_employer||0)).toLocaleString()}</span>
                 </div>
               </div>
               
               <!-- Deductions -->
               <div class="table-column">
-                <div class="table-column-header deductions">Deductions</div>
+                <div class="table-column-header deductions" style="background:#fef08a; color:#854d0e;">Employee Contribution</div>
                 <div class="row">
-                  <span>Provident Fund (PF)</span>
+                  <span>Employee PF</span>
                   <span>₹${parseFloat(slip.pf_employee || 0).toLocaleString()}</span>
+                </div>
+                <div class="row">
+                  <span>Employee ESIC</span>
+                  <span>₹${parseFloat(slip.esic_employee || 0).toLocaleString()}</span>
                 </div>
                 <div class="row">
                   <span>Professional Tax</span>
@@ -553,16 +552,22 @@ export default function Payroll() {
                   <span>Other Deductions</span>
                   <span>₹${parseFloat(slip.other_deductions || 0).toLocaleString()}</span>
                 </div>` : ''}
-                <div class="total-row deductions">
-                  <span>Total Deductions</span>
+                <div class="total-row deductions" style="background:#fef08a; color:#854d0e; border-top: 1px solid #fde047;">
+                  <span>Total</span>
                   <span>₹${parseFloat(slip.total_deductions || 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>
             
-            <div class="net-pay-box">
-              <span class="net-pay-label">Net Take-Home Salary:</span>
-              <span class="net-pay-value">₹${parseFloat(slip.net_pay || 0).toLocaleString()}</span>
+            <div class="net-pay-box" style="margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fef08a; border: 2px solid #fde047;">
+              <div style="display:flex; justify-content:space-between; margin-bottom: 8px; font-weight: bold; color: #854d0e;">
+                <span>Total CTC (A+B):</span>
+                <span>₹${(parseFloat(slip.gross_pay||0) + parseFloat(slip.pf_employer||0) + parseFloat(slip.esic_employer||0)).toLocaleString()}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-weight: bold; color: #0f172a; font-size: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #854d0e40;">
+                <span>Net Payable (Take Home salary):</span>
+                <span>₹${parseFloat(slip.net_pay || 0).toLocaleString()}</span>
+              </div>
             </div>
             
             <div class="footer-sig">
@@ -667,13 +672,7 @@ export default function Payroll() {
                 emp_id: '',
                 month: month,
                 year: year,
-                basic_pay: '',
-                da_percentage: 42,
-                hra_percentage: 20,
-                ta_amount: 1500,
-                medical_allowance: 0,
-                special_allowance: 0,
-                other_allowances: 0,
+                ctc: '',
                 professional_tax: 200,
                 tds: 0,
                 other_deductions: 0,
@@ -900,13 +899,7 @@ export default function Payroll() {
                             onClick={() => {
                               setFormObj({
                                 ...p,
-                                basic_pay: parseFloat(p.basic_pay),
-                                da_percentage: parseFloat(p.da_percentage || 42),
-                                hra_percentage: parseFloat(p.hra_percentage || 20),
-                                ta_amount: parseFloat(p.ta_amount || 1500),
-                                medical_allowance: parseFloat(p.medical_allowance || 0),
-                                special_allowance: parseFloat(p.special_allowance || 0),
-                                other_allowances: parseFloat(p.other_allowances || 0),
+                                ctc: parseFloat(p.ctc || p.basic_pay || 0),
                                 professional_tax: parseFloat(p.professional_tax || 200),
                                 tds: parseFloat(p.tds || 0),
                                 other_deductions: parseFloat(p.other_deductions || 0),
@@ -982,17 +975,24 @@ export default function Payroll() {
             <div className="p-4" style={{ background: '#fff' }}>
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <p className="font-semibold text-sm mb-2 text-emerald-700">Earnings</p>
-                  {[['Basic Pay', slip.basic_pay], ['Dearness Allowance', slip.da_amount], ['HRA', slip.hra_amount], ['Transport Allowance', slip.ta_amount]].map(([k, v]) => (
+                  <p className="font-semibold text-sm mb-2 text-emerald-700">Earnings & Employer Contrib</p>
+                  {[['Basic', slip.basic_pay], ['HRA', slip.hra_amount], ['Conveyance', slip.ta_amount]].map(([k, v]) => (
                     <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
                       <span>{k}</span><span className="font-medium">₹{parseFloat(v || 0).toLocaleString()}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-sm py-2 font-bold text-emerald-700"><span>Gross Pay</span><span>₹{parseFloat(slip.gross_pay || 0).toLocaleString()}</span></div>
+                  <div className="flex justify-between text-sm py-2 font-bold text-emerald-700"><span>Total Gross (A)</span><span>₹{parseFloat(slip.gross_pay || 0).toLocaleString()}</span></div>
+                  <div className="mt-2"></div>
+                  {[['Employer PF', slip.pf_employer], ['Employer ESIC', slip.esic_employer]].map(([k, v]) => (
+                    <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
+                      <span>{k}</span><span className="font-medium">₹{parseFloat(v || 0).toLocaleString()}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm py-2 font-bold text-emerald-700"><span>Total</span><span>₹{(parseFloat(slip.pf_employer||0) + parseFloat(slip.esic_employer||0)).toLocaleString()}</span></div>
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-sm mb-2 text-rose-600">Deductions</p>
-                  {[['Provident Fund', slip.pf_employee], ['Professional Tax', slip.professional_tax], ['Income Tax (TDS)', slip.tds]].map(([k, v]) => (
+                  <p className="font-semibold text-sm mb-2 text-rose-600">Employee Contribution</p>
+                  {[['Employee PF', slip.pf_employee], ['Employee ESIC', slip.esic_employee], ['Professional Tax', slip.professional_tax], ['Income Tax (TDS)', slip.tds]].map(([k, v]) => (
                     <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
                       <span>{k}</span><span className="font-medium text-rose-600">₹{parseFloat(v || 0).toLocaleString()}</span>
                     </div>
@@ -1000,8 +1000,12 @@ export default function Payroll() {
                   <div className="flex justify-between text-sm py-2 font-bold text-rose-600"><span>Total Deductions</span><span>₹{parseFloat(slip.total_deductions || 0).toLocaleString()}</span></div>
                 </div>
               </div>
+              <div className="border rounded-lg p-3 mt-3 flex justify-between items-center bg-amber-50 border-amber-200">
+                <span className="font-bold text-amber-800">Total CTC (A+B)</span>
+                <span className="font-bold text-amber-800 text-lg">₹{(parseFloat(slip.gross_pay||0) + parseFloat(slip.pf_employer||0) + parseFloat(slip.esic_employer||0)).toLocaleString()}</span>
+              </div>
               <div className="border rounded-lg p-3 mt-3 flex justify-between items-center" style={{ background: 'rgba(16, 185, 129, 0.06)', borderColor: 'rgba(16, 185, 129, 0.15)' }}>
-                <span className="font-bold text-emerald-800">Net Pay</span>
+                <span className="font-bold text-emerald-800">Net Payable (Take Home)</span>
                 <span className="font-bold text-emerald-800 text-lg">₹{parseFloat(slip.net_pay || 0).toLocaleString()}</span>
               </div>
             </div>
@@ -1190,62 +1194,38 @@ export default function Payroll() {
 
             <div className="grid grid-cols-2 gap-4">
               {/* Earnings Column */}
-              <div className="space-y-3 bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10">
-                <p className="text-xs font-bold text-emerald-400 uppercase border-b border-emerald-500/10 pb-1.5 mb-2">Earnings</p>
+              <div className="space-y-3 bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10 col-span-2">
+                <p className="text-xs font-bold text-emerald-400 uppercase border-b border-emerald-500/10 pb-1.5 mb-2">CTC Detail</p>
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">Basic Pay (₹)<span className="text-red-400">*</span></label>
-                  <input type="number" className="input text-xs" value={formObj.basic_pay} onChange={e => setFormObj({ ...formObj, basic_pay: parseFloat(e.target.value) || '' })} />
+                  <label className="text-xs text-slate-400 block mb-1">Monthly CTC (₹)<span className="text-red-400">*</span></label>
+                  <input type="number" className="input text-xs" value={formObj.ctc || formObj.basic_pay} onChange={e => setFormObj({ ...formObj, ctc: parseFloat(e.target.value) || '' })} />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs text-slate-400 block mb-1">DA (%)</label>
-                    <input type="number" className="input text-xs" value={formObj.da_percentage} onChange={e => setFormObj({ ...formObj, da_percentage: parseFloat(e.target.value) || 0 })} />
-                  </div>
-                  <div>
-                    <label className="text-xs text-slate-400 block mb-1">HRA (%)</label>
-                    <input type="number" className="input text-xs" value={formObj.hra_percentage} onChange={e => setFormObj({ ...formObj, hra_percentage: parseFloat(e.target.value) || 0 })} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">TA Amount (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.ta_amount} onChange={e => setFormObj({ ...formObj, ta_amount: parseFloat(e.target.value) || 0 })} />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Medical Allowance (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.medical_allowance} onChange={e => setFormObj({ ...formObj, medical_allowance: parseFloat(e.target.value) || 0 })} />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Special Allowance (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.special_allowance} onChange={e => setFormObj({ ...formObj, special_allowance: parseFloat(e.target.value) || 0 })} />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Other Allowances (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.other_allowances} onChange={e => setFormObj({ ...formObj, other_allowances: parseFloat(e.target.value) || 0 })} />
+                <div className="pt-2 text-xs text-slate-500">
+                  <p>* Basic, HRA, Conveyance, PF and ESIC will be auto-calculated upon save based on this CTC.</p>
                 </div>
               </div>
 
               {/* Deductions Column */}
-              <div className="space-y-3 bg-red-500/5 p-4 rounded-xl border border-red-500/10">
-                <p className="text-xs font-bold text-red-400 uppercase border-b border-red-500/10 pb-1.5 mb-2">Deductions</p>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Professional Tax (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.professional_tax} onChange={e => setFormObj({ ...formObj, professional_tax: parseFloat(e.target.value) || 0 })} />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Income Tax / TDS (₹)</label>
-                  <input type="number" className="input text-xs" value={formObj.tds} onChange={e => setFormObj({ ...formObj, tds: parseFloat(e.target.value) || 0 })} />
+              <div className="space-y-3 bg-red-500/5 p-4 rounded-xl border border-red-500/10 col-span-2">
+                <p className="text-xs font-bold text-red-400 uppercase border-b border-red-500/10 pb-1.5 mb-2">Additional Deductions</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">Professional Tax (₹)</label>
+                    <input type="number" className="input text-xs" value={formObj.professional_tax} onChange={e => setFormObj({ ...formObj, professional_tax: parseFloat(e.target.value) || 0 })} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">Income Tax / TDS (₹)</label>
+                    <input type="number" className="input text-xs" value={formObj.tds} onChange={e => setFormObj({ ...formObj, tds: parseFloat(e.target.value) || 0 })} />
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Other Deductions (₹)</label>
                   <input type="number" className="input text-xs" value={formObj.other_deductions} onChange={e => setFormObj({ ...formObj, other_deductions: parseFloat(e.target.value) || 0 })} />
                 </div>
-                <div className="pt-2 text-xs text-slate-500">
-                  <p>* PF will be auto-calculated at 12% of Basic Pay upon save.</p>
-                </div>
               </div>
             </div>
           </div>
-          <button className="btn btn-primary w-full mt-4" disabled={savingForm || !formObj.emp_id || !formObj.basic_pay} onClick={savePayrollEntry}>
+          <button className="btn btn-primary w-full mt-4" disabled={savingForm || !formObj.emp_id || !(formObj.ctc || formObj.basic_pay)} onClick={savePayrollEntry}>
             {savingForm ? 'Saving...' : formObj.id ? 'Update & Recalculate' : 'Create Entry'}
           </button>
         </Modal>
