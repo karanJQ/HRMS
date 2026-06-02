@@ -24,7 +24,8 @@ const STATUS_STYLES = {
   Weekend:    { bg: 'bg-gray-50',    dot: 'bg-gray-300',    text: 'text-gray-400',    label: 'Weekend',  border: 'border-gray-100',    bgHex: '#f9fafb', textHex: '#9ca3af', borderHex: '#f3f4f6' },
   'Miss Punch':{bg: 'bg-orange-50',  dot: 'bg-orange-500',  text: 'text-orange-700',  label: 'Miss Punch', border: 'border-orange-200', bgHex: '#fff7ed', textHex: '#c2410c', borderHex: '#fed7aa' },
   'No Record':{ bg: 'bg-white',      dot: 'bg-gray-200',    text: 'text-gray-300',    label: '—',        border: 'border-gray-50',    bgHex: '#ffffff', textHex: '#d1d5db', borderHex: '#f9fafb' },
-  Upcoming:   { bg: 'bg-white',      dot: 'bg-transparent', text: 'text-gray-400',    label: '',         border: 'border-transparent', bgHex: '#ffffff', textHex: '#9ca3af', borderHex: 'transparent' },
+  Upcoming:   { bg: 'bg-white',      dot: 'bg-transparent', text: 'text-gray-400',    label: '',         border: 'border-transparent', badge: 'bg-transparent', bgHex: '#ffffff', textHex: '#9ca3af', borderHex: 'transparent' },
+  Aggregate:  { bg: 'bg-white',      dot: 'bg-gray-200',    text: 'text-gray-600',    label: 'Aggregate',border: 'border-gray-200',    badge: 'bg-gray-200',   bgHex: '#ffffff', textHex: '#4b5563', borderHex: '#e5e7eb' },
 };
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -327,6 +328,7 @@ export default function Attendance() {
               <select className="text-xs rounded-lg px-3 py-2 outline-none font-semibold"
                 style={{ border:'1px solid rgba(22,38,96,0.15)', background:'#fff', color:'#162660' }}
                 value={selectedEmpId} onChange={e=>{ setSelectedEmpId(e.target.value); load(e.target.value); }}>
+                <option value="all">All Employees</option>
                 {employees.map(e => (
                   <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name}</option>
                 ))}
@@ -425,7 +427,7 @@ export default function Attendance() {
                     </div>
 
                     {/* Status indicator */}
-                    {hasData && (
+                    {hasData && st !== 'Aggregate' && (
                       <div className="flex flex-col gap-0.5">
                         {/* Status label */}
                         <span className={`text-[10px] font-semibold mt-0.5 ${style.text}`}>
@@ -458,6 +460,17 @@ export default function Attendance() {
                             {day.data.half_day_type === 'FIRST_HALF' ? '1st Half' : '2nd Half'}
                           </span>
                         )}
+                      </div>
+                    )}
+
+                    {hasData && st === 'Aggregate' && (
+                      <div className="flex flex-col gap-1 mt-1 flex-1">
+                        {day.data?.present?.length > 0 && <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">P: {day.data.present.length}</span>}
+                        {day.data?.absent?.length > 0 && <span className="text-[9px] bg-red-100 text-red-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">A: {day.data.absent.length}</span>}
+                        {day.data?.leave?.length > 0 && <span className="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">L: {day.data.leave.length}</span>}
+                        {day.data?.wfh?.length > 0 && <span className="text-[9px] bg-amber-100 text-amber-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">W: {day.data.wfh.length}</span>}
+                        {day.data?.half_day?.length > 0 && <span className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">HD: {day.data.half_day.length}</span>}
+                        {day.data?.miss_punch?.length > 0 && <span className="text-[9px] bg-orange-100 text-orange-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">MP: {day.data.miss_punch.length}</span>}
                       </div>
                     )}
 
@@ -506,6 +519,44 @@ export default function Attendance() {
                 const today = new Date();
                 const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
                 const dd = selectedDayData.data || {};
+
+                if (dd.status === 'Aggregate') {
+                  return (
+                    <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                      <div className="flex justify-between items-center mb-5 border-b pb-3" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
+                        <h4 className="font-bold text-lg" style={{ color:'#162660' }}>Team Summary</h4>
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color:'rgba(22,38,96,0.5)' }}>{['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dd.dayOfWeek]}</span>
+                      </div>
+                      
+                      {[
+                        { title: 'Present', color: 'emerald', hex: '#10b981', list: dd.present },
+                        { title: 'Absent', color: 'red', hex: '#ef4444', list: dd.absent },
+                        { title: 'On Leave', color: 'blue', hex: '#3b82f6', list: dd.leave },
+                        { title: 'Work From Home', color: 'amber', hex: '#f59e0b', list: dd.wfh },
+                        { title: 'Half Day', color: 'purple', hex: '#a855f7', list: dd.half_day },
+                        { title: 'Missed Punch', color: 'orange', hex: '#f97316', list: dd.miss_punch },
+                        { title: 'Holiday', color: 'pink', hex: '#ec4899', list: dd.holiday },
+                        { title: 'No Record', color: 'gray', hex: '#9ca3af', list: dd.no_record },
+                      ].map(cat => cat.list?.length > 0 && (
+                        <div key={cat.title} className="mb-5 bg-white rounded-xl p-4 shadow-sm border" style={{ borderColor:`${cat.hex}30` }}>
+                          <h5 className="text-[11px] font-bold uppercase mb-3 flex items-center justify-between" style={{ color: cat.hex }}>
+                            <span>{cat.title}</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-md font-extrabold" style={{ background:`${cat.hex}20` }}>{cat.list.length}</span>
+                          </h5>
+                          <div className="flex flex-wrap gap-2">
+                            {cat.list.map(name => (
+                              <span key={name} className="text-xs px-2.5 py-1.5 rounded-lg font-medium border"
+                                style={{ background:`${cat.hex}08`, color:`${cat.hex}`, borderColor:`${cat.hex}25` }}>
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
                 return (
                 <>
                   <div className="mb-4 p-4 rounded-xl" style={{ background: cfg.bgHex, border: `1px solid ${cfg.borderHex}` }}>

@@ -43,6 +43,74 @@ exports.getCalendar = async (req, res) => {
     if (!eId) return success(res, [], 'No employee specified');
 
     const daysInMonth = getDaysInMonth(y, m);
+    const startDate = `${y}-${String(m).padStart(2,'0')}-01`;
+    const endDate = `${y}-${String(m).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`;
+
+    if (eId === 'all') {
+      const recordsRes = await query(
+        `SELECT to_char(d.date, 'YYYY-MM-DD') as date,
+                e.emp_id, e.first_name, e.last_name,
+                a.status, a.punch_in, a.punch_out, a.working_hours,
+                l.leave_type, l.half_day_type, l.status as leave_status,
+                w.status as wfh_status,
+                CASE WHEN h.id IS NOT NULL THEN true ELSE false END as is_holiday,
+                h.name as holiday_name
+         FROM generate_series($1::DATE, $2::DATE, '1 day'::INTERVAL) AS d(date)
+         CROSS JOIN employees e
+         LEFT JOIN attendance_records a ON a.emp_id = e.emp_id AND a.date = d.date
+         LEFT JOIN leave_applications l ON l.emp_id = e.emp_id AND d.date BETWEEN l.from_date AND l.to_date AND l.status = 'Approved'
+         LEFT JOIN wfh_requests w ON w.emp_id = e.emp_id AND w.date = d.date AND w.status = 'Approved'
+         LEFT JOIN holidays h ON h.date = d.date
+         WHERE e.status = 'Active'
+         ORDER BY d.date, e.emp_id`,
+        [startDate, endDate]
+      );
+
+      const aggByDate = {};
+      recordsRes.rows.forEach(row => {
+        const dateStr = row.date;
+        if (!aggByDate[dateStr]) {
+          aggByDate[dateStr] = {
+             date: dateStr, status: 'Aggregate',
+             dayOfWeek: new Date(dateStr + 'T00:00:00').getDay(),
+             present: [], absent: [], leave: [], wfh: [], holiday: [], miss_punch: [], half_day: [], no_record: []
+          };
+        }
+        
+        const d = new Date(dateStr + 'T00:00:00');
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const isFuture = dateStr > todayStr;
+        
+        let empStatus;
+        if (row.punch_in) {
+          if (!row.punch_out && dateStr < todayStr) empStatus = 'Miss Punch';
+          else if (row.working_hours !== null && parseFloat(row.working_hours) < 9) empStatus = 'Half Day';
+          else empStatus = 'Present';
+        } else if (row.is_holiday) empStatus = 'Holiday';
+        else if (isFuture) {
+           if (row.leave_status === 'Approved') empStatus = 'Leave';
+           else if (row.wfh_status === 'Approved') empStatus = 'WFH';
+           else empStatus = 'Upcoming';
+        } else if (row.leave_status === 'Approved') empStatus = 'Leave';
+        else if (row.wfh_status === 'Approved') empStatus = 'WFH';
+        else if (isWeekend) empStatus = 'Weekend';
+        else if (dateStr < todayStr) empStatus = 'Absent';
+        else empStatus = 'No Record';
+        
+        const empName = `${row.first_name} ${row.last_name}`;
+        if (empStatus === 'Present') aggByDate[dateStr].present.push(empName);
+        else if (empStatus === 'Absent') aggByDate[dateStr].absent.push(empName);
+        else if (empStatus === 'Leave') aggByDate[dateStr].leave.push(empName);
+        else if (empStatus === 'WFH') aggByDate[dateStr].wfh.push(empName);
+        else if (empStatus === 'Holiday') aggByDate[dateStr].holiday.push(empName);
+        else if (empStatus === 'Miss Punch') aggByDate[dateStr].miss_punch.push(empName);
+        else if (empStatus === 'Half Day') aggByDate[dateStr].half_day.push(empName);
+        else if (empStatus === 'No Record') aggByDate[dateStr].no_record.push(empName);
+      });
+      
+      return success(res, { calendar: Object.values(aggByDate), month: m, year: y, daysInMonth });
+    }
 
     const recordsRes = await query(
       `SELECT to_char(d.date, 'YYYY-MM-DD') as date,
@@ -57,7 +125,7 @@ exports.getCalendar = async (req, res) => {
        LEFT JOIN wfh_requests w ON w.emp_id = $3 AND w.date = d.date AND w.status = 'Approved'
        LEFT JOIN holidays h ON h.date = d.date
        ORDER BY d.date`,
-      [`${y}-${String(m).padStart(2,'0')}-01`, `${y}-${String(m).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`, eId]
+      [startDate, endDate, eId]
     );
 
     const result = recordsRes.rows.map(row => {
@@ -146,6 +214,22 @@ exports.getMonthlyStats = async (req, res) => {
     if (!eId) return success(res, {}, 'No employee specified');
 
     const daysInMonth = getDaysInMonth(y, m);
+
+    if (eId === 'all') {
+      const result = await query(
+        `SELECT 
+          COUNT(*) FILTER (WHERE status = 'Present' OR status = 'Half Day') as present,
+          COUNT(*) FILTER (WHERE status = 'Absent') as absent,
+          COUNT(*) FILTER (WHERE status = 'Half Day') as half_days,
+          COUNT(*) FILTER (WHERE status = 'WFH' OR (status = 'Approved' AND EXISTS(SELECT 1 FROM wfh_requests w WHERE w.emp_id = attendance_records.emp_id AND w.date = attendance_records.date))) as wfh,
+          COUNT(*) FILTER (WHERE status = 'Leave' OR (status = 'Approved' AND EXISTS(SELECT 1 FROM leave_applications l WHERE l.emp_id = attendance_records.emp_id AND attendance_records.date BETWEEN l.from_date AND l.to_date))) as leave_days,
+          COUNT(*) FILTER (WHERE EXTRACT(EPOCH FROM punch_in::time) > EXTRACT(EPOCH FROM '09:15:00'::time)) as late
+         FROM attendance_records
+         WHERE EXTRACT(MONTH FROM date) = $1 AND EXTRACT(YEAR FROM date) = $2`,
+        [m, y]
+      );
+      return success(res, result.rows[0] || {}, 'Monthly stats fetched successfully');
+    }
 
     const result = await query(
       `SELECT
