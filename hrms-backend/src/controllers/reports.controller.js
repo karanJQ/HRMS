@@ -90,6 +90,15 @@ exports.retirementReport = async (req, res) => {
 
 exports.getProbationAlerts = async (req, res) => {
   try {
+    const { recentOnly } = req.query;
+    let dateFilter = '';
+    if (recentOnly === 'true') {
+      dateFilter = `AND e.probation_end_date BETWEEN CURRENT_DATE - INTERVAL '7 days' AND CURRENT_DATE + INTERVAL '7 days'`;
+    } else {
+      // Just something reasonable or all pending
+      // Originally it was <= CURRENT_DATE + 7 days
+    }
+
     const alerts = await query(
       `SELECT e.emp_id, e.first_name, e.last_name, e.doj, e.probation_days, e.probation_end_date,
               d.name as dept_name, des.name as designation_name
@@ -98,7 +107,7 @@ exports.getProbationAlerts = async (req, res) => {
        LEFT JOIN designations des ON des.id=e.designation_id
        WHERE e.probation_status = 'Pending' 
          AND e.status = 'Active'
-         AND e.probation_end_date <= CURRENT_DATE + INTERVAL '7 days'
+         ${dateFilter}
        ORDER BY e.probation_end_date ASC`
     );
     return success(res, alerts.rows);

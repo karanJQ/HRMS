@@ -12,20 +12,20 @@ import {
 import { leaveAPI, empAPI, attendanceAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
-// Status → visual config
+// Status → visual config (soft light tints — professional, corporate look)
 const STATUS_STYLES = {
-  Present:    { bg: 'bg-emerald-50', dot: 'bg-emerald-500', text: 'text-emerald-700', label: 'Present',  border: 'border-emerald-200', bgHex: '#ecfdf5', textHex: '#047857', borderHex: '#a7f3d0' },
-  Absent:     { bg: 'bg-red-50',     dot: 'bg-red-500',     text: 'text-red-700',     label: 'Absent',   border: 'border-red-200',     bgHex: '#fef2f2', textHex: '#b91c1c', borderHex: '#fecaca' },
-  'Half Day': { bg: 'bg-purple-50',  dot: 'bg-purple-500',  text: 'text-purple-700',  label: 'Half Day', border: 'border-purple-200', bgHex: '#faf5ff', textHex: '#7e22ce', borderHex: '#e9d5ff' },
-  WFH:        { bg: 'bg-amber-50',   dot: 'bg-amber-500',   text: 'text-amber-700',   label: 'WFH',      border: 'border-amber-200',   bgHex: '#fffbeb', textHex: '#b45309', borderHex: '#fde68a' },
-  Leave:      { bg: 'bg-blue-50',    dot: 'bg-blue-500',    text: 'text-blue-700',    label: 'Leave',    border: 'border-blue-200',    bgHex: '#eff6ff', textHex: '#1d4ed8', borderHex: '#bfdbfe' },
-  Late:       { bg: 'bg-orange-50',  dot: 'bg-orange-500',  text: 'text-orange-700',  label: 'Late',     border: 'border-orange-200',  bgHex: '#fff7ed', textHex: '#c2410c', borderHex: '#fed7aa' },
-  Holiday:    { bg: 'bg-pink-50',    dot: 'bg-pink-500',    text: 'text-pink-700',    label: 'Holiday',  border: 'border-pink-200',    bgHex: '#fdf2f8', textHex: '#be185d', borderHex: '#fbcfe8' },
-  Weekend:    { bg: 'bg-gray-50',    dot: 'bg-gray-300',    text: 'text-gray-400',    label: 'Weekend',  border: 'border-gray-100',    bgHex: '#f9fafb', textHex: '#9ca3af', borderHex: '#f3f4f6' },
-  'Miss Punch':{bg: 'bg-orange-50',  dot: 'bg-orange-500',  text: 'text-orange-700',  label: 'Miss Punch', border: 'border-orange-200', bgHex: '#fff7ed', textHex: '#c2410c', borderHex: '#fed7aa' },
-  'No Record':{ bg: 'bg-white',      dot: 'bg-gray-200',    text: 'text-gray-300',    label: '—',        border: 'border-gray-50',    bgHex: '#ffffff', textHex: '#d1d5db', borderHex: '#f9fafb' },
-  Upcoming:   { bg: 'bg-white',      dot: 'bg-transparent', text: 'text-gray-400',    label: '',         border: 'border-transparent', badge: 'bg-transparent', bgHex: '#ffffff', textHex: '#9ca3af', borderHex: 'transparent' },
-  Aggregate:  { bg: 'bg-white',      dot: 'bg-gray-200',    text: 'text-gray-600',    label: 'Aggregate',border: 'border-gray-200',    badge: 'bg-gray-200',   bgHex: '#ffffff', textHex: '#4b5563', borderHex: '#e5e7eb' },
+  Present:     { bg: '#f0fdf4', border: '#bbf7d0', accent: '#16a34a', label: 'Present',    icon: CheckCircle2 },
+  Absent:      { bg: '#fef2f2', border: '#fecaca', accent: '#dc2626', label: 'Absent',     icon: XCircle },
+  'Half Day':  { bg: '#f5f3ff', border: '#ddd6fe', accent: '#7c3aed', label: 'Half Day',   icon: Clock },
+  WFH:         { bg: '#fefce8', border: '#fef08a', accent: '#ca8a04', label: 'WFH',        icon: Home },
+  Leave:       { bg: '#eff6ff', border: '#bfdbfe', accent: '#2563eb', label: 'Leave',      icon: CalendarDays },
+  Late:        { bg: '#fff7ed', border: '#fed7aa', accent: '#ea580c', label: 'Late',       icon: AlertTriangle },
+  Holiday:     { bg: '#fdf2f8', border: '#fbcfe8', accent: '#db2777', label: 'Holiday',    icon: Sun },
+  Weekend:     { bg: '#f8fafc', border: '#e2e8f0', accent: '#94a3b8', label: 'Weekend',    icon: null },
+  'Miss Punch':{ bg: '#fff7ed', border: '#fed7aa', accent: '#ea580c', label: 'Miss Punch', icon: AlertCircle },
+  'No Record': { bg: '#ffffff', border: '#f1f5f9', accent: '#cbd5e1', label: '—',          icon: null },
+  Upcoming:    { bg: '#ffffff', border: 'transparent', accent: '#cbd5e1', label: '',       icon: null },
+  Aggregate:   { bg: '#ffffff', border: '#e2e8f0', accent: '#64748b', label: 'Aggregate',  icon: null },
 };
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -364,150 +364,120 @@ export default function Attendance() {
               </button>
             )}
           </div>
-          {/* Stats Cards */}
+
+          {/* Stats Summary */}
           <div className="grid grid-cols-6 gap-3 mb-5">
-            {statsArr.map((s,i) => (
-              <div key={s.label}
-                className="relative overflow-hidden p-3 rounded-xl transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-                style={{
-                  background:'#fff', border:'1px solid rgba(22,38,96,0.06)',
-                  boxShadow:'0 2px 8px rgba(22,38,96,0.04)'
-                }}>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="p-1.5 rounded-lg" style={{ background:`${s.color}15` }}>
-                    <s.icon size={13} style={{ color:s.color }}/>
+            {statsArr.map((s) => (
+              <div key={s.label} className="relative overflow-hidden rounded-xl bg-white px-4 py-3 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5" style={{ border: '1px solid rgba(22,38,96,0.06)' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}10` }}>
+                    <s.icon size={18} style={{ color: s.color }} />
                   </div>
-                  <span className="text-[11px] font-medium" style={{ color:'rgba(22,38,96,0.5)' }}>{s.label}</span>
+                  <div>
+                    <div className="text-xl font-extrabold leading-tight" style={{ color: '#162660' }}>{s.value}</div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wider mt-0.5" style={{ color: 'rgba(22,38,96,0.4)' }}>{s.label}</div>
+                  </div>
                 </div>
-                <div className="text-2xl font-bold ml-1" style={{ color:s.color }}>{s.value}</div>
+                <div className="absolute bottom-0 left-0 right-0 h-[3px]" style={{ background: s.color, opacity: 0.5 }} />
               </div>
             ))}
           </div>
 
           {/* Calendar Grid */}
-          <div className="rounded-2xl overflow-hidden shadow-sm" style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.08)' }}>
-            {/* Day headers */}
-            <div className="grid grid-cols-7">
-              {DAYS.map(d => (
-                <div key={d} className="py-3 text-center text-xs font-bold uppercase tracking-wider"
-                  style={{ color:'rgba(22,38,96,0.4)', background:'rgba(22,38,96,0.02)', borderBottom:'1px solid rgba(22,38,96,0.06)' }}>
+          <div className="rounded-2xl overflow-hidden bg-white" style={{ border: '1px solid rgba(22,38,96,0.08)', boxShadow: '0 2px 12px rgba(22,38,96,0.06)' }}>
+            {/* Day name headers */}
+            <div className="grid grid-cols-7" style={{ borderBottom: '1px solid rgba(22,38,96,0.08)' }}>
+              {DAYS.map((d, i) => (
+                <div key={d} className="py-3.5 text-center text-[11px] font-bold uppercase tracking-widest"
+                  style={{ color: (i === 0 || i === 6) ? 'rgba(22,38,96,0.25)' : 'rgba(22,38,96,0.5)', background: 'rgba(22,38,96,0.015)' }}>
                   {d}
                 </div>
               ))}
-              {/* Day cells */}
+            </div>
+
+            {/* Day cells */}
+            <div className="grid grid-cols-7">
               {days.map((day, idx) => {
                 const st = day.data?.status || day.status;
                 const style = STATUS_STYLES[st] || STATUS_STYLES.Upcoming;
                 const isPrevNext = day.status === 'prev' || day.status === 'next';
                 const hasData = day.date && day.data?.status && st !== 'Upcoming' && !isPrevNext;
+                const isWeekend = day.date && new Date(day.date + 'T00:00:00').getDay() % 6 === 0;
 
                 return (
                   <div
                     key={idx}
                     onClick={() => handleDateClick(day)}
-                    className={`relative min-h-[90px] p-2.5 border-b border-r transition-all duration-150 cursor-pointer group
-                      ${hasData ? 'hover:shadow-inner hover:z-10' : ''}
-                      ${day.isToday ? 'ring-2 ring-inset' : ''}`}
+                    className="relative group cursor-pointer transition-all duration-200 hover:brightness-[0.97]"
                     style={{
-                      borderColor: 'rgba(22,38,96,0.05)',
-                      background: hasData ? style.bgHex : (isPrevNext ? '#fafafa' : '#fff'),
-                      opacity: isPrevNext ? 0.3 : 1,
-                      ringColor: day.isToday ? '#162660' : 'transparent',
+                      minHeight: '108px',
+                      borderRight: '1px solid rgba(22,38,96,0.05)',
+                      borderBottom: '1px solid rgba(22,38,96,0.05)',
+                      background: isPrevNext ? '#f8f9fc' : (hasData ? style.bg : (isWeekend ? '#fafbfc' : '#fff')),
+                      opacity: isPrevNext ? 0.45 : 1,
                     }}
                   >
                     {/* Date number */}
-                    <div className={`text-sm font-semibold mb-1.5 ${day.isToday ? 'text-white' : style.text}`}>
+                    <div className="px-3 pt-2.5 pb-1">
                       {day.isToday ? (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#162660] text-white text-xs font-bold shadow-sm">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold text-white" style={{ background: '#162660', boxShadow: '0 2px 8px rgba(22,38,96,0.3)' }}>
                           {day.day}
                         </span>
                       ) : (
-                        <span className="text-xs">{day.day}</span>
+                        <span className="text-sm font-bold" style={{ color: isPrevNext ? '#d0d5dd' : (isWeekend ? 'rgba(22,38,96,0.28)' : '#162660') }}>
+                          {day.day}
+                        </span>
                       )}
                     </div>
 
-                    {/* Status indicator */}
+                    {/* Status content */}
                     {hasData && st !== 'Aggregate' && (
-                      <div className="flex flex-col gap-0.5">
-                        {/* Status label */}
-                        <span className={`text-[10px] font-semibold mt-0.5 ${style.text}`}>
-                          {st === 'Half Day' ? '½ Day' : st === 'Present' ? '' : st === 'Leave' ? day.data?.leave_type||'Leave' : st}
+                      <div className="px-3 pb-2.5 flex flex-col gap-0.5 mt-0.5">
+                        <span className="text-[11px] font-bold" style={{ color: style.accent }}>
+                          {st === 'Half Day' ? 'Half Day' : st === 'Leave' ? (day.data?.leave_type || 'Leave') : st}
                         </span>
 
-                        {/* Punch times */}
                         {day.data?.punch_in && (
-                          <span className="text-[9px]" style={{ color:'rgba(22,38,96,0.5)' }}>
-                            {day.data.punch_in.slice(0,5)}
-                            {day.data.punch_out ? ` - ${day.data.punch_out.slice(0,5)}` : ''}
+                          <span className="text-[10px] font-medium" style={{ color: 'rgba(22,38,96,0.35)' }}>
+                            {day.data.punch_in.slice(0,5)}{day.data.punch_out ? ` - ${day.data.punch_out.slice(0,5)}` : ''}
                           </span>
                         )}
 
-                        {/* Holiday name */}
                         {day.data?.holiday_name && (
-                          <span className="text-[9px] font-medium truncate" style={{ color:'rgba(236,72,153,0.7)' }}>
+                          <span className="text-[10px] font-medium truncate" style={{ color: style.accent, opacity: 0.8 }}>
                             {day.data.holiday_name}
                           </span>
                         )}
 
-                        {/* WFH indicator */}
-                        {st === 'WFH' && (
-                          <span className="text-[9px] flex items-center gap-1"><Home size={9}/> WFH</span>
-                        )}
-
-                        {/* Half day type */}
                         {day.data?.half_day_type && (
-                          <span className="text-[9px] font-medium text-purple-600">
+                          <span className="text-[10px] font-medium" style={{ color: '#7c3aed' }}>
                             {day.data.half_day_type === 'FIRST_HALF' ? '1st Half' : '2nd Half'}
                           </span>
                         )}
                       </div>
                     )}
 
-                    {hasData && st === 'Aggregate' && (
-                      <div className="flex flex-col gap-1 mt-1 flex-1">
-                        {day.data?.present?.length > 0 && <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">P: {day.data.present.length}</span>}
-                        {day.data?.absent?.length > 0 && <span className="text-[9px] bg-red-100 text-red-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">A: {day.data.absent.length}</span>}
-                        {day.data?.leave?.length > 0 && <span className="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">L: {day.data.leave.length}</span>}
-                        {day.data?.wfh?.length > 0 && <span className="text-[9px] bg-amber-100 text-amber-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">W: {day.data.wfh.length}</span>}
-                        {day.data?.half_day?.length > 0 && <span className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">HD: {day.data.half_day.length}</span>}
-                        {day.data?.miss_punch?.length > 0 && <span className="text-[9px] bg-orange-100 text-orange-700 px-1 py-0.5 rounded font-semibold w-fit leading-none">MP: {day.data.miss_punch.length}</span>}
+                    {/* Weekend text */}
+                    {!hasData && isWeekend && !isPrevNext && (
+                      <div className="px-3 mt-0.5">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(22,38,96,0.15)' }}>Off</span>
                       </div>
                     )}
 
-                    {/* Hover effect */}
-                    {hasData && (
-                      <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
-                        style={{ boxShadow:'inset 0 0 0 2px rgba(22,38,96,0.08)'}}/>
-                    )}
-
-                    {/* Miss Punch / Weekend dot */}
-                    {(st === 'Weekend' || st === 'Holiday' || st === 'Miss Punch') && !isPrevNext && (
-                      <div className="absolute bottom-1.5 right-1.5">
-                        <div className={`w-1.5 h-1.5 rounded-full ${style.dot}`}/>
+                    {/* Aggregate view */}
+                    {hasData && st === 'Aggregate' && (
+                      <div className="px-3 pb-2 flex flex-wrap gap-1 mt-1">
+                        {day.data?.present?.length > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: '#dcfce7', color: '#16a34a' }}>P:{day.data.present.length}</span>}
+                        {day.data?.absent?.length > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: '#fee2e2', color: '#dc2626' }}>A:{day.data.absent.length}</span>}
+                        {day.data?.leave?.length > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: '#dbeafe', color: '#2563eb' }}>L:{day.data.leave.length}</span>}
+                        {day.data?.wfh?.length > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: '#fef9c3', color: '#ca8a04' }}>W:{day.data.wfh.length}</span>}
+                        {day.data?.half_day?.length > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: '#ede9fe', color: '#7c3aed' }}>HD:{day.data.half_day.length}</span>}
+                        {day.data?.miss_punch?.length > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: '#ffedd5', color: '#ea580c' }}>MP:{day.data.miss_punch.length}</span>}
                       </div>
                     )}
                   </div>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Legend */}
-          <div className="flex flex-wrap items-center gap-4 mt-4 p-4 rounded-xl bg-white border" style={{ borderColor:'rgba(22,38,96,0.06)' }}>
-            {[
-              { label:'Present', color:'#10b981' }, { label:'Absent', color:'#ef4444' },
-              { label:'Half Day', color:'#a855f7' }, { label:'WFH', color:'#f59e0b' },
-              { label:'Leave', color:'#3b82f6' }, { label:'Late', color:'#f97316' },
-              { label:'Holiday', color:'#ec4899' }, { label:'Miss Punch', color:'#ea580c' },
-            ].map(({label,color}) => (
-              <div key={label} className="flex items-center gap-1.5 text-xs font-medium" style={{ color:'rgba(22,38,96,0.6)' }}>
-                <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor:color }}/>
-                {label}
-              </div>
-            ))}
-            <div className="flex items-center gap-1.5 text-xs font-medium ml-auto" style={{ color:'rgba(22,38,96,0.4)' }}>
-              <div className="w-7 h-7 rounded-full bg-[#162660] flex items-center justify-center text-white text-[9px] font-bold">•</div>
-              Today
             </div>
           </div>
 
@@ -559,10 +529,10 @@ export default function Attendance() {
 
                 return (
                 <>
-                  <div className="mb-4 p-4 rounded-xl" style={{ background: cfg.bgHex, border: `1px solid ${cfg.borderHex}` }}>
+                  <div className="mb-4 p-4 rounded-xl" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-base" style={{ color: cfg.textHex }}>{cfg.label || dd.status}</span>
+                        <span className="font-bold text-base" style={{ color: cfg.accent }}>{cfg.label || dd.status}</span>
                       </div>
                       <span className="text-xs" style={{ color:'rgba(22,38,96,0.4)' }}>{['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dd.dayOfWeek]}</span>
                     </div>

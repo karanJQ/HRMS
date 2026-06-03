@@ -44,7 +44,7 @@ export default function Dashboard() {
       empAPI.birthdays({ month: currentMonth }).catch(() => ({ data: { data: [] } })),
       empAPI.anniversaries({ month: currentMonth }).catch(() => ({ data: { data: [] } })),
       attendanceAPI.getHolidays({ year: currentYear }).catch(() => ({ data: { data: [] } })),
-      reportsAPI.probationAlerts().catch(() => ({ data: { data: [] } })),
+      reportsAPI.probationAlerts({ recentOnly: 'true' }).catch(() => ({ data: { data: [] } })),
     ]).then(([s, h, l, o, b, a, hol, prob]) => {
       setStats(s?.data?.data || null);
       setHeadcount(h?.data?.data || null);
@@ -88,7 +88,7 @@ export default function Dashboard() {
       setProbationModal(null);
       setProbationNotes('');
       // Refresh alerts
-      const res = await reportsAPI.probationAlerts();
+      const res = await reportsAPI.probationAlerts({ recentOnly: 'true' });
       setProbationAlerts(res.data?.data || []);
     } catch (e) {
       setMsg('Error: ' + (e.response?.data?.message || e.message));
