@@ -87,7 +87,7 @@ export default function Sidebar({ collapsed, isMobile, setCollapsed }) {
 
   return (
     <div 
-      className={`sidebar fixed top-0 left-0 h-full flex flex-col shadow-[4px_0_24px_rgba(22,38,96,0.1)] transition-all duration-300 ${isMobile && collapsed ? '-translate-x-full' : 'translate-x-0'}`} 
+      className={`sidebar fixed top-0 left-0 h-[100dvh] flex flex-col shadow-[4px_0_24px_rgba(22,38,96,0.1)] transition-all duration-300 ${isMobile && collapsed ? '-translate-x-full' : 'translate-x-0'}`} 
       style={{ zIndex: 40, borderRight: '1px solid rgba(22, 38, 96, 0.1)', background: '#c8bcea', width: (!isMobile && collapsed) ? '80px' : '280px' }}
     >
       
@@ -128,8 +128,11 @@ export default function Sidebar({ collapsed, isMobile, setCollapsed }) {
           <div 
             key={item.path} 
             className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
-            onClick={() => navigate(item.path)}
-            title={collapsed ? item.label : ''}
+            onClick={() => {
+              navigate(item.path);
+              if (isMobile) setCollapsed(true);
+            }}
+            title={(!isMobile && collapsed) ? item.label : ''}
             style={{ 
               padding: collapsed ? '12px 0' : undefined, 
               justifyContent: collapsed ? 'center' : undefined,
@@ -150,8 +153,11 @@ export default function Sidebar({ collapsed, isMobile, setCollapsed }) {
               <div 
                 key={item.path} 
                 className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
-                onClick={() => navigate(item.path)}
-                title={collapsed ? item.label : ''}
+                onClick={() => {
+                  navigate(item.path);
+                  if (isMobile) setCollapsed(true);
+                }}
+                title={(!isMobile && collapsed) ? item.label : ''}
                 style={{ 
                   padding: collapsed ? '12px 0' : undefined, 
                   justifyContent: collapsed ? 'center' : undefined,
@@ -174,8 +180,11 @@ export default function Sidebar({ collapsed, isMobile, setCollapsed }) {
               <div 
                 key={item.path} 
                 className={`nav-item ${location.pathname === item.path ? 'active' : ''}`} 
-                onClick={() => navigate(item.path)}
-                title={collapsed ? item.label : ''}
+                onClick={() => {
+                  navigate(item.path);
+                  if (isMobile) setCollapsed(true);
+                }}
+                title={(!isMobile && collapsed) ? item.label : ''}
                 style={{ 
                   padding: collapsed ? '12px 0' : undefined, 
                   justifyContent: collapsed ? 'center' : undefined,
@@ -209,12 +218,12 @@ export default function Sidebar({ collapsed, isMobile, setCollapsed }) {
           {/* Sign out action option */}
           {(!isMobile && collapsed) ? null : (
             <button 
-              onClick={logout} 
-              className="p-1.5 hover:text-red-600 hover:bg-black/5 rounded-lg transition-colors cursor-pointer" 
-              style={{ color: 'rgba(22, 38, 96, 0.6)' }}
+              onClick={(e) => { e.stopPropagation(); logout(); }} 
+              className="p-3 -mr-1 hover:text-red-600 hover:bg-black/5 rounded-xl transition-colors cursor-pointer flex items-center justify-center" 
+              style={{ color: 'rgba(22, 38, 96, 0.6)', minWidth: '44px', minHeight: '44px' }}
               title="Sign Out"
             >
-              <LogOut size={15} />
+              <LogOut size={18} />
             </button>
           )}
         </div>

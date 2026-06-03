@@ -46,7 +46,7 @@ export default function Reports() {
       {loading ? <Loader/> : <>
         {tab==='headcount' && headcount && (
           <div className="space-y-5">
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {headcount.by_status?.map((s, idx)=>(
                 <StatsCard 
                   key={s.status} 
@@ -59,7 +59,7 @@ export default function Reports() {
                 />
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <div 
                 className="hover-card animate-slide-up"
                 style={{ 
@@ -87,7 +87,7 @@ export default function Reports() {
 
         {tab==='payroll' && payroll && (
           <div className="space-y-5">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {payroll.monthly?.slice(-1).map(m=>(
                 <React.Fragment key={m.month}>
                   <StatsCard title={`Gross (${monthNames[m.month-1]})`} value={`₹${(parseFloat(m.gross)/100000).toFixed(2)}L`} icon={DollarSign} color="#3b82f6" theme="light" delay={0} />
@@ -130,7 +130,7 @@ export default function Reports() {
               }}
             >
               <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Payroll by Department</h3>
-              <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
+              <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
                 <table>
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
@@ -165,7 +165,7 @@ export default function Reports() {
 
         {tab==='leave' && leave && (
           <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <div 
                 className="hover-card animate-slide-up"
                 style={{ 

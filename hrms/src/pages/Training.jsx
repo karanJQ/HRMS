@@ -52,9 +52,9 @@ export default function Training() {
           {msg}
         </div>
       )}
-      <div className="grid grid-cols-4 gap-4 mb-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-5">
         <div 
-          className="text-center p-5 transition-all duration-300"
+          className="text-center p-3 md:p-5 transition-all duration-300"
           style={{
             background: '#fff',
             border: '1px solid rgba(22, 38, 96, 0.08)',
@@ -145,11 +145,11 @@ export default function Training() {
           <p className="text-sm font-semibold mt-1" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>Total Enrolled</p>
         </div>
       </div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <h3 className="section-title mb-0" style={{ color: '#162660' }}>Training Programs</h3>
         {isMin('hr_staff') && (
           <button 
-            className="btn font-semibold flex items-center gap-2 transition-all duration-200" 
+            className="btn font-semibold flex items-center justify-center gap-2 transition-all duration-200 w-full sm:w-auto" 
             onClick={()=>setShowForm(true)}
             style={{
               background: '#162660',
@@ -174,11 +174,11 @@ export default function Training() {
         )}
       </div>
       {loading ? <Loader/> : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {programs.map(p=>(
             <div 
               key={p.id} 
-              className="p-5 cursor-pointer transition-all duration-300" 
+              className="p-4 md:p-5 cursor-pointer transition-all duration-300" 
               onClick={()=>setSelected(p)}
               style={{
                 background: '#fff',

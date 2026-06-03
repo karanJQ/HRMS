@@ -53,17 +53,19 @@ export default function Grievance() {
   return (
     <Layout title="Grievance & Disciplinary" theme="light" bg="#F8F8FF">
       {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-50 text-red-800 border border-red-200':'bg-emerald-50 text-emerald-800 border border-emerald-200'}`}>{msg}</div>}
-      <div className="flex gap-3 mb-5">
-        <button className={`tab ${tab==='grievance'?'active':''}`} onClick={()=>setTab('grievance')}><AlertTriangle size={13} className="inline mr-1"/>Grievances</button>
-        {isMin('hr_staff') && <button className={`tab ${tab==='disciplinary'?'active':''}`} onClick={()=>setTab('disciplinary')}><Shield size={13} className="inline mr-1"/>Disciplinary</button>}
-        <button className="btn btn-primary ml-auto" onClick={()=>tab==='grievance'?setShowForm(true):setShowDiscForm(true)}>
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <div className="flex gap-2 sm:gap-3 flex-wrap">
+          <button className={`tab ${tab==='grievance'?'active':''}`} onClick={()=>setTab('grievance')}><AlertTriangle size={13} className="inline mr-1"/>Grievances</button>
+          {isMin('hr_staff') && <button className={`tab ${tab==='disciplinary'?'active':''}`} onClick={()=>setTab('disciplinary')}><Shield size={13} className="inline mr-1"/>Disciplinary</button>}
+        </div>
+        <button className="btn btn-primary w-full sm:w-auto sm:ml-auto mt-2 sm:mt-0" onClick={()=>tab==='grievance'?setShowForm(true):setShowDiscForm(true)}>
           <Plus size={16}/>{tab==='grievance'?'New Grievance':'New Case'}
         </button>
       </div>
 
       {loading ? <Loader/> : tab==='grievance' ? (
         <>
-          <div className="grid grid-cols-4 gap-4 mb-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-5">
             <StatsCard title="Pending" value={grievances.filter(g=>g.status==='Pending').length} icon={AlertCircle} color="#f59e0b" theme="light" delay={0} />
             <StatsCard title="Under Review" value={grievances.filter(g=>g.status==='Under Review').length} icon={Clock} color="#3b82f6" theme="light" delay={60} />
             <StatsCard title="Resolved" value={grievances.filter(g=>g.status==='Resolved').length} icon={CheckCircle} color="#10b981" theme="light" delay={120} />
@@ -79,7 +81,7 @@ export default function Grievance() {
               boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
             }}
           >
-            <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
+            <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
               <table>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
@@ -136,7 +138,7 @@ export default function Grievance() {
           }}
         >
           <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Disciplinary Cases</h3>
-          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
             <table>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>

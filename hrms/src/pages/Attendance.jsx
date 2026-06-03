@@ -366,10 +366,10 @@ export default function Attendance() {
           </div>
 
           {/* Stats Summary */}
-          <div className="grid grid-cols-6 gap-3 mb-5">
+          <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3 mb-5">
             {statsArr.map((s) => (
-              <div key={s.label} className="relative overflow-hidden rounded-xl bg-white px-4 py-3 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5" style={{ border: '1px solid rgba(22,38,96,0.06)' }}>
-                <div className="flex items-center gap-3">
+              <div key={s.label} className="relative overflow-hidden rounded-xl bg-white px-2 md:px-4 py-3 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5" style={{ border: '1px solid rgba(22,38,96,0.06)' }}>
+                <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-2 md:gap-3">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}10` }}>
                     <s.icon size={18} style={{ color: s.color }} />
                   </div>
@@ -388,7 +388,7 @@ export default function Attendance() {
             {/* Day name headers */}
             <div className="grid grid-cols-7" style={{ borderBottom: '1px solid rgba(22,38,96,0.08)' }}>
               {DAYS.map((d, i) => (
-                <div key={d} className="py-3.5 text-center text-[11px] font-bold uppercase tracking-widest"
+                <div key={d} className="py-2 md:py-3.5 text-center text-[9px] md:text-[11px] font-bold uppercase tracking-wider md:tracking-widest"
                   style={{ color: (i === 0 || i === 6) ? 'rgba(22,38,96,0.25)' : 'rgba(22,38,96,0.5)', background: 'rgba(22,38,96,0.015)' }}>
                   {d}
                 </div>
@@ -418,13 +418,13 @@ export default function Attendance() {
                     }}
                   >
                     {/* Date number */}
-                    <div className="px-3 pt-2.5 pb-1">
+                    <div className="px-1.5 md:px-3 pt-1.5 md:pt-2.5 pb-0.5 md:pb-1">
                       {day.isToday ? (
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold text-white" style={{ background: '#162660', boxShadow: '0 2px 8px rgba(22,38,96,0.3)' }}>
+                        <span className="inline-flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full text-xs md:text-sm font-bold text-white" style={{ background: '#162660', boxShadow: '0 2px 8px rgba(22,38,96,0.3)' }}>
                           {day.day}
                         </span>
                       ) : (
-                        <span className="text-sm font-bold" style={{ color: isPrevNext ? '#d0d5dd' : (isWeekend ? 'rgba(22,38,96,0.28)' : '#162660') }}>
+                        <span className="text-xs md:text-sm font-bold" style={{ color: isPrevNext ? '#d0d5dd' : (isWeekend ? 'rgba(22,38,96,0.28)' : '#162660') }}>
                           {day.day}
                         </span>
                       )}
@@ -432,14 +432,14 @@ export default function Attendance() {
 
                     {/* Status content */}
                     {hasData && st !== 'Aggregate' && (
-                      <div className="px-3 pb-2.5 flex flex-col gap-0.5 mt-0.5">
-                        <span className="text-[11px] font-bold" style={{ color: style.accent }}>
+                      <div className="px-1.5 md:px-3 pb-1 md:pb-2.5 flex flex-col gap-0 md:gap-0.5 mt-0.5">
+                        <span className="text-[9px] md:text-[11px] font-bold leading-tight" style={{ color: style.accent }}>
                           {st === 'Half Day' ? 'Half Day' : st === 'Leave' ? (day.data?.leave_type || 'Leave') : st}
                         </span>
 
                         {day.data?.punch_in && (
-                          <span className="text-[10px] font-medium" style={{ color: 'rgba(22,38,96,0.35)' }}>
-                            {day.data.punch_in.slice(0,5)}{day.data.punch_out ? ` - ${day.data.punch_out.slice(0,5)}` : ''}
+                          <span className="text-[8px] md:text-[10px] font-medium leading-tight" style={{ color: 'rgba(22,38,96,0.35)' }}>
+                            {day.data.punch_in.slice(0,5)}<span className="hidden sm:inline">{day.data.punch_out ? ` - ${day.data.punch_out.slice(0,5)}` : ''}</span>
                           </span>
                         )}
 
@@ -459,8 +459,8 @@ export default function Attendance() {
 
                     {/* Weekend text */}
                     {!hasData && isWeekend && !isPrevNext && (
-                      <div className="px-3 mt-0.5">
-                        <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(22,38,96,0.15)' }}>Off</span>
+                      <div className="px-1.5 md:px-3 mt-0.5">
+                        <span className="text-[8px] md:text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(22,38,96,0.15)' }}>Off</span>
                       </div>
                     )}
 
@@ -653,21 +653,21 @@ export default function Attendance() {
 
       ) : tab === 'applications' ? (
         <div className="animate-fadeIn">
-          <div className="flex justify-between items-center mb-4">
-            <div className="grid grid-cols-4 gap-4 flex-1">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 w-full md:flex-1">
               {[
                 { title:'Total', value:leaves.length, color:'#818cf8' },
                 { title:'Pending', value:leaves.filter(l=>l.status==='Pending').length, color:'#fbbf24' },
                 { title:'Approved', value:leaves.filter(l=>l.status==='Approved').length, color:'#34d399' },
                 { title:'Rejected', value:leaves.filter(l=>l.status==='Rejected').length, color:'#f87171' },
               ].map((c,i) => (
-                <div key={c.title} className="p-4 rounded-xl" style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.08)' }}>
-                  <div className="text-2xl font-bold" style={{ color:c.color }}>{c.value}</div>
-                  <div className="text-xs mt-1 font-medium" style={{ color:'rgba(22,38,96,0.5)' }}>{c.title}</div>
+                <div key={c.title} className="p-3 md:p-4 rounded-xl" style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.08)' }}>
+                  <div className="text-xl md:text-2xl font-bold" style={{ color:c.color }}>{c.value}</div>
+                  <div className="text-[10px] md:text-xs mt-1 font-medium" style={{ color:'rgba(22,38,96,0.5)' }}>{c.title}</div>
                 </div>
               ))}
             </div>
-            <button className="font-semibold px-5 py-2.5 rounded-xl ml-4 transition-all hover:shadow-lg"
+            <button className="font-semibold px-5 py-2.5 rounded-xl transition-all hover:shadow-lg w-full md:w-auto"
               style={{ background:'#162660', color:'#FEFEFA', whiteSpace:'nowrap' }}
               onClick={()=>setShowForm(true)}><Plus size={16} className="inline mr-1"/>Apply Leave</button>
           </div>

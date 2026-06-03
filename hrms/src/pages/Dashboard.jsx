@@ -273,8 +273,9 @@ export default function Dashboard() {
             <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Announcements</h3>
           </div>
           {['hr_manager', 'super_admin', 'hr_staff'].includes(user?.role) && (
-            <button onClick={() => setShowAnnModal(true)} className="btn btn-primary text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all">
-              + Add Announcement
+            <button onClick={() => setShowAnnModal(true)} className="btn btn-primary text-xs px-3 py-1.5 rounded-lg flex items-center justify-center font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all whitespace-nowrap flex-shrink-0">
+              <span className="hidden sm:inline">+ Add Announcement</span>
+              <span className="sm:hidden">+ Add</span>
             </button>
           )}
         </div>
@@ -310,7 +311,7 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className={`grid ${user?.role !== 'employee' ? 'grid-cols-2' : 'grid-cols-1'} gap-6 mb-6`}>
+      <div className={`grid ${user?.role !== 'employee' ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'} gap-6 mb-6`}>
         {user?.role !== 'employee' && (
           <div className="flex flex-col p-6 hover-card animate-slide-up"
           style={{
@@ -323,7 +324,7 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={deptData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(22,38,96,0.06)" vertical={false} />
-                <XAxis dataKey="dept" tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 11 }} axisLine={false} tickLine={false} height={50} />
+                <XAxis dataKey="dept" tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 11 }} axisLine={false} tickLine={false} height={50} interval={0} angle={-35} textAnchor="end" />
                 <YAxis tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid rgba(22,38,96,0.1)', borderRadius: '8px', color: '#162660' }} />
                 <Bar dataKey="count" fill="url(#colorDept)" radius={[4, 4, 0, 0]} barSize={30} />
@@ -383,7 +384,7 @@ export default function Dashboard() {
 
       {/* Bottom Row: Pending Leaves + Onboarding */}
       {user?.role !== 'employee' && (
-        <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="flex flex-col p-6 hover-card animate-slide-up"
           style={{
             background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
@@ -483,7 +484,7 @@ export default function Dashboard() {
             <AlertTriangle size={20} className="text-red-500" />
             <h3 className="text-lg font-semibold text-red-600">Probation Ending Soon / Overdue</h3>
           </div>
-          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
             <table>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>

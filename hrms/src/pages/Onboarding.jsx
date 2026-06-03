@@ -278,8 +278,8 @@ export default function Onboarding() {
   return (
     <Layout title="Employee Onboarding" theme="light">
       {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
           <p className="text-sm font-medium" style={{ color: 'rgba(22, 38, 96, 0.7)' }}>
             {data.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled').length} candidates in active pipeline
           </p>
@@ -301,18 +301,17 @@ export default function Onboarding() {
             <span>Include Completed & Cancelled</span>
           </label>
         </div>
-        {isMin('hr_staff') && <button className="btn btn-primary" onClick={()=>setShowAdd(true)}><Plus size={16}/>Add Candidate</button>}
+        {isMin('hr_staff') && <button className="btn btn-primary w-full md:w-auto" onClick={()=>setShowAdd(true)}><Plus size={16}/>Add Candidate</button>}
       </div>
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
         {['Pending Documents','Documents Verified','Joining Formalities','Completed'].map((s, idx)=>(
           <div 
             key={s} 
-            className="hover-card animate-slide-up text-center"
+            className="hover-card animate-slide-up text-center p-3 md:p-6"
             style={{
               background: '#fff',
               border: '1px solid rgba(22, 38, 96, 0.08)',
               borderRadius: '16px',
-              padding: '24px',
               boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
               animationDelay: `${idx * 60}ms`
             }}
@@ -334,7 +333,7 @@ export default function Onboarding() {
             animationDelay: '240ms'
           }}
         >
-          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
             <table>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
