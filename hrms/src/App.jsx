@@ -15,7 +15,7 @@ import Promotion from './pages/Promotion';
 import APAR from './pages/APAR';
 import ServiceBook from './pages/ServiceBook';
 import Training from './pages/Training';
-import Retirement from './pages/Retirement';
+
 import Probation from './pages/Probation';
 import Grievance from './pages/Grievance';
 import Reports from './pages/Reports';
@@ -56,7 +56,7 @@ export default function App() {
           <Route path="/apar" element={<Prot comp={APAR} />} />
           <Route path="/servicebook" element={<Prot comp={ServiceBook} />} />
           <Route path="/training" element={<Prot comp={Training} />} />
-          <Route path="/retirement" element={<Prot comp={Retirement} roles={['super_admin','hr_manager','hr_staff']} />} />
+
           <Route path="/probation" element={<Prot comp={Probation} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
           <Route path="/grievance" element={<Prot comp={Grievance} />} />
           <Route path="/reports" element={<Prot comp={Reports} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />

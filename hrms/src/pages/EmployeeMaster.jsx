@@ -199,6 +199,46 @@ export default function EmployeeMaster() {
     finally { setSaving(false); }
   };
 
+  const handleExportAll = async () => {
+    try {
+      const res = await empAPI.list({ limit: 10000 });
+      const data = res.data.data.employees;
+      if (!data || data.length === 0) return setMsg('No data to export');
+      
+      const exclude = ['id'];
+      const keys = Object.keys(data[0]).filter(k => !exclude.includes(k));
+      const csv = [
+        keys.join(','),
+        ...data.map(row => keys.map(k => `"${String(row[k] || '').replace(/"/g, '""')}"`).join(','))
+      ].join('\n');
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Employees_Master_Report_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+    } catch (e) {
+      setMsg('Error exporting: ' + (e.message || e));
+    }
+  };
+
+  const handleExportIndividual = (emp) => {
+    const exclude = ['id'];
+    const keys = Object.keys(emp).filter(k => !exclude.includes(k));
+    const csv = [
+      keys.join(','),
+      keys.map(k => `"${String(emp[k] || '').replace(/"/g, '""')}"`).join(',')
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Employee_${emp.emp_id}_Report.csv`;
+    a.click();
+  };
+
 
 
 
@@ -262,27 +302,52 @@ export default function EmployeeMaster() {
             />
           </div>
           {isMin('hr_staff') && (
-            <button 
-              className="btn font-semibold transition-all duration-200 w-full lg:w-auto" 
-              style={{ 
-                background: '#162660', 
-                color: '#FEFEFA',
-                boxShadow: '0 4px 15px rgba(22, 38, 96, 0.25)'
-              }} 
-              onClick={() => { setForm(blank); setEditMode(false); setShowForm(true); }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#68aae8';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#162660';
-                e.currentTarget.style.transform = 'none';
-                e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.25)';
-              }}
-            >
-              <Plus size={16} />Add Employee
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+              <button 
+                className="btn font-semibold transition-all duration-200 flex items-center justify-center gap-1 w-full sm:w-auto" 
+                style={{ 
+                  background: '#fff', 
+                  color: '#162660',
+                  border: '1px solid rgba(22, 38, 96, 0.15)',
+                  boxShadow: '0 2px 8px rgba(22, 38, 96, 0.05)',
+                  padding: '8px 16px'
+                }} 
+                onClick={handleExportAll}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#68aae8';
+                  e.currentTarget.style.color = '#68aae8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.15)';
+                  e.currentTarget.style.color = '#162660';
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export All
+              </button>
+              <button 
+                className="btn font-semibold transition-all duration-200 flex items-center justify-center gap-1 w-full sm:w-auto" 
+                style={{ 
+                  background: '#162660', 
+                  color: '#FEFEFA',
+                  boxShadow: '0 4px 15px rgba(22, 38, 96, 0.25)',
+                  padding: '8px 16px'
+                }} 
+                onClick={() => { setForm(blank); setEditMode(false); setShowForm(true); }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#68aae8';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 38, 96, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#162660';
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(22, 38, 96, 0.25)';
+                }}
+              >
+                <Plus size={16} />Add Employee
+              </button>
+            </div>
           )}
         </div>
 
@@ -431,7 +496,19 @@ export default function EmployeeMaster() {
             <div className="flex gap-4 mb-4 p-4 rounded-xl" style={{ background: '#162660', border: '1px solid rgba(208, 230, 253, 0.2)' }}>
               <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold" style={{ background: '#D0E6FD', color: '#162660' }}>{view.first_name?.[0]}</div>
               <div><p className="font-bold text-lg text-white">{view.first_name} {view.last_name}</p><p className="text-sm text-slate-300">{view.dept_name}</p><p className="text-xs text-slate-400">{view.emp_id} • Level-{view.pay_level}</p></div>
-              <div className="ml-auto"><Badge text={view.status} /></div>
+              <div className="ml-auto flex items-center gap-3">
+                <button 
+                  className="btn transition-all duration-200 text-sm flex items-center gap-1"
+                  style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px' }}
+                  onClick={() => handleExportIndividual(view)}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                >
+                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export
+                </button>
+                <Badge text={view.status} />
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-x-6 gap-y-3">
               {[['DOB', view.dob?.split('T')[0]], ['DOJ', view.doj?.split('T')[0]], ['Probation', view.probation_days > 0 ? `${view.probation_days} days (${view.probation_status || 'Pending'})` : 'None'], ['Mobile', view.mobile], ['Email', view.official_email], ['Posting Station', view.posting_station], ['Blood Group', view.blood_group], ['Qualification', view.qualification], ['PF No.', view.pf_number], ['PAN', view.pan_number], ['Bank', `${view.bank_name || ''} / ${view.ifsc_code || ''}`], ['Account No.', view.account_number], ['Nominee', view.nominee_name], ['Experience', `${view.experience_years} years`], ['Father Name', view.father_name], ['Monthly CTC', view.ctc || view.basic_pay ? `₹${parseFloat(view.ctc || view.basic_pay).toLocaleString()}` : '—']].map(([k, v]) => (

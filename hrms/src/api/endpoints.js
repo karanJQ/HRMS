@@ -91,12 +91,6 @@ export const trainingAPI = {
   listEnrollments: (params) => API.get('/training/enrollments', { params }),
 };
 
-// Retirement
-export const retirementAPI = {
-  list: () => API.get('/retirement'),
-  update: (empId, data) => API.put(`/retirement/${empId}`, data),
-  sendAlert: (empId) => API.post(`/retirement/${empId}/alert`),
-};
 
 // Grievances
 export const grievanceAPI = {
@@ -131,7 +125,8 @@ export const reportsAPI = {
   headcount: () => API.get('/reports/headcount'),
   payroll: (params) => API.get('/reports/payroll', { params }),
   leave: (params) => API.get('/reports/leave', { params }),
-  retirement: () => API.get('/reports/retirement'),
+  attendanceInsights: () => API.get('/reports/attendance-insights'),
+  demographics: () => API.get('/reports/demographics'),
   probationAlerts: (params) => API.get('/reports/probation-alerts', { params }),
 };
 

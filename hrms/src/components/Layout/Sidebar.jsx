@@ -24,7 +24,7 @@ const allNav = [
   { label:'Performance Appraisal', icon:Star, path:'/apar', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'Service Book',           icon:BookOpen, path:'/servicebook', roles:['super_admin','hr_manager','hr_staff','employee'] },
   { label:'Training', icon:GraduationCap, path:'/training', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
-  { label:'Retirement', icon:Clock, path:'/retirement', roles:['super_admin','hr_manager','hr_staff'] },
+
   { label:'Grievance & Discipline', icon:AlertTriangle, path:'/grievance', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'Reports', icon:BarChart3, path:'/reports', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
   { label:'Workflow Tasks', icon:Workflow, path:'/tasks', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
