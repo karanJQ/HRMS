@@ -139,6 +139,8 @@ export default function Dashboard() {
 
   if (loading) return <Layout title="Dashboard" theme="light" bg="#F8F8FF"><Loader /></Layout>;
 
+  const deptData = headcount?.by_dept?.slice(0, 6) || [];
+  const catData = headcount?.by_category || [];
 
   return (
     <Layout title="HRMS Dashboard" theme="light" bg="#F8F8FF">
