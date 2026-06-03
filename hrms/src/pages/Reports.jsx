@@ -3,7 +3,7 @@ import Layout from '../components/Layout/Layout';
 import Loader from '../components/common/Loader';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { reportsAPI } from '../api/endpoints';
-import { Download, Users, CheckCircle, AlertCircle, AlertTriangle, DollarSign } from 'lucide-react';
+import { Download, Users, CheckCircle, AlertCircle, AlertTriangle, DollarSign, Star, Clock } from 'lucide-react';
 import StatsCard from '../components/common/StatsCard';
 
 const COLORS = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#84cc16'];
@@ -13,12 +13,26 @@ export default function Reports() {
   const [headcount, setHeadcount] = useState(null);
   const [payroll, setPayroll] = useState(null);
   const [leave, setLeave] = useState(null);
+  const [attendance, setAttendance] = useState(null);
+  const [demographics, setDemographics] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([reportsAPI.headcount(), reportsAPI.payroll(), reportsAPI.leave()])
-      .then(([h, p, l]) => { setHeadcount(h.data.data); setPayroll(p.data.data); setLeave(l.data.data); })
+    Promise.all([
+      reportsAPI.headcount(), 
+      reportsAPI.payroll(), 
+      reportsAPI.leave(),
+      reportsAPI.attendanceInsights().catch(()=>({data:{data:null}})),
+      reportsAPI.demographics().catch(()=>({data:{data:null}}))
+    ])
+      .then(([h, p, l, a, d]) => { 
+        setHeadcount(h.data.data); 
+        setPayroll(p.data.data); 
+        setLeave(l.data.data); 
+        setAttendance(a.data?.data);
+        setDemographics(d.data?.data);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -29,19 +43,54 @@ export default function Reports() {
     Gross: parseFloat(m.gross||0).toFixed(0),
     Net: parseFloat(m.net||0).toFixed(0),
   }));
+  
+  // Smart Insights Generation
+  const generateInsights = () => {
+    const insights = [];
+    if (payroll?.monthly?.length > 1) {
+      const curr = parseFloat(payroll.monthly[payroll.monthly.length-1].net);
+      const prev = parseFloat(payroll.monthly[payroll.monthly.length-2].net);
+      if (curr > prev) insights.push(`Payroll net expenditure increased by ${((curr-prev)/prev * 100).toFixed(1)}% this month.`);
+      else insights.push(`Payroll net expenditure decreased by ${((prev-curr)/prev * 100).toFixed(1)}% this month.`);
+    }
+    if (leave?.by_dept?.length > 0) {
+      insights.push(`${leave.by_dept[0].dept} has the highest leave utilization this year (${leave.by_dept[0].total_days} days).`);
+    }
+    if (attendance?.late_trends?.length > 0) {
+      insights.push(`${attendance.late_trends[0].dept} recorded the most late arrivals/half-days this month.`);
+    }
+    if (headcount?.by_dept?.length > 0) {
+      insights.push(`${headcount.by_dept[0].dept} remains the largest department with ${headcount.by_dept[0].count} active employees.`);
+    }
+    return insights;
+  };
 
   return (
     <Layout title="Reports & Analytics" theme="light" bg="#F8F8FF">
       <div className="flex gap-2 mb-5 flex-wrap items-center justify-between">
         <div className="flex gap-2">
-          {['headcount','payroll','leave'].map(t=>(
-            <button key={t} className={`tab ${tab===t?'active':''}`} onClick={()=>setTab(t)}>
-              {t.charAt(0).toUpperCase()+t.slice(1)}
+          {['headcount','payroll','leave','attendance','demographics'].map(t=>(
+            <button key={t} className={`tab ${tab===t?'active':''}`} onClick={()=>setTab(t)} style={{ textTransform: 'capitalize' }}>
+              {t}
             </button>
           ))}
         </div>
-        <button className="btn btn-secondary" style={{ background: 'rgba(22, 38, 96, 0.05)', color: '#162660', border: '1px solid rgba(22, 38, 96, 0.1)' }}><Download size={15}/>Export</button>
+        <button className="btn btn-secondary" style={{ background: 'rgba(22, 38, 96, 0.05)', color: '#162660', border: '1px solid rgba(22, 38, 96, 0.1)' }}><Download size={15}/>Export All</button>
       </div>
+
+      {!loading && (
+        <div className="mb-6 p-5 rounded-xl border border-blue-100 animate-slide-up" style={{ background: 'linear-gradient(135deg, #f0f5fa 0%, #ffffff 100%)', boxShadow: '0 4px 15px rgba(22,38,96,0.03)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center"><Star size={12} className="text-blue-600" /></div>
+            <h3 className="font-bold text-sm" style={{ color: '#162660' }}>AI Management Summary</h3>
+          </div>
+          <ul className="list-disc pl-5 space-y-1.5 text-sm text-slate-700">
+            {generateInsights().map((txt, i) => (
+              <li key={i}>{txt}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {loading ? <Loader/> : <>
         {tab==='headcount' && headcount && (
@@ -216,6 +265,68 @@ export default function Reports() {
           </div>
         )}
 
+
+        {tab==='attendance' && attendance && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-5">
+              <div className="hover-card animate-slide-up" style={{ background: '#fff', borderRadius: '16px', padding: '24px', border: '1px solid rgba(22, 38, 96, 0.1)', boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)' }}>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Average Working Hours</h3>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={attendance.avg_hours}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(22,38,96,0.06)" vertical={false}/>
+                    <XAxis dataKey="dept" tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 11 }} angle={-20} textAnchor="end" height={50} axisLine={false} tickLine={false}/>
+                    <YAxis tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 12 }} axisLine={false} tickLine={false}/>
+                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid rgba(22,38,96,0.1)', borderRadius: '8px', color: '#162660' }}/>
+                    <Bar dataKey="avg_hours" fill="#06b6d4" name="Avg Hours" radius={[4,4,0,0]}/>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="hover-card animate-slide-up" style={{ background: '#fff', borderRadius: '16px', padding: '24px', border: '1px solid rgba(22, 38, 96, 0.1)', boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)' }}>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Late Arrival Trends</h3>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={attendance.late_trends} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(22,38,96,0.06)" horizontal={false}/>
+                    <XAxis type="number" tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 12 }} axisLine={false} tickLine={false}/>
+                    <YAxis dataKey="dept" type="category" width={100} tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 11 }} axisLine={false} tickLine={false}/>
+                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid rgba(22,38,96,0.1)', borderRadius: '8px', color: '#162660' }}/>
+                    <Bar dataKey="late_count" fill="#ef4444" name="Late Arrivals" radius={[0,4,4,0]}/>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab==='demographics' && demographics && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-5">
+              <div className="hover-card animate-slide-up" style={{ background: '#fff', borderRadius: '16px', padding: '24px', border: '1px solid rgba(22, 38, 96, 0.1)', boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)' }}>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Gender Distribution</h3>
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie data={demographics.gender} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="count" nameKey="gender">
+                      {demographics.gender?.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid rgba(22,38,96,0.1)', borderRadius: '8px', color: '#162660' }}/>
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="hover-card animate-slide-up" style={{ background: '#fff', borderRadius: '16px', padding: '24px', border: '1px solid rgba(22, 38, 96, 0.1)', boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)' }}>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Age Brackets</h3>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={demographics.age}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(22,38,96,0.06)" vertical={false}/>
+                    <XAxis dataKey="age_group" tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 12 }} axisLine={false} tickLine={false}/>
+                    <YAxis tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 12 }} axisLine={false} tickLine={false}/>
+                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid rgba(22,38,96,0.1)', borderRadius: '8px', color: '#162660' }}/>
+                    <Bar dataKey="count" fill="#8b5cf6" name="Employees" radius={[4,4,0,0]}/>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
       </>}
     </Layout>
   );
