@@ -849,8 +849,8 @@ export default function Payroll() {
               )}
             </div>
           ) : (
-            <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
-              <table>
+            <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: '900px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
                     {['Emp ID', 'Employee', 'Basic', 'DA', 'HRA', 'TA', 'Gross', 'PF', 'TDS', 'Net Pay', 'Status', 'Actions'].map(h => (

@@ -247,15 +247,14 @@ export default function EmployeeMaster() {
     <Layout title="Employee Master" theme="light" bg="#F8F8FF">
         {msg && <div className={`px-4 py-3 rounded-lg text-sm mb-4 ${msg.startsWith('Error') ? 'bg-red-900/50 text-red-200 border border-red-500/30' : 'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
 
-        <div className="flex gap-3 mb-4 flex-wrap items-center justify-between">
-          <div className="flex gap-3">
+        <div className="flex flex-col lg:flex-row gap-4 mb-6 items-start lg:items-center justify-between w-full">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full lg:w-auto">
           <div 
-            className="flex items-center justify-between rounded-full pl-4 pr-1 py-1" 
+            className="flex items-center justify-between rounded-full pl-4 pr-1 py-1 w-full sm:w-72" 
             style={{ 
               background: '#fff', 
               boxShadow: '0 4px 12px rgba(22, 38, 96, 0.08)',
               border: '1px solid rgba(22, 38, 96, 0.12)',
-              width: 280,
               height: 40
             }}
           >
@@ -303,9 +302,9 @@ export default function EmployeeMaster() {
             />
           </div>
           {isMin('hr_staff') && (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
               <button 
-                className="btn font-semibold transition-all duration-200 flex items-center gap-1" 
+                className="btn font-semibold transition-all duration-200 flex items-center justify-center gap-1 w-full sm:w-auto" 
                 style={{ 
                   background: '#fff', 
                   color: '#162660',
@@ -327,7 +326,7 @@ export default function EmployeeMaster() {
                 Export All
               </button>
               <button 
-                className="btn font-semibold transition-all duration-200 flex items-center gap-1" 
+                className="btn font-semibold transition-all duration-200 flex items-center justify-center gap-1 w-full sm:w-auto" 
                 style={{ 
                   background: '#162660', 
                   color: '#FEFEFA',
@@ -357,7 +356,7 @@ export default function EmployeeMaster() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="section-title mb-0" style={{ color: '#162660' }}>Employees ({total})</h3>
             </div>
-            <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
+            <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
               <table>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>

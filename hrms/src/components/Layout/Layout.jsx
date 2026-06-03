@@ -8,13 +8,22 @@ export default function Layout({ title, children, theme, bg }) {
   const isLight = theme === 'light';
 
   useEffect(() => {
+    let lastWidth = window.innerWidth;
+    
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
+      const newWidth = window.innerWidth;
+      const mobile = newWidth < 768;
       setIsMobile(mobile);
-      if (mobile) setCollapsed(true);
+      
+      // Only close sidebar if the width actually changed (e.g. orientation flip or desktop resize)
+      // This prevents the sidebar from closing when scrolling on mobile (which triggers height resize)
+      if (newWidth !== lastWidth) {
+        if (mobile) setCollapsed(true);
+        lastWidth = newWidth;
+      }
     };
+    
     window.addEventListener('resize', handleResize);
-    handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -37,7 +46,7 @@ export default function Layout({ title, children, theme, bg }) {
         }}
       >
         <Header title={title} theme={theme} bg={bg} onToggleSidebar={() => setCollapsed(!collapsed)} collapsed={collapsed} />
-        <div className="p-4 md:p-6">{children}</div>
+        <div className="px-2 py-4 sm:p-4 md:p-6">{children}</div>
       </div>
     </div>
   );
