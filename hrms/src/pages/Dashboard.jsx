@@ -24,7 +24,7 @@ export default function Dashboard() {
   const [anniversaries, setAnniversaries] = useState([]);
   const [holidays, setHolidays] = useState([]);
   const [probationAlerts, setProbationAlerts] = useState([]);
-  const [probationModal, setProbationModal] = useState(null); // { emp_id, action, name }
+  const [probationModal, setProbationModal] = useState(null); 
   const [probationNotes, setProbationNotes] = useState('');
   const [extendDays, setExtendDays] = useState(30);
   const [loading, setLoading] = useState(true);

@@ -303,28 +303,30 @@ export default function EmployeeMaster() {
           </div>
           {isMin('hr_staff') && (
             <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-              <button 
-                className="btn font-semibold transition-all duration-200 flex items-center justify-center gap-1 w-full sm:w-auto" 
-                style={{ 
-                  background: '#fff', 
-                  color: '#162660',
-                  border: '1px solid rgba(22, 38, 96, 0.15)',
-                  boxShadow: '0 2px 8px rgba(22, 38, 96, 0.05)',
-                  padding: '8px 16px'
-                }} 
-                onClick={handleExportAll}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#68aae8';
-                  e.currentTarget.style.color = '#68aae8';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.15)';
-                  e.currentTarget.style.color = '#162660';
-                }}
-              >
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                Export All
-              </button>
+              {isMin('hr_staff') && (
+                <button 
+                  className="btn font-semibold transition-all duration-200 flex items-center justify-center gap-1 w-full sm:w-auto" 
+                  style={{ 
+                    background: '#fff', 
+                    color: '#162660',
+                    border: '1px solid rgba(22, 38, 96, 0.15)',
+                    boxShadow: '0 2px 8px rgba(22, 38, 96, 0.05)',
+                    padding: '8px 16px'
+                  }} 
+                  onClick={handleExportAll}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#68aae8';
+                    e.currentTarget.style.color = '#68aae8';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.15)';
+                    e.currentTarget.style.color = '#162660';
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Export All
+                </button>
+              )}
               <button 
                 className="btn font-semibold transition-all duration-200 flex items-center justify-center gap-1 w-full sm:w-auto" 
                 style={{ 
@@ -357,7 +359,7 @@ export default function EmployeeMaster() {
               <h3 className="section-title mb-0" style={{ color: '#162660' }}>Employees ({total})</h3>
             </div>
             <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
-              <table>
+              <table style={{ width: '100%', minWidth: '1000px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Emp ID</th>
@@ -497,16 +499,18 @@ export default function EmployeeMaster() {
               <div className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold" style={{ background: '#D0E6FD', color: '#162660' }}>{view.first_name?.[0]}</div>
               <div><p className="font-bold text-lg text-white">{view.first_name} {view.last_name}</p><p className="text-sm text-slate-300">{view.dept_name}</p><p className="text-xs text-slate-400">{view.emp_id} • Level-{view.pay_level}</p></div>
               <div className="ml-auto flex items-center gap-3">
-                <button 
-                  className="btn transition-all duration-200 text-sm flex items-center gap-1"
-                  style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px' }}
-                  onClick={() => handleExportIndividual(view)}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-                >
-                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  Export
-                </button>
+                {isMin('hr_staff') && (
+                  <button 
+                    className="btn transition-all duration-200 text-sm flex items-center gap-1"
+                    style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px' }}
+                    onClick={() => handleExportIndividual(view)}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Export
+                  </button>
+                )}
                 <Badge text={view.status} />
               </div>
             </div>

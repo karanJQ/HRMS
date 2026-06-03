@@ -703,7 +703,7 @@ export default function Payroll() {
         </>}
         {isMin('hr_staff') && (
           <button
-            className="btn font-semibold transition-all duration-200 mr-2"
+            className="btn font-semibold transition-all duration-200"
             style={{
               background: '#162660',
               color: '#FEFEFA',
@@ -738,7 +738,7 @@ export default function Payroll() {
           </button>
         )}
         <button
-          className="btn font-semibold transition-all duration-200 mr-2"
+          className="btn font-semibold transition-all duration-200"
           style={{
             background: '#fff',
             color: '#162660',
@@ -760,28 +760,30 @@ export default function Payroll() {
         >
           <IndianRupee size={15} />{annualLoading ? 'Loading...' : 'Annual Summary'}
         </button>
-        <button
-          className="btn font-semibold transition-all duration-200"
-          style={{
-            background: '#fff',
-            color: '#162660',
-            border: '1px solid rgba(22, 38, 96, 0.2)',
-            boxShadow: '0 4px 12px rgba(22, 38, 96, 0.05)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#fff';
-            e.currentTarget.style.transform = 'none';
-            e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
-          }}
-          onClick={exportToCSV}
-        >
-          <Download size={15} />Export
-        </button>
+        {isMin('hr_staff') && (
+          <button
+            className="btn font-semibold transition-all duration-200"
+            style={{
+              background: '#fff',
+              color: '#162660',
+              border: '1px solid rgba(22, 38, 96, 0.2)',
+              boxShadow: '0 4px 12px rgba(22, 38, 96, 0.05)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(22, 38, 96, 0.03)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#fff';
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.borderColor = 'rgba(22, 38, 96, 0.2)';
+            }}
+            onClick={exportToCSV}
+          >
+            <Download size={15} />Export
+          </button>
+        )}
       </div>
 
       {msg && (
@@ -850,7 +852,7 @@ export default function Payroll() {
             </div>
           ) : (
             <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
-              <table style={{ width: '100%', minWidth: '900px' }}>
+              <table style={{ width: '100%', minWidth: '1150px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
                     {['Emp ID', 'Employee', 'Basic', 'DA', 'HRA', 'TA', 'Gross', 'PF', 'TDS', 'Net Pay', 'Status', 'Actions'].map(h => (

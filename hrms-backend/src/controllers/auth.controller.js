@@ -12,12 +12,12 @@ const signToken = (user) =>
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return error(res, 'Email and password required.', 400);
+  if (!email || !password) return error(res, 'Email/Employee ID and password required.', 400);
   try {
     const result = await query(
       `SELECT u.*, d.name as dept_name FROM users u
        LEFT JOIN departments d ON d.id = u.dept_id
-       WHERE u.email = $1 AND u.is_active = true`, [email]
+       WHERE (u.email = $1 OR u.emp_id = $1 OR u.username = $1) AND u.is_active = true`, [email]
     );
     if (!result.rows.length) return error(res, 'Invalid credentials.', 401);
     const user = result.rows[0];

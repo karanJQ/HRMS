@@ -51,10 +51,10 @@ export default function Login() {
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, color: '#475569', display: 'block', marginBottom: 6, fontWeight: 500 }}>Email Address</label>
+              <label style={{ fontSize: 13, color: '#475569', display: 'block', marginBottom: 6, fontWeight: 500 }}>Email / Employee ID</label>
               <div style={{ position: 'relative' }}>
-                <Mail size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                <Mail size={18} color="#94a3b8" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+                <input type="text" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
                   style={{ width: '100%', padding: '10px 12px 10px 38px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#1e293b', background: '#fff' }}
                   placeholder="admin@hrms.gov.in" />
               </div>

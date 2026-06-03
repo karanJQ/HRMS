@@ -38,11 +38,12 @@ export default function Layout({ title, children, theme, bg }) {
         />
       )}
       <div 
-        className="main-content flex-1 transition-all duration-300 w-full"
+        className="main-content transition-all duration-300"
         style={{
           background: bg || (isLight ? '#FEFEFA' : 'var(--bg-gradient)'),
           minHeight: '100vh',
           marginLeft: isMobile ? '0' : (collapsed ? '80px' : '280px'),
+          width: isMobile ? '100%' : (collapsed ? 'calc(100% - 80px)' : 'calc(100% - 280px)'),
         }}
       >
         <Header title={title} theme={theme} bg={bg} onToggleSidebar={() => setCollapsed(!collapsed)} collapsed={collapsed} />
