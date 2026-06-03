@@ -5,10 +5,10 @@ import Badge from '../components/common/Badge';
 import Loader from '../components/common/Loader';
 import {
   Users, IndianRupee, Calendar, AlertTriangle, UserPlus, TrendingUp,
-  Star, Fingerprint, Gift, Briefcase, Sun, Cake
+  Star, Fingerprint, Gift, Briefcase, Sun, Cake, Bell, Trash2
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { reportsAPI, leaveAPI, onboardingAPI, attendanceAPI, empAPI } from '../api/endpoints';
+import { reportsAPI, leaveAPI, onboardingAPI, attendanceAPI, empAPI, announcementAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import PunchModal from '../components/PunchModal';
 
@@ -31,6 +31,10 @@ export default function Dashboard() {
   const [msg, setMsg] = useState('');
   const [punchLoading, setPunchLoading] = useState(false);
   const [showPunchModal, setShowPunchModal] = useState(false);
+  const [announcements, setAnnouncements] = useState([]);
+  const [showAnnModal, setShowAnnModal] = useState(false);
+  const [annForm, setAnnForm] = useState({ title: '', type: 'General', content: '', sendMail: false });
+  const [annSubmitting, setAnnSubmitting] = useState(false);
 
   useEffect(() => {
     const currentMonth = new Date().getMonth() + 1;
@@ -39,13 +43,14 @@ export default function Dashboard() {
     Promise.all([
       reportsAPI.dashboard().catch(() => ({ data: { data: null } })),
       reportsAPI.headcount().catch(() => null),
-      leaveAPI.listApplications({ status: 'Pending' }).catch(() => ({ data: { data: [] } })),
+      leaveAPI.listApplications(user?.role === 'employee' ? {} : { status: 'Pending' }).catch(() => ({ data: { data: [] } })),
       onboardingAPI.list().catch(() => ({ data: { data: [] } })),
       empAPI.birthdays({ month: currentMonth }).catch(() => ({ data: { data: [] } })),
       empAPI.anniversaries({ month: currentMonth }).catch(() => ({ data: { data: [] } })),
       attendanceAPI.getHolidays({ year: currentYear }).catch(() => ({ data: { data: [] } })),
       reportsAPI.probationAlerts().catch(() => ({ data: { data: [] } })),
-    ]).then(([s, h, l, o, b, a, hol, prob]) => {
+      announcementAPI.list().catch(() => ({ data: { data: [] } })),
+    ]).then(([s, h, l, o, b, a, hol, prob, ann]) => {
       setStats(s?.data?.data || null);
       setHeadcount(h?.data?.data || null);
       setLeaves((l?.data?.data || []).slice(0, 5));
@@ -55,6 +60,7 @@ export default function Dashboard() {
       setAnniversaries(a?.data?.data?.slice(0, 6) || []);
       setHolidays(hol?.data?.data?.slice(0, 6) || []);
       setProbationAlerts(prob?.data?.data || []);
+      setAnnouncements(ann?.data?.data || []);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -98,6 +104,37 @@ export default function Dashboard() {
     }
   };
 
+  const submitAnnouncement = async () => {
+    if (!annForm.title || !annForm.content) return setMsg('Error: Title and content are required');
+    try {
+      setAnnSubmitting(true);
+      await announcementAPI.create(annForm);
+      setMsg('Announcement created successfully!');
+      setShowAnnModal(false);
+      setAnnForm({ title: '', type: 'General', content: '', sendMail: false });
+      const res = await announcementAPI.list();
+      setAnnouncements(res.data?.data || []);
+    } catch (e) {
+      setMsg('Error: ' + (e.response?.data?.message || e.message));
+    } finally {
+      setAnnSubmitting(false);
+      setTimeout(() => setMsg(''), 5000);
+    }
+  };
+
+  const deleteAnnouncement = async (id) => {
+    if (!window.confirm('Delete this announcement?')) return;
+    try {
+      await announcementAPI.delete(id);
+      setMsg('Announcement deleted.');
+      setAnnouncements(prev => prev.filter(a => a.id !== id));
+    } catch (e) {
+      setMsg('Error: ' + (e.response?.data?.message || e.message));
+    } finally {
+      setTimeout(() => setMsg(''), 5000);
+    }
+  };
+
   if (loading) return <Layout title="Dashboard" theme="light" bg="#F8F8FF"><Loader /></Layout>;
 
   const deptData = headcount?.by_dept?.slice(0, 6) || [];
@@ -115,16 +152,64 @@ export default function Dashboard() {
       )}
 
       {/* Top Stats */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <StatsCard title="Total Employees" value={stats?.total_employees || 0} icon={Users} color="#68aae8" sub={`${stats?.active_employees || 0} Active`} theme="light" delay={0} />
         <StatsCard title="Monthly Payroll" value={`₹${((stats?.monthly_payroll || 0) / 100000).toFixed(1)}L`} icon={IndianRupee} color="#10b981" sub="Current month" theme="light" delay={60} />
         <StatsCard title="Pending Leaves" value={stats?.pending_leaves || 0} icon={Calendar} color="#f59e0b" sub="Awaiting approval" theme="light" delay={120} />
         <StatsCard title="Open Grievances" value={stats?.open_grievances || 0} icon={AlertTriangle} color="#ef4444" sub="Needs attention" theme="light" delay={180} />
         <StatsCard title="This Month" value={`${birthdays.length + anniversaries.length}`} icon={Star} color="#ec4899" sub="Celebrations" theme="light" delay={240} />
       </div>
+      {/* Announcements */}
+      <div className="mb-6 p-4 rounded-xl transition-all duration-300 animate-slide-up"
+        style={{
+          background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
+          boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Bell size={20} className="text-blue-500" />
+            <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Announcements</h3>
+          </div>
+          {['hr_manager', 'super_admin', 'hr_staff'].includes(user?.role) && (
+            <button onClick={() => setShowAnnModal(true)} className="btn btn-primary text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all">
+              + Add Announcement
+            </button>
+          )}
+        </div>
+        {announcements.length === 0 ? (
+          <p className="text-slate-400 text-sm py-4">No recent announcements.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {announcements.slice(0, 3).map(a => (
+              <div key={a.id} className="p-3 rounded-xl border border-slate-100 flex flex-col justify-between" style={{ background: 'rgba(22, 38, 96, 0.02)' }}>
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      a.type === 'Important' ? 'bg-red-100 text-red-600' :
+                      a.type === 'Event' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'
+                    }`}>{a.type}</span>
+                    {['hr_manager', 'super_admin', 'hr_staff'].includes(user?.role) && (
+                      <button onClick={() => deleteAnnouncement(a.id)} className="text-slate-400 hover:text-red-500">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <h4 className="font-bold text-sm mb-1" style={{ color: '#162660' }}>{a.title}</h4>
+                  <p className="text-xs text-slate-600 line-clamp-2">{a.content}</p>
+                </div>
+                <div className="mt-3 text-[10px] text-slate-400 flex justify-between">
+                  <span>{a.creator_name}</span>
+                  <span>{new Date(a.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Quick Actions + Birthdays + Anniversaries */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         {/* Quick Punch Card */}
         <div className="flex flex-col justify-between p-4 hover-scale transition-all duration-300"
           style={{
@@ -223,8 +308,9 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        <div className="flex flex-col p-6 hover-card animate-slide-up"
+      <div className={`grid ${user?.role !== 'employee' ? 'grid-cols-2' : 'grid-cols-1'} gap-6 mb-6`}>
+        {user?.role !== 'employee' && (
+          <div className="flex flex-col p-6 hover-card animate-slide-up"
           style={{
             background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
             borderRadius: '16px', boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
@@ -249,6 +335,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           ) : <p className="text-slate-400 text-sm text-center py-16">No data</p>}
         </div>
+        )}
 
         {/* Holidays Card */}
         <div className="flex flex-col p-6 hover-card animate-slide-up"
@@ -293,7 +380,8 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom Row: Pending Leaves + Onboarding */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      {user?.role !== 'employee' && (
+        <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="flex flex-col p-6 hover-card animate-slide-up"
           style={{
             background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
@@ -302,21 +390,21 @@ export default function Dashboard() {
         >
           <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Recent Pending Leaves</h3>
           {leaves.length === 0 ? <p className="text-slate-400 text-sm text-center py-8">No pending leaves</p> :
-            <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflow: 'hidden' }}>
+            <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px' }}>
               <table>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
                     {['Employee', 'Type', 'Days', 'Status'].map(h => (
-                      <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>{h}</th>
+                      <th key={h} className="whitespace-nowrap px-4 py-3" style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>{leaves.map(l => (
-                  <tr key={l.id} style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.05)' }}>
-                    <td style={{ color: '#162660' }}>{l.emp_name}</td>
-                    <td><span className="px-2 py-1 rounded text-xs font-medium" style={{ background: 'rgba(22, 38, 96, 0.05)', color: '#162660' }}>{l.leave_type}</span></td>
-                    <td style={{ color: '#162660' }}>{l.days}</td>
-                    <td><Badge text={l.status} /></td>
+                  <tr key={l.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.05)' }}>
+                    <td className="whitespace-nowrap px-4 py-3 font-medium" style={{ color: '#162660' }}>{l.emp_name}</td>
+                    <td className="whitespace-nowrap px-4 py-3"><span className="px-2 py-1 rounded text-xs font-bold" style={{ background: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>{l.leave_type}</span></td>
+                    <td className="whitespace-nowrap px-4 py-3" style={{ color: '#162660' }}>{l.days}</td>
+                    <td className="whitespace-nowrap px-4 py-3"><Badge text={l.status} /></td>
                   </tr>
                 ))}</tbody>
               </table>
@@ -344,6 +432,42 @@ export default function Dashboard() {
             </div>}
         </div>
       </div>
+      )}
+
+      {/* My Leave Status (Employee) */}
+      {user?.role === 'employee' && (
+        <div className="grid grid-cols-1 gap-6 mb-6">
+          <div className="flex flex-col p-6 hover-card animate-slide-up"
+            style={{
+              background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
+              borderRadius: '16px', boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
+            }}
+          >
+            <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>My Recent Leaves</h3>
+            {leaves.length === 0 ? <p className="text-slate-400 text-sm text-center py-8">No recent leaves</p> :
+              <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px' }}>
+                <table>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
+                      {['Type', 'From', 'To', 'Days', 'Status'].map(h => (
+                        <th key={h} className="whitespace-nowrap px-4 py-3" style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>{leaves.map(l => (
+                    <tr key={l.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.05)' }}>
+                      <td className="whitespace-nowrap px-4 py-3"><span className="px-2.5 py-1 rounded-md text-xs font-bold" style={{ background: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>{l.leave_type}</span></td>
+                      <td className="whitespace-nowrap px-4 py-3 font-medium" style={{ color: '#162660' }}>{new Date(l.from_date).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'})}</td>
+                      <td className="whitespace-nowrap px-4 py-3 font-medium" style={{ color: '#162660' }}>{new Date(l.to_date).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'})}</td>
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-center" style={{ color: '#162660' }}>{l.days}</td>
+                      <td className="whitespace-nowrap px-4 py-3"><Badge text={l.status} /></td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>}
+          </div>
+        </div>
+      )}
 
       {/* Probation Alerts Row */}
       {probationAlerts.length > 0 && (
@@ -428,6 +552,50 @@ export default function Dashboard() {
                 className={`px-4 py-2 text-sm font-semibold text-white rounded-lg ${!probationNotes.trim() ? 'bg-slate-400 cursor-not-allowed' : probationModal.action === 'reject' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
               >
                 Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Announcement Creation Modal */}
+      {showAnnModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-slide-up">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-bold text-lg text-slate-800">Create Announcement</h3>
+              <button onClick={() => setShowAnnModal(false)} className="text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Title</label>
+                <input type="text" className="input w-full" value={annForm.title} onChange={e => setAnnForm({ ...annForm, title: e.target.value })} placeholder="e.g., Happy Fun Friday!" />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Type</label>
+                <select className="input w-full" value={annForm.type} onChange={e => setAnnForm({ ...annForm, type: e.target.value })}>
+                  <option value="General">General</option>
+                  <option value="Important">Important</option>
+                  <option value="Event">Event</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Content</label>
+                <textarea className="input w-full h-24 resize-none" value={annForm.content} onChange={e => setAnnForm({ ...annForm, content: e.target.value })} placeholder="Write your announcement..." />
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <input type="checkbox" id="sendMail" className="w-4 h-4 accent-blue-600" checked={annForm.sendMail} onChange={e => setAnnForm({ ...annForm, sendMail: e.target.checked })} />
+                <label htmlFor="sendMail" className="text-sm font-medium text-slate-700 cursor-pointer">Send email to all employees</label>
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 flex justify-end gap-3 border-t">
+              <button onClick={() => setShowAnnModal(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg">Cancel</button>
+              <button 
+                onClick={submitAnnouncement} 
+                disabled={annSubmitting || !annForm.title || !annForm.content}
+                className={`px-4 py-2 text-sm font-semibold text-white rounded-lg ${annSubmitting || !annForm.title || !annForm.content ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+              >
+                {annSubmitting ? 'Posting...' : 'Post Announcement'}
               </button>
             </div>
           </div>

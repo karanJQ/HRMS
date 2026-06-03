@@ -232,8 +232,9 @@ export default function Payroll() {
   const fetchAnnualSummary = async () => {
     setAnnualLoading(true);
     try {
-      const res = await api.get(`/payroll?year=${year}&month=all`);
+      const res = await payrollAPI.list({ year, month: 'all' });
       setAnnualSummary(res.data.data);
+      setShowAnnualModal(true);
     } catch (err) {
       setMsg(`Error fetching summary: ${err.response?.data?.message || err.message}`);
     } finally {
@@ -797,7 +798,7 @@ export default function Payroll() {
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         <StatsCard title="Gross Payroll" value={`₹${((summary.gross || 0) / 100000).toFixed(2)}L`} icon={IndianRupee} color="#3b82f6" theme="light" delay={0} />
         <StatsCard title="Net Payroll" value={`₹${((summary.net || 0) / 100000).toFixed(2)}L`} icon={IndianRupee} color="#22c55e" theme="light" delay={60} />
         <StatsCard title="Total PF" value={`₹${Math.round(summary.pf || 0).toLocaleString()}`} icon={IndianRupee} color="#8b5cf6" theme="light" delay={120} />
@@ -852,8 +853,8 @@ export default function Payroll() {
               <table>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
-                    {['Emp ID', 'Name', 'Dept', 'Basic', 'DA', 'HRA', 'TA', 'Gross', 'PF', 'TDS', 'Net Pay', 'Status', 'Actions'].map(h => (
-                      <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
+                    {['Emp ID', 'Employee', 'Basic', 'DA', 'HRA', 'TA', 'Gross', 'PF', 'TDS', 'Net Pay', 'Status', 'Actions'].map(h => (
+                      <th key={h} className="whitespace-nowrap px-4 py-3" style={{ color: '#162660', fontWeight: 600, fontSize: '12px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -872,22 +873,21 @@ export default function Payroll() {
                       e.currentTarget.style.background = 'transparent';
                     }}
                   >
-                    <td className="font-mono text-xs font-semibold" style={{ color: '#162660' }}>{p.emp_id}</td>
-                    <td>
-                      <div className="font-medium text-sm" style={{ color: '#162660' }}>{p.emp_name}</div>
-                      <div className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.4)' }}>{p.dept_name}</div>
+                    <td className="font-mono text-xs font-semibold px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>{p.emp_id}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="font-semibold text-sm" style={{ color: '#162660' }}>{p.emp_name}</div>
+                      <div className="text-xs font-medium mt-0.5" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{p.dept_name || '—'}</div>
                     </td>
-                    <td className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{p.dept_name}</td>
-                    <td style={{ color: '#162660' }}>₹{parseFloat(p.basic_pay).toLocaleString()}</td>
-                    <td style={{ color: '#162660' }}>₹{parseFloat(p.da_amount).toLocaleString()}</td>
-                    <td style={{ color: '#162660' }}>₹{parseFloat(p.hra_amount).toLocaleString()}</td>
-                    <td style={{ color: '#162660' }}>₹{parseFloat(p.ta_amount).toLocaleString()}</td>
-                    <td className="font-semibold" style={{ color: '#162660' }}>₹{parseFloat(p.gross_pay).toLocaleString()}</td>
-                    <td className="text-red-600 font-medium">-₹{parseFloat(p.pf_employee).toLocaleString()}</td>
-                    <td className="text-red-600 font-medium">-₹{parseFloat(p.tds).toLocaleString()}</td>
-                    <td className="font-bold text-emerald-600">₹{parseFloat(p.net_pay).toLocaleString()}</td>
-                    <td><Badge text={p.status} /></td>
-                    <td>
+                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{parseFloat(p.basic_pay).toLocaleString()}</td>
+                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{parseFloat(p.da_amount).toLocaleString()}</td>
+                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{parseFloat(p.hra_amount).toLocaleString()}</td>
+                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{parseFloat(p.ta_amount).toLocaleString()}</td>
+                    <td className="font-bold px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{parseFloat(p.gross_pay).toLocaleString()}</td>
+                    <td className="text-red-600 font-semibold px-4 py-3 whitespace-nowrap">-₹{parseFloat(p.pf_employee).toLocaleString()}</td>
+                    <td className="text-red-600 font-semibold px-4 py-3 whitespace-nowrap">-₹{parseFloat(p.tds).toLocaleString()}</td>
+                    <td className="font-bold text-emerald-600 px-4 py-3 whitespace-nowrap">₹{parseFloat(p.net_pay).toLocaleString()}</td>
+                    <td className="px-4 py-3 whitespace-nowrap"><Badge text={p.status} /></td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex gap-1.5 justify-center">
                         <button
                           className="btn font-semibold transition-all duration-300"
@@ -984,11 +984,11 @@ export default function Payroll() {
                 ))}</tbody>
                 <tfoot>
                   <tr style={{ background: 'rgba(22, 38, 96, 0.04)', borderTop: '2px solid rgba(22, 38, 96, 0.15)' }}>
-                    <td colSpan={7} className="font-bold px-4 py-3 text-sm" style={{ color: '#162660' }}>TOTALS</td>
-                    <td className="font-bold px-4 py-3" style={{ color: '#162660' }}>₹{Math.round(summary.gross || 0).toLocaleString()}</td>
-                    <td className="font-bold text-red-600 px-4 py-3">-₹{Math.round(summary.pf || 0).toLocaleString()}</td>
-                    <td className="font-bold text-red-600 px-4 py-3">-₹{Math.round(summary.tds || 0).toLocaleString()}</td>
-                    <td className="font-bold text-emerald-600 px-4 py-3">₹{Math.round(summary.net || 0).toLocaleString()}</td>
+                    <td colSpan={6} className="font-bold px-4 py-3 text-sm pr-6 text-right" style={{ color: '#162660' }}>TOTALS</td>
+                    <td className="font-bold px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{Math.round(summary.gross || 0).toLocaleString()}</td>
+                    <td className="font-bold text-red-600 px-4 py-3 whitespace-nowrap">-₹{Math.round(summary.pf || 0).toLocaleString()}</td>
+                    <td className="font-bold text-red-600 px-4 py-3 whitespace-nowrap">-₹{Math.round(summary.tds || 0).toLocaleString()}</td>
+                    <td className="font-bold text-emerald-600 px-4 py-3 whitespace-nowrap">₹{Math.round(summary.net || 0).toLocaleString()}</td>
                     <td colSpan={2}></td>
                   </tr>
                 </tfoot>

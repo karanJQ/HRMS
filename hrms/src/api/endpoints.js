@@ -191,3 +191,9 @@ export const kpiAPI = {
   aiInsights:       (id)         => API.get(`/kpi/reports/${id}/ai-insights`),
 };
 
+// Announcements
+export const announcementAPI = {
+  list: () => API.get('/announcements'),
+  create: (data) => API.post('/announcements', data),
+  delete: (id) => API.delete(`/announcements/${id}`),
+};

@@ -103,7 +103,7 @@ export default function Header({ title, theme, bg, collapsed, onToggleSidebar })
           <Menu size={20} />
         </button>
         <h1 
-          className="text-3xl font-bold text-glow transition-all duration-300 m-0 leading-none"
+          className="text-xl sm:text-2xl md:text-3xl font-bold text-glow transition-all duration-300 m-0 leading-none truncate max-w-[180px] sm:max-w-[300px] md:max-w-none"
           style={{
             color: isLight ? '#162660' : '#fff',
             textShadow: isLight ? '0 0 20px rgba(22, 38, 96, 0.1)' : '0 0 20px rgba(129, 140, 248, 0.5)'

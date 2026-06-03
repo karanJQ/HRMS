@@ -30,7 +30,7 @@ const allNav = [
   { label:'User Management', icon:Shield, path:'/users', roles:['super_admin'] },
 ];
 
-export default function Sidebar({ collapsed }) {
+export default function Sidebar({ collapsed, isMobile, setCollapsed }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -85,7 +85,10 @@ export default function Sidebar({ collapsed }) {
   };
 
   return (
-    <div className="sidebar fixed top-0 left-0 flex flex-col shadow-[4px_0_24px_rgba(22,38,96,0.1)] transition-all duration-300" style={{ zIndex: 40, borderRight: '1px solid rgba(22, 38, 96, 0.1)', background: '#c8bcea', width: collapsed ? '80px' : '280px' }}>
+    <div 
+      className={`sidebar fixed top-0 left-0 h-full flex flex-col shadow-[4px_0_24px_rgba(22,38,96,0.1)] transition-all duration-300 ${isMobile && collapsed ? '-translate-x-full' : 'translate-x-0'}`} 
+      style={{ zIndex: 40, borderRight: '1px solid rgba(22, 38, 96, 0.1)', background: '#c8bcea', width: (!isMobile && collapsed) ? '80px' : '280px' }}
+    >
       
       {/* Header Info */}
       <div className="px-6 pt-7 pb-5 flex-shrink-0">
@@ -93,7 +96,7 @@ export default function Sidebar({ collapsed }) {
           <div className="w-8 h-8 rounded-xl bg-[#162660] flex items-center justify-center shadow-[0_4px_12px_rgba(22,38,96,0.2)] flex-shrink-0">
             <TrendingUp size={16} color="#fff" />
           </div>
-          {!collapsed && (
+          {(!isMobile && collapsed) ? null : (
             <div>
               <p className="font-extrabold text-base leading-tight tracking-tight" style={{ color: '#162660' }}>JadeQuest HRMS</p>
             </div>
@@ -102,7 +105,7 @@ export default function Sidebar({ collapsed }) {
       </div>
 
       {/* Search Input Box */}
-      {!collapsed && (
+      {(!isMobile && collapsed) ? null : (
         <div className="px-4 mb-4 flex-shrink-0">
           <div className="relative">
             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'rgba(22, 38, 96, 0.6)' }} />
@@ -133,9 +136,9 @@ export default function Sidebar({ collapsed }) {
             }}
           >
             <item.icon size={16} className="flex-shrink-0" />
-            {!collapsed && <span>{item.label}</span>}
-            {!collapsed && getBadge(item.path)}
-            {!collapsed && hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
+            {(!isMobile && collapsed) ? null : <span>{item.label}</span>}
+            {(!isMobile && collapsed) ? null : getBadge(item.path)}
+            {(!isMobile && collapsed) ? null : hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
           </div>
         ))}
 
@@ -155,9 +158,9 @@ export default function Sidebar({ collapsed }) {
                 }}
               >
                 <item.icon size={16} className="flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-                {!collapsed && getBadge(item.path)}
-                {!collapsed && hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
+                {(!isMobile && collapsed) ? null : <span>{item.label}</span>}
+                {(!isMobile && collapsed) ? null : getBadge(item.path)}
+                {(!isMobile && collapsed) ? null : hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
               </div>
             ))}
           </>
@@ -179,9 +182,9 @@ export default function Sidebar({ collapsed }) {
                 }}
               >
                 <item.icon size={16} className="flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-                {!collapsed && getBadge(item.path)}
-                {!collapsed && hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
+                {(!isMobile && collapsed) ? null : <span>{item.label}</span>}
+                {(!isMobile && collapsed) ? null : getBadge(item.path)}
+                {(!isMobile && collapsed) ? null : hasDropdown(item.path) && <ChevronDown size={12} className="ml-auto" />}
               </div>
             ))}
           </>
@@ -196,14 +199,14 @@ export default function Sidebar({ collapsed }) {
             {initials}
           </div>
           {/* Name & Role details */}
-          {!collapsed && (
+          {(!isMobile && collapsed) ? null : (
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold truncate" style={{ color: '#162660' }}>{user?.first_name || user?.username}</p>
               <p className="text-[10px] truncate mt-0.5" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{roleLabel[user?.role] || user?.role}</p>
             </div>
           )}
           {/* Sign out action option */}
-          {!collapsed && (
+          {(!isMobile && collapsed) ? null : (
             <button 
               onClick={logout} 
               className="p-1.5 hover:text-red-600 hover:bg-black/5 rounded-lg transition-colors cursor-pointer" 
