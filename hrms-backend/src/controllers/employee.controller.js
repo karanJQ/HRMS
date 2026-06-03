@@ -122,6 +122,25 @@ exports.update = async (req, res) => {
   const b = req.body;
   const { empId } = req.params;
   try {
+    const empRes = await query('SELECT doj, probation_days, probation_status, probation_end_date FROM employees WHERE emp_id = $1', [empId]);
+    if (!empRes.rows.length) return error(res, 'Employee not found.', 404);
+    
+    const curr = empRes.rows[0];
+    const newDoj = b.doj || curr.doj;
+    const newProbDays = b.probation_days !== undefined ? parseInt(b.probation_days) : curr.probation_days;
+    
+    let probEndDate = b.probation_end_date || curr.probation_end_date;
+    let probStatus = b.probation_status || curr.probation_status;
+    
+    if (newProbDays > 0 && newDoj) {
+      const d = new Date(newDoj);
+      d.setDate(d.getDate() + newProbDays);
+      probEndDate = d.toISOString().split('T')[0];
+    } else if (newProbDays === 0) {
+      probEndDate = null;
+      probStatus = 'Accepted';
+    }
+
     const result = await query(
       `UPDATE employees SET
         first_name=COALESCE($1,first_name), last_name=COALESCE($2,last_name),
@@ -148,9 +167,9 @@ exports.update = async (req, res) => {
         emergency_contact_name=COALESCE($41,emergency_contact_name),
         emergency_contact_mobile=COALESCE($42,emergency_contact_mobile),
         status=COALESCE($43,status), ctc=COALESCE($46,ctc),
-        probation_days=COALESCE($47,probation_days),
-        probation_end_date=COALESCE(NULLIF($48,'')::date,probation_end_date),
-        probation_status=COALESCE($49,probation_status),
+        probation_days=$47,
+        probation_end_date=NULLIF($48,'')::date,
+        probation_status=$49,
         updated_by=$44, updated_at=NOW()
        WHERE emp_id=$45 RETURNING *`,
       [b.first_name, b.last_name, b.father_name, b.mother_name, b.gender, b.dob,
@@ -164,7 +183,7 @@ exports.update = async (req, res) => {
        b.pf_number, b.nps_id, b.nominee_name, b.nominee_relation, b.nominee_dob,
        b.emergency_contact_name, b.emergency_contact_mobile,
        b.status, req.user.id, empId, b.ctc,
-       b.probation_days, b.probation_end_date, b.probation_status]
+       newProbDays, probEndDate, probStatus]
     );
     if (!result.rows.length) return error(res, 'Employee not found.', 404);
     return success(res, result.rows[0], 'Updated successfully');

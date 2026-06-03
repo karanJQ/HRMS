@@ -1,5 +1,10 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+
+// Parse PostgreSQL DATE as string to prevent timezone offset bugs
+types.setTypeParser(1082, function(stringValue) {
+  return stringValue;
+});
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',

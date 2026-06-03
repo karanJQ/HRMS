@@ -75,16 +75,64 @@ exports.leaveReport = async (req, res) => {
   } catch (err) { return error(res, err.message); }
 };
 
-exports.retirementReport = async (req, res) => {
+exports.attendanceInsights = async (req, res) => {
   try {
-    const upcoming1yr = await query(
-      `SELECT rt.*, e.first_name||' '||e.last_name as emp_name, d.name as dept_name, e.basic_pay
-       FROM retirement_tracking rt JOIN employees e ON e.emp_id=rt.emp_id
-       JOIN departments d ON d.id=e.dept_id
-       WHERE rt.retirement_date BETWEEN NOW() AND NOW() + INTERVAL '1 year'
-       AND e.status='Active' ORDER BY rt.retirement_date`
-    );
-    return success(res, { upcoming_1yr: upcoming1yr.rows });
+    const avgHours = await query(`
+      SELECT d.name as dept, AVG(a.working_hours) as avg_hours
+      FROM attendance_logs a
+      JOIN employees e ON e.emp_id = a.emp_id
+      JOIN departments d ON d.id = e.dept_id
+      WHERE EXTRACT(MONTH FROM a.date) = EXTRACT(MONTH FROM CURRENT_DATE)
+      AND EXTRACT(YEAR FROM a.date) = EXTRACT(YEAR FROM CURRENT_DATE)
+      AND a.working_hours > 0
+      GROUP BY d.name
+      ORDER BY avg_hours DESC
+    `);
+    
+    const lateTrends = await query(`
+      SELECT d.name as dept, COUNT(*) as late_count
+      FROM attendance_logs a
+      JOIN employees e ON e.emp_id = a.emp_id
+      JOIN departments d ON d.id = e.dept_id
+      WHERE EXTRACT(MONTH FROM a.date) = EXTRACT(MONTH FROM CURRENT_DATE)
+      AND EXTRACT(YEAR FROM a.date) = EXTRACT(YEAR FROM CURRENT_DATE)
+      AND a.status = 'Half Day'
+      GROUP BY d.name
+      ORDER BY late_count DESC
+    `);
+    
+    return success(res, { avg_hours: avgHours.rows, late_trends: lateTrends.rows });
+  } catch (err) { return error(res, err.message); }
+};
+
+exports.demographics = async (req, res) => {
+  try {
+    const genderRatio = await query(`
+      SELECT gender, COUNT(*) as count 
+      FROM employees 
+      WHERE status = 'Active' 
+      GROUP BY gender
+    `);
+    
+    const ageBrackets = await query(`
+      SELECT 
+        CASE 
+          WHEN age_years < 30 THEN '20-29'
+          WHEN age_years < 40 THEN '30-39'
+          WHEN age_years < 50 THEN '40-49'
+          ELSE '50+' 
+        END as age_group,
+        COUNT(*) as count
+      FROM (
+        SELECT EXTRACT(YEAR FROM AGE(CURRENT_DATE, dob)) as age_years 
+        FROM employees 
+        WHERE status = 'Active' AND dob IS NOT NULL
+      ) as ages
+      GROUP BY age_group
+      ORDER BY age_group
+    `);
+    
+    return success(res, { gender: genderRatio.rows, age: ageBrackets.rows });
   } catch (err) { return error(res, err.message); }
 };
 

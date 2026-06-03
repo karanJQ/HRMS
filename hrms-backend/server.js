@@ -30,7 +30,7 @@ app.use(`${prefix}/promotions`,  require('./src/routes/promotion.routes'));
 app.use(`${prefix}/apar`,        require('./src/routes/apar.routes'));
 app.use(`${prefix}/service-book`,require('./src/routes/servicebook.routes'));
 app.use(`${prefix}/training`,    require('./src/routes/training.routes'));
-app.use(`${prefix}/retirement`,  require('./src/routes/retirement.routes'));
+
 app.use(`${prefix}/grievances`,  require('./src/routes/grievance.routes'));
 app.use(`${prefix}/onboarding`,  require('./src/routes/onboarding.routes'));
 app.use(`${prefix}/reports`,     require('./src/routes/reports.routes'));
