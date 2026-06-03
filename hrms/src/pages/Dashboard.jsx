@@ -40,15 +40,17 @@ export default function Dashboard() {
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
 
+    const isAdmin = user?.role !== 'employee';
+
     Promise.all([
       reportsAPI.dashboard().catch(() => ({ data: { data: null } })),
-      reportsAPI.headcount().catch(() => null),
-      leaveAPI.listApplications(user?.role === 'employee' ? {} : { status: 'Pending' }).catch(() => ({ data: { data: [] } })),
-      onboardingAPI.list().catch(() => ({ data: { data: [] } })),
+      isAdmin ? reportsAPI.headcount().catch(() => null) : Promise.resolve({ data: { data: null } }),
+      leaveAPI.listApplications(isAdmin ? { status: 'Pending' } : {}).catch(() => ({ data: { data: [] } })),
+      isAdmin ? onboardingAPI.list().catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
       empAPI.birthdays({ month: currentMonth }).catch(() => ({ data: { data: [] } })),
       empAPI.anniversaries({ month: currentMonth }).catch(() => ({ data: { data: [] } })),
       attendanceAPI.getHolidays({ year: currentYear }).catch(() => ({ data: { data: [] } })),
-      reportsAPI.probationAlerts({ recentOnly: 'true' }).catch(() => ({ data: { data: [] } })),
+      isAdmin ? reportsAPI.probationAlerts({ recentOnly: 'true' }).catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
       announcementAPI.list().catch(() => ({ data: { data: [] } })),
     ]).then(([s, h, l, o, b, a, hol, prob, ann]) => {
       setStats(s?.data?.data || null);
@@ -152,62 +154,13 @@ export default function Dashboard() {
       )}
 
       {/* Top Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <StatsCard title="Total Employees" value={stats?.total_employees || 0} icon={Users} color="#68aae8" sub={`${stats?.active_employees || 0} Active`} theme="light" delay={0} />
         <StatsCard title="Monthly Payroll" value={`₹${((stats?.monthly_payroll || 0) / 100000).toFixed(1)}L`} icon={IndianRupee} color="#10b981" sub="Current month" theme="light" delay={60} />
         <StatsCard title="Pending Leaves" value={stats?.pending_leaves || 0} icon={Calendar} color="#f59e0b" sub="Awaiting approval" theme="light" delay={120} />
         <StatsCard title="Open Grievances" value={stats?.open_grievances || 0} icon={AlertTriangle} color="#ef4444" sub="Needs attention" theme="light" delay={180} />
         <StatsCard title="This Month" value={`${birthdays.length + anniversaries.length}`} icon={Star} color="#ec4899" sub="Celebrations" theme="light" delay={240} />
       </div>
-      {/* Announcements */}
-      <div className="mb-6 p-4 rounded-xl transition-all duration-300 animate-slide-up"
-        style={{
-          background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
-          boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
-        }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Bell size={20} className="text-blue-500" />
-            <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Announcements</h3>
-          </div>
-          {['hr_manager', 'super_admin', 'hr_staff'].includes(user?.role) && (
-            <button onClick={() => setShowAnnModal(true)} className="btn btn-primary text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all">
-              + Add Announcement
-            </button>
-          )}
-        </div>
-        {announcements.length === 0 ? (
-          <p className="text-slate-400 text-sm py-4">No recent announcements.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {announcements.slice(0, 3).map(a => (
-              <div key={a.id} className="p-3 rounded-xl border border-slate-100 flex flex-col justify-between" style={{ background: 'rgba(22, 38, 96, 0.02)' }}>
-                <div>
-                  <div className="flex justify-between items-start mb-2">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                      a.type === 'Important' ? 'bg-red-100 text-red-600' :
-                      a.type === 'Event' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'
-                    }`}>{a.type}</span>
-                    {['hr_manager', 'super_admin', 'hr_staff'].includes(user?.role) && (
-                      <button onClick={() => deleteAnnouncement(a.id)} className="text-slate-400 hover:text-red-500">
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-                  <h4 className="font-bold text-sm mb-1" style={{ color: '#162660' }}>{a.title}</h4>
-                  <p className="text-xs text-slate-600 line-clamp-2">{a.content}</p>
-                </div>
-                <div className="mt-3 text-[10px] text-slate-400 flex justify-between">
-                  <span>{a.creator_name}</span>
-                  <span>{new Date(a.created_at).toLocaleDateString()}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Quick Actions + Birthdays + Anniversaries */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         {/* Quick Punch Card */}
@@ -305,6 +258,55 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Announcements */}
+      <div className="mb-6 p-4 rounded-xl transition-all duration-300 animate-slide-up"
+        style={{
+          background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
+          boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Bell size={20} className="text-blue-500" />
+            <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Announcements</h3>
+          </div>
+          {['hr_manager', 'super_admin', 'hr_staff'].includes(user?.role) && (
+            <button onClick={() => setShowAnnModal(true)} className="btn btn-primary text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all">
+              + Add Announcement
+            </button>
+          )}
+        </div>
+        {announcements.length === 0 ? (
+          <p className="text-slate-400 text-sm py-4">No recent announcements.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {announcements.slice(0, 3).map(a => (
+              <div key={a.id} className="p-3 rounded-xl border border-slate-100 flex flex-col justify-between" style={{ background: 'rgba(22, 38, 96, 0.02)' }}>
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      a.type === 'Important' ? 'bg-red-100 text-red-600' :
+                      a.type === 'Event' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'
+                    }`}>{a.type}</span>
+                    {['hr_manager', 'super_admin', 'hr_staff'].includes(user?.role) && (
+                      <button onClick={() => deleteAnnouncement(a.id)} className="text-slate-400 hover:text-red-500">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <h4 className="font-bold text-sm mb-1" style={{ color: '#162660' }}>{a.title}</h4>
+                  <p className="text-xs text-slate-600 line-clamp-2">{a.content}</p>
+                </div>
+                <div className="mt-3 text-[10px] text-slate-400 flex justify-between">
+                  <span>{a.creator_name}</span>
+                  <span>{new Date(a.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Charts Row */}

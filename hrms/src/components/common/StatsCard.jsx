@@ -22,16 +22,16 @@ export default function StatsCard({ title, value, icon: Icon, color, sub, theme,
 
   return (
     <div 
-      className="relative flex flex-col justify-between p-5 transition-all duration-300 overflow-hidden"
+      className="relative flex flex-col justify-between p-4 sm:p-5 transition-all duration-300 overflow-hidden"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
         background: '#fff',
         border: `1px solid ${hovered ? color : 'rgba(22, 38, 96, 0.07)'}`,
-        borderRadius: '20px',
+        borderRadius: '16px',
         boxShadow: hovered ? '0 15px 35px rgba(22, 38, 96, 0.08)' : '0 10px 30px rgba(22, 38, 96, 0.04)',
         transform: hovered ? 'translateY(-4px)' : 'none',
-        minHeight: '135px',
+        minHeight: '110px',
         animation: 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
         animationDelay: `${delay}ms`,
         cursor: 'pointer'
@@ -70,38 +70,15 @@ export default function StatsCard({ title, value, icon: Icon, color, sub, theme,
       </div>
 
       {/* Bottom Details Row */}
-      <div className="mt-4 pr-3">
-        <p 
-          style={{ 
-            fontSize: '11px', 
-            color: 'rgba(22, 38, 96, 0.5)', 
-            fontWeight: '600', 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.5px' 
-          }}
-        >
+      <div className="mt-3 pr-3">
+        <p className="text-[10px] sm:text-[11px] font-semibold tracking-wide uppercase truncate" title={title} style={{ color: 'rgba(22, 38, 96, 0.5)' }}>
           {title}
         </p>
-        <h4 
-          style={{ 
-            fontSize: '24px', 
-            fontWeight: '800', 
-            color: '#162660', 
-            marginTop: '4px',
-            lineHeight: 1 
-          }}
-        >
+        <h4 className="text-xl sm:text-2xl font-extrabold mt-1 leading-none truncate" style={{ color: '#162660' }}>
           {value}
         </h4>
         {sub && (
-          <p 
-            style={{ 
-              fontSize: '11px', 
-              color: 'rgba(22, 38, 96, 0.45)', 
-              marginTop: '4px', 
-              fontWeight: '500' 
-            }}
-          >
+          <p className="text-[10px] sm:text-[11px] font-medium mt-1 truncate" title={sub} style={{ color: 'rgba(22, 38, 96, 0.45)' }}>
             {sub}
           </p>
         )}
