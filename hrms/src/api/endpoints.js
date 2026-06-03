@@ -132,7 +132,7 @@ export const reportsAPI = {
   payroll: (params) => API.get('/reports/payroll', { params }),
   leave: (params) => API.get('/reports/leave', { params }),
   retirement: () => API.get('/reports/retirement'),
-  probationAlerts: () => API.get('/reports/probation-alerts'),
+  probationAlerts: (params) => API.get('/reports/probation-alerts', { params }),
 };
 
 // Attendance & Biometrics

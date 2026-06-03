@@ -46,6 +46,14 @@ exports.getCalendar = async (req, res) => {
     const startDate = `${y}-${String(m).padStart(2,'0')}-01`;
     const endDate = `${y}-${String(m).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`;
 
+    const settingsRes = await query(`SELECT shift_start, shift_end FROM attendance_settings LIMIT 1`);
+    let expectedHours = 9;
+    if (settingsRes.rows.length > 0 && settingsRes.rows[0].shift_start && settingsRes.rows[0].shift_end) {
+      const [sh, sm] = settingsRes.rows[0].shift_start.split(':');
+      const [eh, em] = settingsRes.rows[0].shift_end.split(':');
+      expectedHours = (parseInt(eh)*60 + parseInt(em) - (parseInt(sh)*60 + parseInt(sm))) / 60.0;
+    }
+
     if (eId === 'all') {
       const recordsRes = await query(
         `SELECT to_char(d.date, 'YYYY-MM-DD') as date,
@@ -85,7 +93,8 @@ exports.getCalendar = async (req, res) => {
         let empStatus;
         if (row.punch_in) {
           if (!row.punch_out && dateStr < todayStr) empStatus = 'Miss Punch';
-          else if (row.working_hours !== null && parseFloat(row.working_hours) < 9) empStatus = 'Half Day';
+          else if (row.working_hours !== null && parseFloat(row.working_hours) < expectedHours) empStatus = 'Half Day';
+          else if (row.status === 'Half Day') empStatus = 'Half Day';
           else empStatus = 'Present';
         } else if (row.is_holiday) empStatus = 'Holiday';
         else if (isFuture) {
@@ -140,7 +149,9 @@ exports.getCalendar = async (req, res) => {
       if (row.punch_in) {
         if (!row.punch_out && dateStr < todayStr) {
           computedStatus = 'Miss Punch';
-        } else if (row.working_hours !== null && parseFloat(row.working_hours) < 9) {
+        } else if (row.working_hours !== null && parseFloat(row.working_hours) < expectedHours) {
+          computedStatus = 'Half Day';
+        } else if (row.status === 'Half Day') {
           computedStatus = 'Half Day';
         } else {
           computedStatus = 'Present';
@@ -293,7 +304,27 @@ exports.syncBiometrics = async (req, res) => {
           [outTime, inTime]
         );
         const workingHours = Math.max(0, parseFloat(hrs.rows[0].hours));
-        const outStatus = workingHours < 9 ? 'Half Day' : 'Present';
+        
+        const settings = await query(`SELECT * FROM attendance_settings LIMIT 1`);
+        const shift = settings.rows[0] || { shift_start: '09:00:00', shift_end: '18:00:00', grace_period_mins: 30 };
+        
+        let expectedHours = 9;
+        if (shift.shift_start && shift.shift_end) {
+          const [sh, sm] = shift.shift_start.split(':');
+          const [eh, em] = shift.shift_end.split(':');
+          expectedHours = (parseInt(eh)*60 + parseInt(em) - (parseInt(sh)*60 + parseInt(sm))) / 60.0;
+        }
+
+        const lateCheck = await query(
+          `SELECT $1::TIME > ($2::TIME + ($3 || ' minutes')::INTERVAL) as is_late`,
+          [inTime, shift.shift_start, shift.grace_period_mins]
+        );
+        const isLateBeyondGrace = lateCheck.rows[0].is_late;
+        
+        let outStatus = 'Present';
+        if (workingHours < expectedHours || isLateBeyondGrace) {
+          outStatus = 'Half Day';
+        }
 
         const result = await query(
           `UPDATE attendance_records SET punch_out = $1, working_hours = $2, status = $3, location = COALESCE($5, location), photo_url = COALESCE($6, photo_url), updated_at = NOW() WHERE id = $4 RETURNING *`,
@@ -318,7 +349,14 @@ exports.punch = async (req, res) => {
   const emp_id = req.user.emp_id;
   try {
     const settings = await query(`SELECT * FROM attendance_settings LIMIT 1`);
-    const shift = settings.rows[0] || { shift_start: '09:00:00', grace_period_mins: 30 };
+    const shift = settings.rows[0] || { shift_start: '09:00:00', shift_end: '18:00:00', grace_period_mins: 30 };
+
+    let expectedHours = 9;
+    if (shift.shift_start && shift.shift_end) {
+      const [sh, sm] = shift.shift_start.split(':');
+      const [eh, em] = shift.shift_end.split(':');
+      expectedHours = (parseInt(eh)*60 + parseInt(em) - (parseInt(sh)*60 + parseInt(sm))) / 60.0;
+    }
 
     const existing = await query(`SELECT * FROM attendance_records WHERE emp_id = $1 AND date = CURRENT_DATE`, [emp_id]);
 
@@ -339,7 +377,17 @@ exports.punch = async (req, res) => {
           [outTime, inTime]
         );
         const workingHours = Math.max(0, parseFloat(hrs.rows[0].hours));
-        const outStatus = workingHours < 9 ? 'Half Day' : 'Present';
+        
+        const lateCheck = await query(
+          `SELECT $1::TIME > ($2::TIME + ($3 || ' minutes')::INTERVAL) as is_late`,
+          [inTime, shift.shift_start, shift.grace_period_mins]
+        );
+        const isLateBeyondGrace = lateCheck.rows[0].is_late;
+        
+        let outStatus = 'Present';
+        if (workingHours < expectedHours || isLateBeyondGrace) {
+          outStatus = 'Half Day';
+        }
 
         const result = await query(
           `UPDATE attendance_records SET punch_out = $1, working_hours = $2, status = $3, updated_at = NOW() WHERE id = $4 RETURNING *`,
@@ -641,6 +689,14 @@ exports.exportCSV = async (req, res) => {
       eId = emp_id;
     }
 
+    const settingsRes = await query(`SELECT shift_start, shift_end FROM attendance_settings LIMIT 1`);
+    let expectedHours = 9;
+    if (settingsRes.rows.length > 0 && settingsRes.rows[0].shift_start && settingsRes.rows[0].shift_end) {
+      const [sh, sm] = settingsRes.rows[0].shift_start.split(':');
+      const [eh, em] = settingsRes.rows[0].shift_end.split(':');
+      expectedHours = (parseInt(eh)*60 + parseInt(em) - (parseInt(sh)*60 + parseInt(sm))) / 60.0;
+    }
+
     let recordsRes;
     if (eId) {
       recordsRes = await query(
@@ -713,7 +769,9 @@ exports.exportCSV = async (req, res) => {
 
       let code = '';
       if (row.punch_in) {
-        if (row.working_hours !== null && parseFloat(row.working_hours) < 9) {
+        if (row.working_hours !== null && parseFloat(row.working_hours) < expectedHours) {
+          code = 'HD';
+        } else if (row.status === 'Half Day') {
           code = 'HD';
         } else {
           code = 'P';

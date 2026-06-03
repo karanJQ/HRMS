@@ -13,6 +13,7 @@ const allNav = [
   { label:'Dashboard', icon:LayoutDashboard, path:'/dashboard', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'Onboarding', icon:UserPlus, path:'/onboarding', roles:['super_admin','hr_manager','hr_staff'] },
   { label:'Employee Master', icon:Users, path:'/employees', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
+  { label:'Probation Period', icon:Shield, path:'/probation', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
   { label:'My Profile', icon:Users, path:'/my-profile', roles:['employee'] },
   { label:'My Documents', icon:FileText, path:'/my-documents', roles:['employee', 'hr_staff', 'hr_manager', 'super_admin'] },
   { label:'Doc Verification', icon:FileCheck, path:'/document-verification', roles:['super_admin','hr_manager','hr_staff'] },
