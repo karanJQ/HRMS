@@ -81,7 +81,7 @@ exports.createUser = async (req, res) => {
     );
     return success(res, result.rows[0], 'User created successfully', 201);
   } catch (err) {
-    if (err.code === '23505') return error(res, 'Username or email already exists.', 409);
+    if (err.code === '23505') return error(res, 'Username, email, or Employee Profile is already linked to another user account.', 409);
     return error(res, err.message);
   }
 };
