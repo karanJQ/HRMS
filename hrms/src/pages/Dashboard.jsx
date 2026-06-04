@@ -290,7 +290,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="mt-3">
-            {hasEmpId ? (
+            {!['super_admin','hr_manager','hr_staff'].includes(user.role) ? (
               <button
                 className="w-full btn btn-success flex items-center justify-center gap-2 py-2 font-bold text-white rounded-lg transition-all"
                 onClick={() => setShowPunchModal(true)}

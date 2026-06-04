@@ -628,38 +628,42 @@ export default function Attendance() {
                   )}
 
                   <p className="text-xs font-semibold mb-3" style={{ color:'rgba(22,38,96,0.5)' }}>QUICK ACTIONS</p>
-                  <div className="space-y-2.5">
-                    {/* Miss Punch: show Regularize prominently first */}
-                    {selectedDayData.status === 'Miss Punch' && (
-                      <button className="w-full text-sm font-bold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                        style={{ background:'#ea580c', color:'#fff' }}
-                        onClick={()=>handleDateAction('regularize')}>
-                        <Activity size={16}/> Regularize This Day
-                      </button>
-                    )}
-                    <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                      style={{ background:'#162660', color:'#fff' }}
-                      onClick={()=>handleDateAction('leave')}><Calendar size={16}/> Apply Full Day Leave</button>
-                    
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
-                        style={{ background:'#8b5cf6', color:'#fff' }}
-                        onClick={()=>handleDateAction('first_half')}>First Half Leave</button>
-                      <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
-                        style={{ background:'#8b5cf6', color:'#fff' }}
-                        onClick={()=>handleDateAction('second_half')}>Second Half Leave</button>
+                  {!['super_admin','hr_manager','hr_staff'].includes(user.role) ? (
+                    <div className="space-y-2.5">
+                      {/* Miss Punch: show Regularize prominently first */}
+                      {selectedDayData.status === 'Miss Punch' && (
+                        <button className="w-full text-sm font-bold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                          style={{ background:'#ea580c', color:'#fff' }}
+                          onClick={()=>handleDateAction('regularize')}>
+                          <Activity size={16}/> Regularize This Day
+                        </button>
+                      )}
+                      <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                        style={{ background:'#162660', color:'#fff' }}
+                        onClick={()=>handleDateAction('leave')}><Calendar size={16}/> Apply Full Day Leave</button>
+                      
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
+                          style={{ background:'#8b5cf6', color:'#fff' }}
+                          onClick={()=>handleDateAction('first_half')}>First Half Leave</button>
+                        <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
+                          style={{ background:'#8b5cf6', color:'#fff' }}
+                          onClick={()=>handleDateAction('second_half')}>Second Half Leave</button>
+                      </div>
+
+                      <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                        style={{ background:'#f59e0b', color:'#fff' }}
+                        onClick={()=>handleDateAction('wfh')}><Home size={16}/> Apply Work From Home</button>
+
+                      {selectedDate <= todayStr && selectedDayData.status !== 'Miss Punch' && (
+                        <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md"
+                          style={{ background:'rgba(22,38,96,0.04)', color:'#162660', border:'1px solid rgba(22,38,96,0.12)' }}
+                          onClick={()=>handleDateAction('regularize')}>Request Regularization</button>
+                      )}
                     </div>
-
-                    <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                      style={{ background:'#f59e0b', color:'#fff' }}
-                      onClick={()=>handleDateAction('wfh')}><Home size={16}/> Apply Work From Home</button>
-
-                    {selectedDate <= todayStr && selectedDayData.status !== 'Miss Punch' && (
-                      <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md"
-                        style={{ background:'rgba(22,38,96,0.04)', color:'#162660', border:'1px solid rgba(22,38,96,0.12)' }}
-                        onClick={()=>handleDateAction('regularize')}>Request Regularization</button>
-                    )}
-                  </div>
+                  ) : (
+                    <p className="text-xs text-center py-4" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>Not available for admin accounts</p>
+                  )}
 
                 </>
               )})()}
@@ -683,9 +687,11 @@ export default function Attendance() {
                 </div>
               ))}
             </div>
-            <button className="font-semibold px-5 py-2.5 rounded-xl transition-all hover:shadow-lg w-full md:w-auto"
-              style={{ background:'#162660', color:'#FEFEFA', whiteSpace:'nowrap' }}
-              onClick={()=>setShowForm(true)}><Plus size={16} className="inline mr-1"/>Apply Leave</button>
+            {!['super_admin','hr_manager','hr_staff'].includes(user.role) && (
+              <button className="font-semibold px-5 py-2.5 rounded-xl transition-all hover:shadow-lg w-full md:w-auto"
+                style={{ background:'#162660', color:'#FEFEFA', whiteSpace:'nowrap' }}
+                onClick={()=>setShowForm(true)}><Plus size={16} className="inline mr-1"/>Apply Leave</button>
+            )}
           </div>
           <div className="rounded-xl overflow-hidden bg-white border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
             <div className="overflow-x-auto">
@@ -762,9 +768,11 @@ export default function Attendance() {
         <div className="animate-fadeIn rounded-xl bg-white p-6 border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold" style={{ color:'#162660' }}>Work From Home</h3>
-            <button className="font-semibold px-5 py-2.5 rounded-xl transition-all"
-              style={{ background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff' }}
-              onClick={()=>setShowWfhForm(true)}><Plus size={16} className="inline mr-1"/>Request WFH</button>
+            {!['super_admin','hr_manager','hr_staff'].includes(user.role) && (
+              <button className="font-semibold px-5 py-2.5 rounded-xl transition-all"
+                style={{ background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff' }}
+                onClick={()=>setShowWfhForm(true)}><Plus size={16} className="inline mr-1"/>Request WFH</button>
+            )}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -799,9 +807,11 @@ export default function Attendance() {
         <div className="animate-fadeIn rounded-xl bg-white p-6 border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold" style={{ color:'#162660' }}>Regularizations</h3>
-            <button className="font-semibold px-5 py-2.5 rounded-xl transition-all"
-              style={{ background:'#fff', color:'#162660', border:'1px solid rgba(22,38,96,0.15)' }}
-              onClick={()=>setShowRegForm(true)}><Plus size={16} className="inline mr-1"/>Request Regularization</button>
+            {!['super_admin','hr_manager','hr_staff'].includes(user.role) && (
+              <button className="font-semibold px-5 py-2.5 rounded-xl transition-all"
+                style={{ background:'#fff', color:'#162660', border:'1px solid rgba(22,38,96,0.15)' }}
+                onClick={()=>setShowRegForm(true)}><Plus size={16} className="inline mr-1"/>Request Regularization</button>
+            )}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -849,11 +859,13 @@ export default function Attendance() {
                 </select>
               )}
             </div>
-            <button className="font-semibold px-5 py-2.5 rounded-xl text-white transition-all"
-              style={{ background:'linear-gradient(135deg,#10b981,#059669)' }}
-              onClick={syncBiometrics} disabled={user?.role!=='employee' && !selectedEmpId}>
-              <Fingerprint size={15} className="inline mr-1.5"/>Simulate Punch
-            </button>
+            {!['super_admin','hr_manager','hr_staff'].includes(user.role) && (
+              <button className="text-xs font-semibold px-4 py-2 rounded-lg border transition-all hover:bg-slate-50"
+                style={{ color:'#162660', borderColor:'rgba(22,38,96,0.2)' }}
+                onClick={syncBiometrics}>
+                <Fingerprint size={15} className="inline mr-1.5"/>Simulate Punch
+              </button>
+            )}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

@@ -11,7 +11,6 @@ import MyProfile from './pages/MyProfile';
 import Payroll from './pages/Payroll';
 import Attendance from './pages/Attendance';
 import Transfer from './pages/Transfer';
-import Promotion from './pages/Promotion';
 import APAR from './pages/APAR';
 import ServiceBook from './pages/ServiceBook';
 import Training from './pages/Training';
@@ -52,7 +51,6 @@ export default function App() {
           <Route path="/payroll" element={<Prot comp={Payroll} />} />
           <Route path="/attendance" element={<Prot comp={Attendance} />} />
           <Route path="/transfer" element={<Prot comp={Transfer} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
-          <Route path="/promotion" element={<Prot comp={Promotion} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
           <Route path="/apar" element={<Prot comp={APAR} />} />
           <Route path="/servicebook" element={<Prot comp={ServiceBook} />} />
           <Route path="/training" element={<Prot comp={Training} />} />

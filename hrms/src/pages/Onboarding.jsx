@@ -268,10 +268,10 @@ export default function Onboarding() {
   };
 
   const CheckRow = ({label, val, id, field}) => (
-    <div className="flex items-center justify-between py-3 border-b border-white/5 cursor-pointer hover:bg-white/5 rounded-xl px-4 transition-colors"
+    <div className="flex items-center justify-between py-3 border-b border-slate-100 cursor-pointer hover:bg-slate-50 rounded-xl px-4 transition-colors"
       onClick={()=>isMin('hr_staff') && updateField(id, field, !val)}>
-      <span className="text-sm text-slate-300 font-medium">{label}</span>
-      {val ? <CheckCircle size={20} className="text-emerald-400"/> : <XCircle size={20} className="text-red-400"/>}
+      <span className="text-sm text-slate-700 font-medium">{label}</span>
+      {val ? <CheckCircle size={20} className="text-emerald-500"/> : <XCircle size={20} className="text-red-500"/>}
     </div>
   );
 
@@ -417,27 +417,28 @@ export default function Onboarding() {
 
       {selected && (
         <Modal title={`Onboarding: ${selected.name}`} onClose={()=>setSelected(null)} theme="light" wide>
+          {msg && <div className={`px-4 py-3 rounded-xl text-sm mb-6 border ${msg.startsWith('Error') ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>{msg}</div>}
           <div className="grid grid-cols-2 gap-6 mb-6">
             {[['Post',selected.post],['Department',selected.dept_name_full||selected.dept_name],['Candidate ID',selected.candidate_ref_id],['Joining Date',selected.joining_date?.split('T')[0]]].map(([k,v])=>(
-              <div key={k}><p className="text-xs text-slate-400 mb-1">{k}</p><p className="text-sm font-medium text-white">{v||'—'}</p></div>
+              <div key={k}><p className="text-xs text-slate-400 mb-1">{k}</p><p className="text-sm font-medium text-slate-800">{v||'—'}</p></div>
             ))}
           </div>
-          <h4 className="font-semibold text-white mb-3 mt-6">Onboarding Checklist <span className="text-xs text-slate-400 font-normal ml-1">(click to toggle)</span></h4>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-2">
+          <h4 className="font-semibold text-slate-800 mb-3 mt-6">Onboarding Checklist <span className="text-xs text-slate-400 font-normal ml-1">(click to toggle)</span></h4>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-2">
             <CheckRow label="Documents Submitted" val={selected.documents_submitted} id={selected.id} field="documents_submitted"/>
             <CheckRow label="Medical Fitness Cleared" val={selected.medical_cleared} id={selected.id} field="medical_cleared"/>
             <CheckRow label="Appointment Letter Sent" val={selected.appointment_letter_sent} id={selected.id} field="appointment_letter_sent"/>
             <CheckRow label="Service Book Created" val={selected.service_book_created} id={selected.id} field="service_book_created"/>
-            <div className="flex items-center justify-between py-3 border-b border-white/5 px-4">
-              <span className="text-sm text-slate-300 font-medium">Police Verification</span>
-              <select className="text-xs border border-white/20 bg-slate-800 text-white rounded px-3 py-1.5 outline-none" value={selected.police_verification}
+            <div className="flex items-center justify-between py-3 border-b border-slate-200 px-4">
+              <span className="text-sm text-slate-700 font-medium">Police Verification</span>
+              <select className="text-xs border border-slate-300 bg-white text-slate-800 rounded px-3 py-1.5 outline-none" value={selected.police_verification}
                 onChange={e=>updateField(selected.id,'police_verification',e.target.value)}>
                 {['Pending','In Progress','Cleared','Failed'].map(v=><option key={v}>{v}</option>)}
               </select>
             </div>
             <div className="flex items-center justify-between py-3 px-4">
-              <span className="text-sm text-slate-300 font-medium">Overall Status</span>
-              <select className="text-xs border border-white/20 bg-slate-800 text-white rounded px-3 py-1.5 outline-none" value={selected.status}
+              <span className="text-sm text-slate-700 font-medium">Overall Status</span>
+              <select className="text-xs border border-slate-300 bg-white text-slate-800 rounded px-3 py-1.5 outline-none" value={selected.status}
                 onChange={e=>updateField(selected.id,'status',e.target.value)}>
                 {['Pending Documents','Documents Verified','Medical Pending','Police Verification Pending','Joining Formalities','Completed','Cancelled'].map(v=><option key={v}>{v}</option>)}
               </select>
@@ -528,13 +529,14 @@ export default function Onboarding() {
 
       {showAdd && (
         <Modal title="Add Candidate to Onboarding" onClose={()=>setShowAdd(false)} theme="light">
+          {msg && <div className={`px-4 py-3 rounded-xl text-sm mb-6 border ${msg.startsWith('Error') ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>{msg}</div>}
           <div className="grid grid-cols-2 gap-4">
             {[['candidate_ref_id','Candidate Ref ID'],['name','Full Name'],['post','Post Applied']].map(([k,l])=>(
               <div key={k}><label className="text-xs text-slate-400 block mb-1">{l}</label><input className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})}/></div>
             ))}
             <div><label className="text-xs text-slate-400 block mb-1">Department</label>
               <select className="input" value={form.dept_id} onChange={e=>setForm({...form,dept_id:e.target.value})}>
-                <option value="" className="bg-slate-800">Select</option>{depts.map(d=><option key={d.id} value={d.id} className="bg-slate-800">{d.name}</option>)}
+                <option value="">Select</option>{depts.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
             <div><label className="text-xs text-slate-400 block mb-1">Selection Date</label><input type="date" className="input" value={form.selection_date} onChange={e=>setForm({...form,selection_date:e.target.value})}/></div>

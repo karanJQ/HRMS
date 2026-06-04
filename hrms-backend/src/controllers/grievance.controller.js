@@ -57,11 +57,14 @@ exports.assign = async (req, res) => {
 
 exports.resolve = async (req, res) => {
   const { resolution_remarks } = req.body;
+  if (!resolution_remarks || resolution_remarks.trim() === '') {
+    return error(res, 'Resolution remarks are required to resolve a grievance.', 400);
+  }
   try {
     const result = await query(
       `UPDATE grievances SET status='Resolved', resolution_remarks=$1, resolution_date=CURRENT_DATE, updated_at=NOW()
        WHERE id=$2 RETURNING *`,
-      [resolution_remarks||null, req.params.id]
+      [resolution_remarks.trim(), req.params.id]
     );
     return success(res, result.rows[0]);
   } catch (err) { return error(res, err.message); }

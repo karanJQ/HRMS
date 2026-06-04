@@ -19,6 +19,9 @@ export default function Grievance() {
   const [msg, setMsg] = useState('');
   const [form, setForm] = useState({ emp_id:'', grievance_type:'Service Matter', subject:'', description:'', priority:'Medium' });
   const [discForm, setDiscForm] = useState({ emp_id:'', charge_description:'', incident_date:'', case_start_date:'', inquiry_officer_name:'' });
+  const [resolveData, setResolveData] = useState(null);
+  const [resolveRemarks, setResolveRemarks] = useState('');
+  const [viewRemarksData, setViewRemarksData] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -32,8 +35,15 @@ export default function Grievance() {
     try { await grievanceAPI.assign(id,{ assigned_to: user.id }); setMsg('Grievance assigned'); load(); }
     catch(e) { setMsg('Error: '+e.response?.data?.message); }
   };
-  const resolve = async (id) => {
-    try { await grievanceAPI.resolve(id,{ resolution_remarks:'Resolved by HR' }); setMsg('Grievance resolved'); load(); }
+  const submitResolve = async () => {
+    if (!resolveRemarks.trim()) return setMsg('Error: Remarks are required to resolve a grievance');
+    try { 
+      await grievanceAPI.resolve(resolveData.id, { resolution_remarks: resolveRemarks }); 
+      setMsg('Grievance resolved successfully'); 
+      setResolveData(null);
+      setResolveRemarks('');
+      load(); 
+    }
     catch(e) { setMsg('Error: '+e.response?.data?.message); }
   };
   const submitGrievance = async () => {
@@ -116,8 +126,17 @@ export default function Grievance() {
                       <td><Badge text={g.status}/></td>
                       <td>
                         {g.status==='Pending' && isMin('hr_staff') && <button className="btn btn-primary" style={{padding:'4px 10px',fontSize:11}} onClick={()=>assign(g.id)}>Assign</button>}
-                        {g.status==='Under Review' && isMin('hr_staff') && <button className="btn btn-success" style={{padding:'4px 10px',fontSize:11}} onClick={()=>resolve(g.id)}>Resolve</button>}
-                        {g.status==='Resolved' && <span className="text-xs text-green-600 font-medium">✓ Closed</span>}
+                        {g.status==='Under Review' && isMin('hr_staff') && <button className="btn btn-success" style={{padding:'4px 10px',fontSize:11}} onClick={()=>setResolveData(g)}>Resolve</button>}
+                        {g.status==='Resolved' && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-green-600 font-medium">✓ Closed</span>
+                            {g.resolution_remarks && (
+                              <button className="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded border hover:bg-slate-200 transition-colors" onClick={()=>setViewRemarksData(g)}>
+                                View Solution
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -207,6 +226,37 @@ export default function Grievance() {
             <div className="col-span-2"><label className="text-xs text-slate-400 block mb-1">Charge Description</label><textarea className="input" rows={3} value={discForm.charge_description} onChange={e=>setDiscForm({...discForm,charge_description:e.target.value})}/></div>
           </div>
           <button className="btn btn-danger w-full mt-4" onClick={submitDisc}>Register Case</button>
+        </Modal>
+      )}
+      {resolveData && (
+        <Modal title="Resolve Grievance" onClose={()=>{setResolveData(null); setResolveRemarks('');}} theme="light">
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-slate-700 mb-1">Subject: <span className="font-normal text-slate-600">{resolveData.subject}</span></p>
+            <p className="text-sm font-semibold text-slate-700 mb-2">Description: <span className="font-normal text-slate-600">{resolveData.description || 'N/A'}</span></p>
+          </div>
+          <div>
+            <label className="text-xs text-slate-400 block mb-1">Resolution Remarks / Solution Provided <span className="text-red-500">*</span></label>
+            <textarea 
+              className="input w-full" 
+              rows={4} 
+              placeholder="Enter details of how this grievance was resolved..."
+              value={resolveRemarks} 
+              onChange={e=>setResolveRemarks(e.target.value)}
+            />
+          </div>
+          <button className="btn btn-success w-full mt-4" onClick={submitResolve}>Resolve Grievance</button>
+        </Modal>
+      )}
+      {viewRemarksData && (
+        <Modal title="Grievance Resolution" onClose={()=>setViewRemarksData(null)} theme="light">
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-slate-700 mb-1">Subject: <span className="font-normal text-slate-600">{viewRemarksData.subject}</span></p>
+            <p className="text-sm font-semibold text-slate-700 mb-2">Description: <span className="font-normal text-slate-600">{viewRemarksData.description || 'N/A'}</span></p>
+          </div>
+          <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
+            <h4 className="text-xs font-bold text-emerald-800 uppercase mb-2 flex items-center gap-1.5"><CheckCircle size={14}/> Solution Provided</h4>
+            <p className="text-sm text-emerald-900 whitespace-pre-wrap">{viewRemarksData.resolution_remarks}</p>
+          </div>
         </Modal>
       )}
     </Layout>

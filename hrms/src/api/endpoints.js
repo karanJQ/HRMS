@@ -57,14 +57,6 @@ export const transferAPI = {
   reject: (id, data) => API.put(`/transfers/${id}/reject`, data),
 };
 
-// Promotions
-export const promotionAPI = {
-  list: (params) => API.get('/promotions', { params }),
-  seniority: (params) => API.get('/promotions/seniority', { params }),
-  create: (data) => API.post('/promotions', data),
-  approve: (id, data) => API.put(`/promotions/${id}/approve`, data),
-};
-
 // APAR
 export const aparAPI = {
   list: (params) => API.get('/apar', { params }),

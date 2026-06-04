@@ -26,7 +26,6 @@ app.use(`${prefix}/employees`,   require('./src/routes/employee.routes'));
 app.use(`${prefix}/payroll`,     require('./src/routes/payroll.routes'));
 app.use(`${prefix}/leaves`,      require('./src/routes/leave.routes'));
 app.use(`${prefix}/transfers`,   require('./src/routes/transfer.routes'));
-app.use(`${prefix}/promotions`,  require('./src/routes/promotion.routes'));
 app.use(`${prefix}/apar`,        require('./src/routes/apar.routes'));
 app.use(`${prefix}/service-book`,require('./src/routes/servicebook.routes'));
 app.use(`${prefix}/training`,    require('./src/routes/training.routes'));
