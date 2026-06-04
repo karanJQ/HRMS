@@ -4,7 +4,7 @@ import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Loader from '../components/common/Loader';
 import { useApi, useApiCall } from '../hooks/useApi';
-import { authAPI, deptAPI } from '../api/endpoints';
+import { authAPI, deptAPI, empAPI } from '../api/endpoints';
 import { Plus, ToggleLeft, ToggleRight, Shield } from 'lucide-react';
 
 const roleColors = { super_admin: '#7c3aed', hr_manager: '#2563eb', dept_head: '#0891b2', hr_staff: '#16a34a', employee: '#64748b' };
@@ -12,15 +12,17 @@ const roleColors = { super_admin: '#7c3aed', hr_manager: '#2563eb', dept_head: '
 export default function UserManagement() {
   const { data: users, loading, refetch } = useApi(authAPI.listUsers, null, []);
   const { data: depts } = useApi(deptAPI.list, null, []);
+  const { data: empData } = useApi(empAPI.list, { limit: 1000 }, []);
+  const employees = empData?.employees || [];
   const { call } = useApiCall();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ username: '', email: '', password: '', role: 'hr_staff', dept_id: '' });
+  const [form, setForm] = useState({ username: '', email: '', password: '', role: 'hr_staff', dept_id: '', emp_id: '' });
   const [msg, setMsg] = useState('');
 
   const handleCreate = async () => {
     await call(() => authAPI.createUser(form), () => {
       setMsg('User created successfully'); setShowForm(false);
-      setForm({ username: '', email: '', password: '', role: 'hr_staff', dept_id: '' });
+      setForm({ username: '', email: '', password: '', role: 'hr_staff', dept_id: '', emp_id: '' });
       refetch();
     });
   };
@@ -143,6 +145,15 @@ export default function UserManagement() {
               <select className="input" value={form.dept_id} onChange={e => setForm({ ...form, dept_id: e.target.value })}>
                 <option value="">Select Department</option>
                 {(depts || []).map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs text-slate-400 block mb-1">
+                Link to Employee Profile {form.role === 'hr_manager' ? '(Optional)' : <span className="text-red-500">*</span>}
+              </label>
+              <select className="input" required={form.role !== 'hr_manager'} value={form.emp_id} onChange={e => setForm({ ...form, emp_id: e.target.value })}>
+                <option value="">{form.role === 'hr_manager' ? 'No Link (Admin / System User)' : 'Select Employee Profile'}</option>
+                {employees.map(e => <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name} ({e.emp_id})</option>)}
               </select>
             </div>
           </div>
