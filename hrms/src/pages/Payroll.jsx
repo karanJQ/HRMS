@@ -601,6 +601,13 @@ export default function Payroll() {
               </div>
             </div>
             
+            ${parseFloat(slip.compensation || 0) > 0 ? `
+            <div style="margin-top: 20px; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px 16px; background: #e0f2fe; color: #0369a1; display:flex; justify-content:space-between; font-weight: bold;">
+              <span>Additional Compensation / Bonus:</span>
+              <span>+ ₹${parseFloat(slip.compensation || 0).toLocaleString()}</span>
+            </div>
+            ` : ''}
+            
             <div class="net-pay-box" style="margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fef08a; border: 2px solid #fde047;">
               <div style="display:flex; justify-content:space-between; margin-bottom: 8px; font-weight: bold; color: #854d0e;">
                 <span>Total CTC (A+B):</span>
@@ -718,6 +725,7 @@ export default function Payroll() {
                 professional_tax: 200,
                 tds: 0,
                 other_deductions: 0,
+                compensation: 0,
                 payment_mode: 'Bank Transfer',
                 status: 'Processed'
               });
@@ -919,7 +927,7 @@ export default function Payroll() {
                         >
                           <FileText size={12} />Slip
                         </button>
-                        {isMin('hr_staff') && (
+                        {isMin('hr_staff') && p.status !== 'Paid' && (
                           <button
                             className="btn font-semibold transition-all duration-300"
                             style={{
@@ -947,6 +955,7 @@ export default function Payroll() {
                                 professional_tax: parseFloat(p.professional_tax || 200),
                                 tds: parseFloat(p.tds || 0),
                                 other_deductions: parseFloat(p.other_deductions || 0),
+                                compensation: parseFloat(p.compensation || 0),
                               });
                               setShowFormModal(true);
                             }}
@@ -1048,6 +1057,12 @@ export default function Payroll() {
                   <div className="flex justify-between text-sm py-2 font-bold text-rose-600"><span>Total Deductions</span><span>₹{parseFloat(slip.total_deductions || 0).toLocaleString()}</span></div>
                 </div>
               </div>
+              {parseFloat(slip.compensation || 0) > 0 && (
+                <div className="border rounded-lg p-3 mt-3 flex justify-between items-center bg-sky-50 border-sky-200">
+                  <span className="font-bold text-sky-800">Additional Compensation / Bonus</span>
+                  <span className="font-bold text-sky-800 text-lg">+ ₹{parseFloat(slip.compensation || 0).toLocaleString()}</span>
+                </div>
+              )}
               <div className="border rounded-lg p-3 mt-3 flex justify-between items-center bg-amber-50 border-amber-200">
                 <span className="font-bold text-amber-800">Total CTC </span>
                 <span className="font-bold text-amber-800 text-lg">₹{(parseFloat(slip.gross_pay||0) + parseFloat(slip.pf_employer||0) + parseFloat(slip.esic_employer||0)).toLocaleString()}</span>
@@ -1244,9 +1259,15 @@ export default function Payroll() {
               {/* Earnings Column */}
               <div className="space-y-3 bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10 col-span-2">
                 <p className="text-xs font-bold text-emerald-400 uppercase border-b border-emerald-500/10 pb-1.5 mb-2">Gross Salary Detail</p>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">Monthly Gross Salary (₹)<span className="text-red-400">*</span></label>
-                  <input type="number" className="input text-xs" value={formObj.ctc || formObj.basic_pay} onChange={e => setFormObj({ ...formObj, ctc: parseFloat(e.target.value) || '' })} />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">Monthly Gross Salary (₹)<span className="text-red-400">*</span></label>
+                    <input type="number" min="0" className="input text-xs" placeholder="0" value={formObj.ctc || formObj.basic_pay || ''} onChange={e => setFormObj({ ...formObj, ctc: Math.max(0, parseFloat(e.target.value)) || '' })} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">Compensation / Bonus (₹)</label>
+                    <input type="number" min="0" className="input text-xs" placeholder="0" value={formObj.compensation || ''} onChange={e => setFormObj({ ...formObj, compensation: Math.max(0, parseFloat(e.target.value)) || '' })} />
+                  </div>
                 </div>
                 <div className="pt-2 text-xs text-slate-500">
                   <p>* Basic, HRA, Conveyance, PF and ESIC will be auto-calculated upon save based on this Gross Salary.</p>
@@ -1259,21 +1280,21 @@ export default function Payroll() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs text-slate-400 block mb-1">Professional Tax (₹)</label>
-                    <input type="number" className="input text-xs" value={formObj.professional_tax} onChange={e => setFormObj({ ...formObj, professional_tax: parseFloat(e.target.value) || 0 })} />
+                    <input type="number" min="0" className="input text-xs" placeholder="0" value={formObj.professional_tax || ''} onChange={e => setFormObj({ ...formObj, professional_tax: Math.max(0, parseFloat(e.target.value)) || '' })} />
                   </div>
                   <div>
                     <label className="text-xs text-slate-400 block mb-1">Income Tax / TDS (₹)</label>
-                    <input type="number" className="input text-xs" value={formObj.tds} onChange={e => setFormObj({ ...formObj, tds: parseFloat(e.target.value) || 0 })} />
+                    <input type="number" min="0" className="input text-xs" placeholder="0" value={formObj.tds || ''} onChange={e => setFormObj({ ...formObj, tds: Math.max(0, parseFloat(e.target.value)) || '' })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs text-slate-400 block mb-1">Other Deductions (₹)</label>
-                    <input type="number" className="input text-xs" value={formObj.other_deductions} onChange={e => setFormObj({ ...formObj, other_deductions: parseFloat(e.target.value) || 0 })} />
+                    <input type="number" min="0" className="input text-xs" placeholder="0" value={formObj.other_deductions || ''} onChange={e => setFormObj({ ...formObj, other_deductions: Math.max(0, parseFloat(e.target.value)) || '' })} />
                   </div>
                   <div>
                     <label className="text-xs text-slate-400 block mb-1">Leave Without Pay (Days)</label>
-                    <input type="number" step="0.5" className="input text-xs" value={formObj.lwp_days} onChange={e => setFormObj({ ...formObj, lwp_days: parseFloat(e.target.value) || 0 })} />
+                    <input type="number" min="0" step="0.5" className="input text-xs" placeholder="0" value={formObj.lwp_days || ''} onChange={e => setFormObj({ ...formObj, lwp_days: Math.max(0, parseFloat(e.target.value)) || '' })} />
                   </div>
                 </div>
               </div>

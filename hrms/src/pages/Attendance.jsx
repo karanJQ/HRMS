@@ -163,7 +163,17 @@ export default function Attendance() {
     } catch(e) { showMsg('Error: '+e.response?.data?.message); }
   };
   const saveSettings = async () => {
-    try { await attendanceAPI.updateSettings(settings); showMsg('Settings saved'); load(); }
+    try {
+      const payload = {
+        ...settings,
+        grace_period_mins: settings.grace_period_mins || 0,
+        auto_absent_minutes: settings.auto_absent_minutes || 0,
+        ot_rate_weekday: settings.ot_rate_weekday || 0,
+        ot_rate_weekend: settings.ot_rate_weekend || 0,
+        ot_rate_holiday: settings.ot_rate_holiday || 0,
+      };
+      await attendanceAPI.updateSettings(payload); showMsg('Settings saved'); load(); 
+    }
     catch(e) { showMsg('Error: '+e.response?.data?.message); }
   };
   const syncBiometrics = async () => {
@@ -928,8 +938,8 @@ export default function Attendance() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-semibold block mb-1.5" style={{ color:'rgba(22,38,96,0.5)' }}>Grace Period (min)</label>
-                <input type="number" className="input w-full" value={settings.grace_period_mins}
-                  onChange={e=>setSettings({...settings,grace_period_mins:parseInt(e.target.value)||0})}
+                <input type="number" min="0" className="input w-full" placeholder="0" value={settings.grace_period_mins || ''}
+                  onChange={e=>setSettings({...settings,grace_period_mins:Math.max(0, parseInt(e.target.value)) || ''})}
                   style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
               </div>
               <div>
@@ -950,8 +960,8 @@ export default function Attendance() {
               </div>
               <div>
                 <label className="text-xs font-semibold block mb-1.5" style={{ color:'rgba(22,38,96,0.5)' }}>Auto Absent (min)</label>
-                <input type="number" className="input w-full" value={settings.auto_absent_minutes}
-                  onChange={e=>setSettings({...settings,auto_absent_minutes:parseInt(e.target.value)||0})}
+                <input type="number" min="0" className="input w-full" placeholder="0" value={settings.auto_absent_minutes || ''}
+                  onChange={e=>setSettings({...settings,auto_absent_minutes:Math.max(0, parseInt(e.target.value)) || ''})}
                   style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
               </div>
             </div>
@@ -965,20 +975,20 @@ export default function Attendance() {
               <div className="grid grid-cols-3 gap-3 p-4 rounded-xl" style={{ background:'rgba(22,38,96,0.03)' }}>
                 <div>
                   <label className="text-[11px] font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Weekday</label>
-                  <input type="number" step="0.1" className="input w-full" value={settings.ot_rate_weekday}
-                    onChange={e=>setSettings({...settings,ot_rate_weekday:parseFloat(e.target.value)||1.5})}
+                  <input type="number" min="0" step="0.1" className="input w-full" placeholder="0" value={settings.ot_rate_weekday || ''}
+                    onChange={e=>setSettings({...settings,ot_rate_weekday:Math.max(0, parseFloat(e.target.value)) || ''})}
                     style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'8px', padding:'8px 10px' }}/>
                 </div>
                 <div>
                   <label className="text-[11px] font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Weekend</label>
-                  <input type="number" step="0.1" className="input w-full" value={settings.ot_rate_weekend}
-                    onChange={e=>setSettings({...settings,ot_rate_weekend:parseFloat(e.target.value)||2.0})}
+                  <input type="number" min="0" step="0.1" className="input w-full" placeholder="0" value={settings.ot_rate_weekend || ''}
+                    onChange={e=>setSettings({...settings,ot_rate_weekend:Math.max(0, parseFloat(e.target.value)) || ''})}
                     style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'8px', padding:'8px 10px' }}/>
                 </div>
                 <div>
                   <label className="text-[11px] font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Holiday</label>
-                  <input type="number" step="0.1" className="input w-full" value={settings.ot_rate_holiday}
-                    onChange={e=>setSettings({...settings,ot_rate_holiday:parseFloat(e.target.value)||2.5})}
+                  <input type="number" min="0" step="0.1" className="input w-full" placeholder="0" value={settings.ot_rate_holiday || ''}
+                    onChange={e=>setSettings({...settings,ot_rate_holiday:Math.max(0, parseFloat(e.target.value)) || ''})}
                     style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'8px', padding:'8px 10px' }}/>
                 </div>
               </div>
@@ -1158,8 +1168,8 @@ export default function Attendance() {
             {['sl_entitled','sl_used','ml_entitled','ml_used','el_entitled','el_used','dl_entitled','dl_used'].map(f => (
               <div key={f}>
                 <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>{f.replace('_',' ').toUpperCase()}</label>
-                <input type="number" step="0.5" className="input w-full" value={editBalance[f]||0}
-                  onChange={e=>setEditBalance({...editBalance,[f]:parseFloat(e.target.value)||0})}
+                <input type="number" min="0" step="0.5" className="input w-full" placeholder="0" value={editBalance[f] || ''}
+                  onChange={e=>setEditBalance({...editBalance,[f]:Math.max(0, parseFloat(e.target.value)) || ''})}
                   style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }} />
               </div>
             ))}
@@ -1169,7 +1179,9 @@ export default function Attendance() {
               style={{ background:'#162660', color:'#FEFEFA' }}
               onClick={async ()=>{
                 try {
-                  await leaveAPI.updateBalance(editBalance.emp_id, editBalance);
+                  const cleanBalance = { ...editBalance };
+                  Object.keys(cleanBalance).forEach(k => { if (k.includes('entitled') || k.includes('used')) cleanBalance[k] = cleanBalance[k] || 0; });
+                  await leaveAPI.updateBalance(cleanBalance.emp_id, cleanBalance);
                   setMsg('Leave balance updated!');
                   setShowBalanceEdit(false);
                   const bRes = await leaveAPI.listBalances();
