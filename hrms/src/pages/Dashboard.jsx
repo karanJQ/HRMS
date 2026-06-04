@@ -274,7 +274,7 @@ export default function Dashboard() {
       {/* Quick Actions + Birthdays + Anniversaries */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         {/* Quick Punch Card */}
-        <div className="flex flex-col justify-between p-4 hover-scale transition-all duration-300"
+        <div className="flex flex-col justify-between p-4 self-start hover-scale transition-all duration-300"
           style={{
             background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
             borderRadius: '16px', boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
@@ -321,7 +321,7 @@ export default function Dashboard() {
           {birthdays.length === 0 ? (
             <p className="text-xs text-center py-4" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>No birthdays this month</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1 custom-scrollbar">
               {birthdays.map((b, i) => (
                 <div key={b.emp_id} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: i % 2 === 0 ? 'rgba(236, 72, 153, 0.04)' : 'transparent' }}>
                   <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-xs font-bold">
@@ -352,7 +352,7 @@ export default function Dashboard() {
           {anniversaries.length === 0 ? (
             <p className="text-xs text-center py-4" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>No anniversaries this month</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1 custom-scrollbar">
               {anniversaries.map((a, i) => (
                 <div key={a.emp_id} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: i % 2 === 0 ? 'rgba(245, 158, 11, 0.04)' : 'transparent' }}>
                   <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-xs font-bold">
