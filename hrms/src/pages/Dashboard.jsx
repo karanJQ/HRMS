@@ -8,7 +8,7 @@ import {
   Users, IndianRupee, Calendar, AlertTriangle, UserPlus, TrendingUp,
   Star, Fingerprint, Gift, Briefcase, Sun, Cake, Bell, Trash2
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { PieChart, Pie, Cell, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { reportsAPI, leaveAPI, onboardingAPI, attendanceAPI, empAPI, announcementAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import PunchModal from '../components/PunchModal';
@@ -155,14 +155,123 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Top Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-        <StatsCard title="Total Employees" value={stats?.total_employees || 0} icon={Users} color="#68aae8" sub={`${stats?.active_employees || 0} Active`} theme="light" delay={0} />
-        <StatsCard title="Monthly Payroll" value={`₹${((stats?.monthly_payroll || 0) / 100000).toFixed(1)}L`} icon={IndianRupee} color="#10b981" sub="Current month" theme="light" delay={60} />
-        <StatsCard title="Pending Leaves" value={stats?.pending_leaves || 0} icon={Calendar} color="#f59e0b" sub="Awaiting approval" theme="light" delay={120} />
-        <StatsCard title="Open Grievances" value={stats?.open_grievances || 0} icon={AlertTriangle} color="#ef4444" sub="Needs attention" theme="light" delay={180} />
-        <StatsCard title="This Month" value={`${birthdays.length + anniversaries.length}`} icon={Star} color="#ec4899" sub="Celebrations" theme="light" delay={240} />
-      </div>
+      )}
+
+      )}
+
+      {/* Reports & Analytics Header (Admins Only) */}
+      {user?.role !== 'employee' && (
+        <>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold" style={{ color: '#0f172a' }}>Reports & Analytics</h2>
+              <p className="text-sm text-slate-500 mt-1">Key insights and data to help you make better decisions.</p>
+            </div>
+          </div>
+
+          {/* Top Stats Cards (Reference Image Style, Live Data Only) */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            {[
+              { title: 'Total Employees', value: stats?.total_employees || 0, sub: `${stats?.active_employees || 0} Active`, icon: Users, color: '#3b82f6', bg: '#eff6ff' },
+              { title: 'Monthly Payroll', value: `₹${((stats?.monthly_payroll || 0) / 100000).toFixed(1)}L`, sub: 'Current month', icon: IndianRupee, color: '#10b981', bg: '#ecfdf5' },
+              { title: 'Pending Leaves', value: stats?.pending_leaves || 0, sub: 'Awaiting approval', icon: Calendar, color: '#f59e0b', bg: '#fffbeb' },
+              { title: 'Open Grievances', value: stats?.open_grievances || 0, sub: 'Needs attention', icon: AlertTriangle, color: '#ef4444', bg: '#fef2f2' },
+              { title: 'Celebrations', value: (birthdays.length + anniversaries.length) || 0, sub: 'This month', icon: Star, color: '#ec4899', bg: '#fdf2f8' }
+            ].map((s, i) => (
+              <div key={i} className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between hover-scale transition-all">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-3 rounded-full flex items-center justify-center" style={{ backgroundColor: s.bg, color: s.color }}>
+                    <s.icon size={22} strokeWidth={2} />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold text-slate-500 mb-1">{s.title}</p>
+                    <h3 className="text-2xl font-bold text-slate-800">{s.value}</h3>
+                  </div>
+                </div>
+                <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                  {s.sub}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Analytics Charts Grid (Live Data Only) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            
+            {/* Employee Distribution Donut */}
+            <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-800 mb-6">Employee Distribution by Department</h3>
+              <div className="h-64 flex items-center justify-between">
+                <ResponsiveContainer width="55%" height="100%">
+                  <PieChart>
+                    <Pie data={(headcount?.by_dept?.slice(0,5) || []).map(d => ({ ...d, count: Number(d.count) }))} innerRadius={60} outerRadius={85} paddingAngle={2} dataKey="count" stroke="none">
+                      { (headcount?.by_dept?.slice(0,5) || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#a855f7', '#f43f5e'][index % 5]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="w-[45%] flex flex-col gap-3 justify-center pl-2">
+                  {(headcount?.by_dept?.slice(0,5) || []).map((d, i) => {
+                    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#a855f7', '#f43f5e'];
+                    return (
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[i % 5] }}></div>
+                          <span className="text-slate-600 font-medium truncate max-w-[80px]" title={d.dept}>{d.dept}</span>
+                        </div>
+                        <span className="font-bold text-slate-800">{d.count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Employee Status Donut */}
+            <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-800 mb-6">Employee Status</h3>
+              <div className="h-64 flex items-center justify-between">
+                <ResponsiveContainer width="50%" height="100%">
+                  <PieChart>
+                    <Pie data={(headcount?.by_status || []).map(d => ({ ...d, count: Number(d.count) }))} innerRadius={60} outerRadius={85} paddingAngle={2} dataKey="count" stroke="none">
+                      { (headcount?.by_status || []).map((entry, index) => {
+                        let c = '#cbd5e1';
+                        if(entry.status === 'Active') c = '#10b981';
+                        if(entry.status === 'On Probation') c = '#f59e0b';
+                        if(entry.status === 'Resigned') c = '#f43f5e';
+                        return <Cell key={`cell-${index}`} fill={c} />;
+                      })}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="w-[50%] flex flex-col gap-4 justify-center pl-4">
+                  {(headcount?.by_status || []).map((d, i) => {
+                    let c = '#cbd5e1';
+                    if(d.status === 'Active') c = '#10b981';
+                    if(d.status === 'On Probation') c = '#f59e0b';
+                    if(d.status === 'Resigned') c = '#f43f5e';
+                    return (
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c }}></div>
+                          <span className="text-slate-600 font-medium">{d.status}</span>
+                        </div>
+                        <span className="font-bold text-slate-800">{d.count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+          </div>
+          
+          <div className="h-[1px] w-full bg-slate-200 mb-8"></div>
+        </>
+      )}
       {/* Quick Actions + Birthdays + Anniversaries */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         {/* Quick Punch Card */}

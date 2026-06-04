@@ -19,15 +19,13 @@ const allNav = [
   { label:'Doc Verification', icon:FileCheck, path:'/document-verification', roles:['super_admin','hr_manager','hr_staff'] },
   { label:'Payroll', icon:IndianRupee, path:'/payroll', roles:['super_admin','hr_manager','hr_staff','employee'] },
   { label:'Attendance & Leave', icon:Calendar, path:'/attendance', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
-  { label:'Transfer & Posting', icon:ArrowLeftRight, path:'/transfer', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
   { label:'Promotion & Seniority', icon:TrendingUp, path:'/promotion', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
   { label:'Performance Appraisal', icon:Star, path:'/apar', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'Service Book',           icon:BookOpen, path:'/servicebook', roles:['super_admin','hr_manager','hr_staff','employee'] },
   { label:'Training', icon:GraduationCap, path:'/training', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
 
   { label:'Grievance & Discipline', icon:AlertTriangle, path:'/grievance', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
-  { label:'Reports', icon:BarChart3, path:'/reports', roles:['super_admin','hr_manager','dept_head','hr_staff'] },
-  { label:'Workflow Tasks', icon:Workflow, path:'/tasks', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
+
   { label:'User Management', icon:Shield, path:'/users', roles:['super_admin'] },
 ];
 
