@@ -593,7 +593,9 @@ export default function APAR() {
   };
 
   const handleGenerateYearlyReport = async (manual = false) => {
-    if (yearlyForm.emp_id === 'all') {
+    const targetEmpId = user?.role === 'employee' ? user.emp_id : yearlyForm.emp_id;
+
+    if (targetEmpId === 'all') {
       setYearlyLoading(true); setYearlyResult(null);
       let successCount = 0; let errorCount = 0;
       let allData = [];
@@ -627,7 +629,7 @@ export default function APAR() {
 
     setYearlyLoading(true); setYearlyResult(null);
     try {
-      const res = await aparAPI.yearlyReportAI({ emp_id: yearlyForm.emp_id, year: yearlyForm.year, manual: manual });
+      const res = await aparAPI.yearlyReportAI({ emp_id: targetEmpId, year: yearlyForm.year, manual: manual });
       setYearlyResult(res.data.data);
       loadAPAR();
     } catch(e) {
@@ -839,15 +841,17 @@ export default function APAR() {
             ) : !yearlyResult ? (
               <div style={{ maxWidth: 500 }}>
                 <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-                  <div>
-                    <label style={{ fontSize:11, fontWeight:700, color:'rgba(22,38,96,0.6)', display:'block', marginBottom:6 }}>EMPLOYEE *</label>
-                    <select value={yearlyForm.emp_id} onChange={e => setYearlyForm({...yearlyForm, emp_id:e.target.value})}
-                      style={{ width:'100%', padding:'10px 14px', borderRadius:10, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', background:'#fff', color:'#1e293b', boxShadow:'0 2px 4px rgba(0,0,0,0.02)' }}>
-                      <option value="">Select Employee...</option>
-                      <option value="all" style={{ fontWeight: 'bold', color: '#10b981' }}>All Employees (Batch Generate)</option>
-                      {employees.map(e => <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name} ({e.emp_id})</option>)}
-                    </select>
-                  </div>
+                  {user?.role !== 'employee' && (
+                    <div>
+                      <label style={{ fontSize:11, fontWeight:700, color:'rgba(22,38,96,0.6)', display:'block', marginBottom:6 }}>EMPLOYEE *</label>
+                      <select value={yearlyForm.emp_id} onChange={e => setYearlyForm({...yearlyForm, emp_id:e.target.value})}
+                        style={{ width:'100%', padding:'10px 14px', borderRadius:10, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', background:'#fff', color:'#1e293b', boxShadow:'0 2px 4px rgba(0,0,0,0.02)' }}>
+                        <option value="">Select Employee...</option>
+                        <option value="all" style={{ fontWeight: 'bold', color: '#10b981' }}>All Employees (Batch Generate)</option>
+                        {employees.map(e => <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name} ({e.emp_id})</option>)}
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label style={{ fontSize:11, fontWeight:700, color:'rgba(22,38,96,0.6)', display:'block', marginBottom:6 }}>YEAR *</label>
                     <select value={yearlyForm.year} onChange={e => setYearlyForm({...yearlyForm, year:e.target.value})}
@@ -857,13 +861,13 @@ export default function APAR() {
                     </select>
                   </div>
                   <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-                    <button disabled={!yearlyForm.emp_id || !yearlyForm.year} onClick={() => handleGenerateYearlyReport(false)}
-                      style={{ flex: 1, padding:'12px', borderRadius:10, background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', border:'none', fontWeight:700, fontSize:14, cursor:'pointer', opacity:yearlyForm.emp_id?1:0.5, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-                      <Sparkles size={16}/> {yearlyForm.emp_id === 'all' ? 'Batch Generate with AI' : 'Generate with AI'}
+                    <button disabled={(!yearlyForm.emp_id && user?.role !== 'employee') || !yearlyForm.year} onClick={() => handleGenerateYearlyReport(false)}
+                      style={{ flex: 1, padding:'12px', borderRadius:10, background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', border:'none', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!yearlyForm.emp_id && user?.role !== 'employee')?0.5:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                      <Sparkles size={16}/> {yearlyForm.emp_id === 'all' && user?.role !== 'employee' ? 'Batch Generate with AI' : 'Generate with AI'}
                     </button>
-                    <button disabled={!yearlyForm.emp_id || !yearlyForm.year} onClick={() => handleGenerateYearlyReport(true)}
-                      style={{ flex: 1, padding:'12px', borderRadius:10, background:'#f1f5f9', color:'#475569', border:'1px solid #e2e8f0', fontWeight:700, fontSize:14, cursor:'pointer', opacity:yearlyForm.emp_id?1:0.5 }}>
-                      {yearlyForm.emp_id === 'all' ? 'Batch Generate Manually' : 'Generate Manually'}
+                    <button disabled={(!yearlyForm.emp_id && user?.role !== 'employee') || !yearlyForm.year} onClick={() => handleGenerateYearlyReport(true)}
+                      style={{ flex: 1, padding:'12px', borderRadius:10, background:'#f1f5f9', color:'#475569', border:'1px solid #e2e8f0', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!yearlyForm.emp_id && user?.role !== 'employee')?0.5:1 }}>
+                      {yearlyForm.emp_id === 'all' && user?.role !== 'employee' ? 'Batch Generate Manually' : 'Generate Manually'}
                     </button>
                   </div>
                 </div>
@@ -911,7 +915,9 @@ export default function APAR() {
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                   <div>
                     <div style={{ fontSize:20, fontWeight:800, color:BRAND }}>Annual Performance Report: {yearlyForm.year}</div>
-                    <div style={{ fontSize:13, color:'#64748b', marginTop:4 }}>{employees.find(e => e.emp_id === yearlyForm.emp_id)?.first_name} {employees.find(e => e.emp_id === yearlyForm.emp_id)?.last_name}</div>
+                    <div style={{ fontSize:13, color:'#64748b', marginTop:4 }}>
+                      {user?.role === 'employee' ? `${user.first_name} ${user.last_name}` : `${employees.find(e => e.emp_id === yearlyForm.emp_id)?.first_name || ''} ${employees.find(e => e.emp_id === yearlyForm.emp_id)?.last_name || ''}`}
+                    </div>
                   </div>
                   <button onClick={() => setYearlyResult(null)}
                     style={{ padding:'8px 16px', borderRadius:8, background:'#f1f5f9', color:'#475569', border:'none', fontWeight:700, fontSize:12, cursor:'pointer' }}>

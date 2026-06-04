@@ -8,6 +8,6 @@ router.post('/initiate', auth, allow('super_admin','hr_manager','hr_staff'), ctr
 router.put('/:id/reporting', auth, allow('super_admin','hr_manager','dept_head'), ctrl.fillReporting);
 router.put('/:id/reviewing', auth, allow('super_admin','hr_manager'), ctrl.fillReviewing);
 router.get('/:id/ai-insights', auth, allow('super_admin','hr_manager','dept_head'), ctrl.generateAIInsights);
-router.get('/yearly-report', auth, allow('super_admin','hr_manager','dept_head'), ctrl.getYearlyReport);
-router.get('/yearly-report-ai', auth, allow('super_admin','hr_manager','dept_head'), ctrl.generateYearlyReportAI);
+router.get('/yearly-report', auth, allow('super_admin','hr_manager','dept_head','employee'), ctrl.getYearlyReport);
+router.get('/yearly-report-ai', auth, allow('super_admin','hr_manager','dept_head','employee'), ctrl.generateYearlyReportAI);
 module.exports = router;
