@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/Layout/Layout';
 import { documentAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
-import { Upload, FileText, CheckCircle, AlertCircle, X, Trash2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, X, Trash2, Eye } from 'lucide-react';
 import Badge from '../components/common/Badge';
 
 export default function DocumentUpload() {
@@ -213,13 +213,27 @@ export default function DocumentUpload() {
                         </span>
                       </div>
                       
-                      <button 
-                        onClick={() => handleDelete(doc.id)}
-                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                        title="Delete Document"
+                      <a 
+                        href={doc.file_path ? `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '')}/uploads/${doc.file_path.split(/[\\/]/).pop()}` : '#'}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-medium transition-colors flex items-center gap-1.5"
+                        title="Preview Document"
                       >
-                        <Trash2 size={18} />
-                      </button>
+                        <Eye size={16} /> Preview
+                      </a>
+                      
+                      <div className="group relative">
+                        <button 
+                          disabled
+                          className="p-2 text-slate-300 rounded-lg cursor-not-allowed"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                        <div className="absolute bottom-full mb-2 right-0 hidden group-hover:block w-36 bg-slate-800 text-white text-[10px] text-center p-1.5 rounded shadow-lg">
+                          Contact HR to delete submitted documents.
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

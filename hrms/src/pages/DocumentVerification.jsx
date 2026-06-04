@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout/Layout';
 import { empAPI, documentAPI } from '../api/endpoints';
-import { Search, FileText, CheckCircle, AlertCircle, Play, Eye } from 'lucide-react';
+import { Search, FileText, CheckCircle, AlertCircle, Play, Eye, Trash2, X } from 'lucide-react';
 import Badge from '../components/common/Badge';
 
 export default function DocumentVerification() {
@@ -13,6 +13,7 @@ export default function DocumentVerification() {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [processingId, setProcessingId] = useState(null);
   const [viewDoc, setViewDoc] = useState(null);
+  const [deleteDocId, setDeleteDocId] = useState(null);
 
   useEffect(() => {
     loadEmployees();
@@ -50,6 +51,18 @@ export default function DocumentVerification() {
       documentAPI.list(selectedEmp.emp_id).then(res => setDocuments(res.data.data));
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteDocId) return;
+    try {
+      await documentAPI.delete(deleteDocId);
+      setDocuments(docs => docs.filter(d => d.id !== deleteDocId));
+      setDeleteDocId(null);
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert('Failed to delete document.');
     }
   };
 
@@ -275,6 +288,12 @@ export default function DocumentVerification() {
                                 )}
                               </button>
                             )}
+                            <button 
+                              onClick={() => setDeleteDocId(doc.id)}
+                              className="px-3 py-1.5 text-sm bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors flex items-center gap-1.5 flex-1 md:flex-none justify-center"
+                            >
+                              <Trash2 size={16} /> Delete
+                            </button>
                           </div>
                         </div>
                         
@@ -304,6 +323,38 @@ export default function DocumentVerification() {
           )}
         </div>
       </div>
+
+      {deleteDocId && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-5 flex items-center justify-between border-b border-slate-100">
+              <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                <Trash2 className="text-red-500" size={20}/> Delete Document
+              </h3>
+              <button onClick={() => setDeleteDocId(null)} className="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-lg transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-5 text-slate-600 text-sm">
+              <p>Are you sure you want to permanently delete this document? This action cannot be undone.</p>
+            </div>
+            <div className="p-5 bg-slate-50 flex justify-end gap-3 border-t border-slate-100">
+              <button 
+                onClick={() => setDeleteDocId(null)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 shadow-sm shadow-red-200 rounded-xl transition-all"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

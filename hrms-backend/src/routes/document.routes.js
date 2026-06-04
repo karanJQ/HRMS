@@ -39,6 +39,6 @@ router.post('/:id/ocr', allow('super_admin', 'hr_manager', 'hr_staff'), document
 router.put('/:id/data', allow('super_admin', 'hr_manager', 'hr_staff'), documentController.updateData);
 
 // Delete a document
-router.delete('/:id', allow('super_admin', 'hr_manager', 'hr_staff', 'employee'), documentController.deleteDocument);
+router.delete('/:id', allow('super_admin', 'hr_manager', 'hr_staff'), documentController.deleteDocument);
 
 module.exports = router;
