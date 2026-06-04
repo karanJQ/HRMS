@@ -318,34 +318,7 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className={`grid ${user?.role !== 'employee' ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'} gap-6 mb-6`}>
-        {user?.role !== 'employee' && (
-          <div className="flex flex-col p-6 hover-card animate-slide-up"
-          style={{
-            background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
-            borderRadius: '16px', boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
-          }}
-        >
-          <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Employees by Department</h3>
-          {deptData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={deptData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(22,38,96,0.06)" vertical={false} />
-                <XAxis dataKey="dept" tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 11 }} axisLine={false} tickLine={false} height={50} interval={0} angle={-35} textAnchor="end" />
-                <YAxis tick={{ fill: 'rgba(22, 38, 96, 0.6)', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid rgba(22,38,96,0.1)', borderRadius: '8px', color: '#162660' }} />
-                <Bar dataKey="count" fill="url(#colorDept)" radius={[4, 4, 0, 0]} barSize={30} />
-                <defs>
-                  <linearGradient id="colorDept" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#68aae8" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#162660" stopOpacity={0.8} />
-                  </linearGradient>
-                </defs>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : <p className="text-slate-400 text-sm text-center py-16">No data</p>}
-        </div>
-        )}
+      <div className="grid grid-cols-1 gap-6 mb-6">
 
         {/* Holidays Card */}
         <div className="flex flex-col p-6 hover-card animate-slide-up"
