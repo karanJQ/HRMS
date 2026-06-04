@@ -3,6 +3,7 @@ import Layout from '../components/Layout/Layout';
 import StatsCard from '../components/common/StatsCard';
 import Badge from '../components/common/Badge';
 import Loader from '../components/common/Loader';
+import Modal from '../components/common/Modal';
 import {
   Users, IndianRupee, Calendar, AlertTriangle, UserPlus, TrendingUp,
   Star, Fingerprint, Gift, Briefcase, Sun, Cake, Bell, Trash2
@@ -35,6 +36,7 @@ export default function Dashboard() {
   const [showAnnModal, setShowAnnModal] = useState(false);
   const [annForm, setAnnForm] = useState({ title: '', type: 'General', content: '', sendMail: false });
   const [annSubmitting, setAnnSubmitting] = useState(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
 
   useEffect(() => {
     const currentMonth = new Date().getMonth() + 1;
@@ -284,25 +286,30 @@ export default function Dashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {announcements.slice(0, 3).map(a => (
-              <div key={a.id} className="p-3 rounded-xl border border-slate-100 flex flex-col justify-between" style={{ background: 'rgba(22, 38, 96, 0.02)' }}>
+              <div key={a.id} onClick={() => setSelectedAnnouncement(a)} className="p-4 rounded-xl border border-slate-100 flex flex-col justify-between cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all duration-300 bg-white group" style={{ border: '1px solid rgba(22, 38, 96, 0.08)' }}>
                 <div>
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-start mb-3">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                      a.type === 'Important' ? 'bg-red-100 text-red-600' :
-                      a.type === 'Event' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'
+                      a.type === 'Important' ? 'bg-red-50 text-red-600' :
+                      a.type === 'Event' ? 'bg-pink-50 text-pink-600' : 'bg-blue-50 text-blue-600'
                     }`}>{a.type}</span>
                     {['hr_manager', 'super_admin', 'hr_staff'].includes(user?.role) && (
-                      <button onClick={() => deleteAnnouncement(a.id)} className="text-slate-400 hover:text-red-500">
+                      <button onClick={(e) => { e.stopPropagation(); deleteAnnouncement(a.id); }} className="text-slate-400 hover:text-red-500 bg-slate-50 p-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100">
                         <Trash2 size={14} />
                       </button>
                     )}
                   </div>
-                  <h4 className="font-bold text-sm mb-1" style={{ color: '#162660' }}>{a.title}</h4>
-                  <p className="text-xs text-slate-600 line-clamp-2">{a.content}</p>
+                  <h4 className="font-bold text-[15px] mb-2 leading-snug" style={{ color: '#162660' }}>{a.title}</h4>
+                  <p className="text-[13px] text-slate-600 line-clamp-3 leading-relaxed mb-3">{a.content}</p>
                 </div>
-                <div className="mt-3 text-[10px] text-slate-400 flex justify-between">
-                  <span>{a.creator_name}</span>
-                  <span>{new Date(a.created_at).toLocaleDateString()}</span>
+                <div className="mt-2 pt-3 border-t border-slate-50 text-[11px] text-slate-400 flex justify-between items-center font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-600">
+                      {a.creator_name?.[0]?.toUpperCase() || '?'}
+                    </div>
+                    {a.creator_name}
+                  </span>
+                  <span>{new Date(a.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                 </div>
               </div>
             ))}
@@ -513,7 +520,6 @@ export default function Dashboard() {
                       <div className="flex gap-2">
                         <button onClick={() => setProbationModal({ emp_id: p.emp_id, name: p.first_name, action: 'accept' })} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-semibold hover:bg-emerald-200">Accept</button>
                         <button onClick={() => setProbationModal({ emp_id: p.emp_id, name: p.first_name, action: 'extend' })} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-xs font-semibold hover:bg-amber-200">Extend</button>
-                        <button onClick={() => setProbationModal({ emp_id: p.emp_id, name: p.first_name, action: 'reject' })} className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold hover:bg-red-200">Reject</button>
                       </div>
                     </td>
                   </tr>
@@ -552,13 +558,41 @@ export default function Dashboard() {
               <button 
                 onClick={submitProbationAction} 
                 disabled={!probationNotes.trim()}
-                className={`px-4 py-2 text-sm font-semibold text-white rounded-lg ${!probationNotes.trim() ? 'bg-slate-400 cursor-not-allowed' : probationModal.action === 'reject' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                className={`px-4 py-2 text-sm font-semibold text-white rounded-lg ${!probationNotes.trim() ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
               >
                 Confirm
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* View Announcement Modal */}
+      {selectedAnnouncement && (
+        <Modal title="Announcement" onClose={() => setSelectedAnnouncement(null)} theme="light">
+          <div className="p-2 space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
+                selectedAnnouncement.type === 'Important' ? 'bg-red-100 text-red-700' :
+                selectedAnnouncement.type === 'Event' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'
+              }`}>{selectedAnnouncement.type}</span>
+              <span className="text-xs text-slate-400 font-medium">{new Date(selectedAnnouncement.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+            </div>
+            <h2 className="text-xl font-bold text-slate-800 leading-tight">{selectedAnnouncement.title}</h2>
+            <div className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
+              {selectedAnnouncement.content}
+            </div>
+            <div className="pt-4 mt-6 border-t border-slate-100 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600">
+                {selectedAnnouncement.creator_name?.[0]?.toUpperCase() || '?'}
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-700">Posted by {selectedAnnouncement.creator_name}</p>
+                <p className="text-[10px] text-slate-400">HR Department</p>
+              </div>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Announcement Creation Modal */}

@@ -541,10 +541,16 @@ export default function Attendance() {
                       <div className="bg-white/60 rounded-lg p-2.5 text-center">
                         <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color:'rgba(22,38,96,0.35)' }}>In</div>
                         <div className="font-bold text-sm" style={{ color: dd.punch_in ? '#162660' : 'rgba(22,38,96,0.25)' }}>{dd.punch_in ? dd.punch_in.slice(0,5) : 'Not punched'}</div>
+                        {dd.is_regularized && dd.actual_punch_in && (
+                          <div className="text-[9px] mt-0.5 font-medium text-slate-400">Actual: {dd.actual_punch_in.slice(0,5)}</div>
+                        )}
                       </div>
                       <div className="bg-white/60 rounded-lg p-2.5 text-center">
                         <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color:'rgba(22,38,96,0.35)' }}>Out</div>
                         <div className="font-bold text-sm" style={{ color: dd.punch_out ? '#162660' : 'rgba(22,38,96,0.25)' }}>{dd.punch_out ? dd.punch_out.slice(0,5) : 'Not punched'}</div>
+                        {dd.is_regularized && dd.actual_punch_out && (
+                          <div className="text-[9px] mt-0.5 font-medium text-slate-400">Actual: {dd.actual_punch_out.slice(0,5)}</div>
+                        )}
                       </div>
                       <div className="bg-white/60 rounded-lg p-2.5 text-center">
                         <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color:'rgba(22,38,96,0.35)' }}>Hours</div>
@@ -987,6 +993,7 @@ export default function Attendance() {
       {/* Leave Modal */}
       {showForm && (
         <Modal title={form.half_day_type ? `Apply ${form.half_day_type==='FIRST_HALF'?'First Half':'Second Half'} Leave` : 'Apply Leave'} onClose={()=>setShowForm(false)} theme="light">
+          <form onSubmit={(e) => { e.preventDefault(); submitLeave(); }}>
           <div className="grid grid-cols-2 gap-3">
             {user.role!=='employee' && (
               <div className="col-span-2">
@@ -1025,7 +1032,7 @@ export default function Attendance() {
             </div>
             <div>
               <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Contact</label>
-              <input className="input w-full" value={form.contact_number} onChange={e=>setForm({...form,contact_number:e.target.value})} placeholder="Mobile"
+              <input className="input w-full" value={form.contact_number} onChange={e => { let v = e.target.value.replace(/\D/g, ''); if (v.length > 10) v = v.slice(0, 10); setForm({...form,contact_number:v}) }} placeholder="Mobile" required pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9"
                 style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
             </div>
             <div>
@@ -1039,8 +1046,9 @@ export default function Attendance() {
                 style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
             </div>
           </div>
-          <button className="w-full mt-5 font-semibold py-3.5 rounded-xl transition-all hover:shadow-lg"
-            style={{ background:'#162660', color:'#FEFEFA' }} onClick={submitLeave}>Submit</button>
+          <button type="submit" className="w-full mt-5 font-semibold py-3.5 rounded-xl transition-all hover:shadow-lg"
+            style={{ background:'#162660', color:'#FEFEFA' }}>Submit</button>
+          </form>
         </Modal>
       )}
 

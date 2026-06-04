@@ -416,7 +416,7 @@ export default function Onboarding() {
       )}
 
       {selected && (
-        <Modal title={`Onboarding: ${selected.name}`} onClose={()=>setSelected(null)} wide>
+        <Modal title={`Onboarding: ${selected.name}`} onClose={()=>setSelected(null)} theme="light" wide>
           <div className="grid grid-cols-2 gap-6 mb-6">
             {[['Post',selected.post],['Department',selected.dept_name_full||selected.dept_name],['Candidate ID',selected.candidate_ref_id],['Joining Date',selected.joining_date?.split('T')[0]]].map(([k,v])=>(
               <div key={k}><p className="text-xs text-slate-400 mb-1">{k}</p><p className="text-sm font-medium text-white">{v||'—'}</p></div>
@@ -478,7 +478,7 @@ export default function Onboarding() {
       )}
 
       {showLetter && selected && (
-        <Modal title="Appointment Letter Preview" onClose={()=>setShowLetter(false)} wide>
+        <Modal title="Appointment Letter Preview" onClose={()=>setShowLetter(false)} theme="light" wide>
           <div className="bg-white text-slate-800 p-8 rounded-lg shadow-inner font-serif h-[60vh] overflow-y-auto">
             <div className="text-center border-b-2 border-slate-300 pb-4 mb-6">
               <h2 className="text-xl font-bold uppercase">JadeQuest </h2>
@@ -527,7 +527,7 @@ export default function Onboarding() {
       )}
 
       {showAdd && (
-        <Modal title="Add Candidate to Onboarding" onClose={()=>setShowAdd(false)}>
+        <Modal title="Add Candidate to Onboarding" onClose={()=>setShowAdd(false)} theme="light">
           <div className="grid grid-cols-2 gap-4">
             {[['candidate_ref_id','Candidate Ref ID'],['name','Full Name'],['post','Post Applied']].map(([k,l])=>(
               <div key={k}><label className="text-xs text-slate-400 block mb-1">{l}</label><input className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})}/></div>

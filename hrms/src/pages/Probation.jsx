@@ -108,7 +108,6 @@ export default function Probation() {
                         <div className="flex gap-2">
                           <button onClick={() => setProbationModal({ emp_id: p.emp_id, name: p.first_name, action: 'accept' })} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-semibold hover:bg-emerald-200 transition-colors">Accept</button>
                           <button onClick={() => setProbationModal({ emp_id: p.emp_id, name: p.first_name, action: 'extend' })} className="px-3 py-1 bg-amber-100 text-amber-700 rounded text-xs font-semibold hover:bg-amber-200 transition-colors">Extend</button>
-                          <button onClick={() => setProbationModal({ emp_id: p.emp_id, name: p.first_name, action: 'reject' })} className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold hover:bg-red-200 transition-colors">Reject</button>
                         </div>
                       </td>
                     </tr>
@@ -148,7 +147,7 @@ export default function Probation() {
               <button 
                 onClick={submitProbationAction} 
                 disabled={!probationNotes.trim()}
-                className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-colors ${!probationNotes.trim() ? 'bg-slate-400 cursor-not-allowed' : probationModal.action === 'reject' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-colors ${!probationNotes.trim() ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
               >
                 Confirm
               </button>

@@ -1196,7 +1196,7 @@ export default function Payroll() {
       )}
 
       {showFormModal && (
-        <Modal title={formObj.id ? `Adjust Salary Components — ${formObj.emp_name}` : 'New Payroll Entry'} onClose={() => setShowFormModal(false)}>
+        <Modal title={formObj.id ? `Adjust Salary Components — ${formObj.emp_name}` : 'New Payroll Entry'} onClose={() => setShowFormModal(false)} theme="light">
           <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
             <div className="grid grid-cols-2 gap-4">
               <div>

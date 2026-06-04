@@ -54,7 +54,7 @@ export default function Login() {
               <label style={{ fontSize: 13, color: '#475569', display: 'block', marginBottom: 6, fontWeight: 500 }}>Email / Employee ID</label>
               <div style={{ position: 'relative' }}>
                 <Mail size={18} color="#94a3b8" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-                <input type="text" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                <input type="text" required pattern="^([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9_\-]+)$" title="Enter a valid Email or Employee ID" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
                   style={{ width: '100%', padding: '10px 12px 10px 38px', border: '1px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#1e293b', background: '#fff' }}
                   placeholder="admin@hrms.gov.in" />
               </div>

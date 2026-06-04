@@ -148,14 +148,25 @@ function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) 
   );
 }
 
-const F = ({ k, l, type = 'text', opts, full, req, form, setForm }) => (
+const F = ({ k, l, type = 'text', opts, full, req, pattern, title, maxLength, restrict, form, setForm }) => {
+  const handleChange = (e) => {
+    let val = e.target.value;
+    if (restrict === 'number') val = val.replace(/\D/g, '');
+    if (restrict === 'pan') val = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (restrict === 'ifsc') val = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (restrict === 'pf') val = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (maxLength && val.length > maxLength) val = val.slice(0, maxLength);
+    setForm({ ...form, [k]: val });
+  };
+  return (
   <div className={full ? 'col-span-3' : ''}>
     <label className="text-xs text-slate-400 block mb-1">{l}{req && <span className="text-red-400">*</span>}</label>
-    {opts ? <select className="input" value={form[k] || ''} onChange={e => setForm({ ...form, [k]: e.target.value })}>
+    {opts ? <select className="input" required={req} value={form[k] || ''} onChange={handleChange}>
       <option value="">Select</option>{opts.map(o => <option key={o.v || o} value={o.v || o}>{o.l || o}</option>)}
-    </select> : <input type={type} className="input" value={form[k] || ''} onChange={e => setForm({ ...form, [k]: e.target.value })} />}
+    </select> : <input type={type} className="input" required={req} pattern={pattern} title={title} maxLength={maxLength} value={form[k] || ''} onChange={handleChange} />}
   </div>
-);
+  );
+};
 
 export default function EmployeeMaster() {
   const { can, isMin, user } = useAuth();
@@ -523,13 +534,15 @@ export default function EmployeeMaster() {
         )}
 
         {showForm && (
-          <Modal title={editMode ? `Edit: ${form.first_name} ${form.last_name}` : 'Add New Employee'} onClose={() => setShowForm(false)} theme="light" wide>
-            <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
-              <F form={form} setForm={setForm} k="first_name" l="First Name" req /><F form={form} setForm={setForm} k="last_name" l="Last Name" req /><F form={form} setForm={setForm} k="father_name" l="Father's Name" />
+          <Modal title={editMode ? 'Edit Employee' : 'Add New Employee'} onClose={() => { setShowForm(false); setEditMode(false); setForm(blank); }} theme="light" wide>
+            <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3 mt-4">
+              <F form={form} setForm={setForm} k="first_name" l="First Name" req />
+              <F form={form} setForm={setForm} k="last_name" l="Last Name" req /><F form={form} setForm={setForm} k="father_name" l="Father's Name" />
               <F form={form} setForm={setForm} k="gender" l="Gender" opts={['Male', 'Female', 'Other']} req />
               <F form={form} setForm={setForm} k="dob" l="Date of Birth" type="date" req /><F form={form} setForm={setForm} k="doj" l="Date of Joining" type="date" req />
               <div><label className="text-xs text-slate-400 block mb-1">Department<span className="text-red-400">*</span></label>
-                <select className="input" value={form.dept_id || ''} onChange={e => setForm({ ...form, dept_id: e.target.value })}>
+                <select className="input" value={form.dept_id || ''} onChange={e => setForm({ ...form, dept_id: e.target.value })} required>
                   <option value="">Select</option>{depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
@@ -537,16 +550,24 @@ export default function EmployeeMaster() {
               <F form={form} setForm={setForm} k="ctc" l="Monthly Gross Salary (₹)" type="number" />
               <F form={form} setForm={setForm} k="probation_days" l="Probation (Days)" type="number" />
               <F form={form} setForm={setForm} k="posting_station" l="Posting Station" full />
-              <F form={form} setForm={setForm} k="mobile" l="Mobile" req /><F form={form} setForm={setForm} k="alternate_mobile" l="Alternate Mobile" /><F form={form} setForm={setForm} k="official_email" l="Official Email" type="email" />
+              <F form={form} setForm={setForm} k="mobile" l="Mobile" req pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9" restrict="number" maxLength={10} />
+              <F form={form} setForm={setForm} k="alternate_mobile" l="Alternate Mobile" pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9" restrict="number" maxLength={10} />
+              <F form={form} setForm={setForm} k="official_email" l="Official Email" type="email" pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Valid email address" />
               <F form={form} setForm={setForm} k="blood_group" l="Blood Group" opts={['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']} />
               <F form={form} setForm={setForm} k="qualification" l="Qualification" /><F form={form} setForm={setForm} k="experience_years" l="Experience (Years)" type="number" />
-              <F form={form} setForm={setForm} k="pan_number" l="PAN No." /><F form={form} setForm={setForm} k="aadhaar_number" l="Aadhaar No." /><F form={form} setForm={setForm} k="pf_number" l="PF No." />
-              <F form={form} setForm={setForm} k="bank_name" l="Bank Name" /><F form={form} setForm={setForm} k="account_number" l="Account No." /><F form={form} setForm={setForm} k="ifsc_code" l="IFSC Code" />
+              <F form={form} setForm={setForm} k="pan_number" l="PAN No." pattern="^[A-Z]{5}\d{4}[A-Z]{1}$" title="Valid PAN format (e.g., ABCDE1234F)" restrict="pan" maxLength={10} />
+              <F form={form} setForm={setForm} k="aadhaar_number" l="Aadhaar No." pattern="^\d{12}$" title="12-digit Aadhaar number" restrict="number" maxLength={12} />
+              <F form={form} setForm={setForm} k="pf_number" l="PF No." pattern="^[A-Z0-9]{10,22}$" title="10 to 22 alphanumeric characters" restrict="pf" maxLength={22} />
+              <F form={form} setForm={setForm} k="bank_name" l="Bank Name" />
+              <F form={form} setForm={setForm} k="account_number" l="Account No." pattern="^\d{9,18}$" title="9 to 18 digits" restrict="number" maxLength={18} />
+              <F form={form} setForm={setForm} k="ifsc_code" l="IFSC Code" pattern="^[A-Z]{4}0[A-Z0-9]{6}$" title="Valid IFSC code" restrict="ifsc" maxLength={11} />
               <F form={form} setForm={setForm} k="nominee_name" l="Nominee Name" /><F form={form} setForm={setForm} k="nominee_relation" l="Relation" />
-              <F form={form} setForm={setForm} k="emergency_contact_name" l="Emergency Contact" /><F form={form} setForm={setForm} k="emergency_contact_mobile" l="Emergency Mobile" />
+              <F form={form} setForm={setForm} k="emergency_contact_name" l="Emergency Contact" />
+              <F form={form} setForm={setForm} k="emergency_contact_mobile" l="Emergency Mobile" pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9" restrict="number" maxLength={10} />
               <F form={form} setForm={setForm} k="status" l="Status" opts={['Active', 'On Leave', 'Retired', 'Suspended', 'Resigned']} />
             </div>
             <button 
+              type="submit"
               className="btn w-full mt-4 font-semibold" 
               style={{ 
                 background: 'linear-gradient(135deg, #D0E6FD 0%, #FEFEFA 100%)', 
@@ -554,10 +575,10 @@ export default function EmployeeMaster() {
                 boxShadow: '0 4px 15px rgba(208, 230, 253, 0.3)'
               }} 
               disabled={saving} 
-              onClick={handleSave}
             >
               {saving ? 'Saving...' : editMode ? 'Save Changes' : 'Add Employee'}
             </button>
+            </form>
           </Modal>
         )}
     </Layout>

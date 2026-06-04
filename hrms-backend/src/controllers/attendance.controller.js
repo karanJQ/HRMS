@@ -123,7 +123,7 @@ exports.getCalendar = async (req, res) => {
 
     const recordsRes = await query(
       `SELECT to_char(d.date, 'YYYY-MM-DD') as date,
-              a.status, a.punch_in, a.punch_out, a.biometric_sync, a.is_regularized, a.working_hours, a.location, a.photo_url,
+              a.status, a.punch_in, a.punch_out, a.actual_punch_in, a.actual_punch_out, a.biometric_sync, a.is_regularized, a.working_hours, a.location, a.photo_url,
               l.leave_type, l.half_day_type, l.status as leave_status,
               w.status as wfh_status,
               CASE WHEN h.id IS NOT NULL THEN true ELSE false END as is_holiday,
@@ -197,6 +197,8 @@ exports.getCalendar = async (req, res) => {
         status: computedStatus,
         punch_in: row.punch_in,
         punch_out: row.punch_out,
+        actual_punch_in: row.actual_punch_in,
+        actual_punch_out: row.actual_punch_out,
         biometric_sync: row.biometric_sync,
         is_regularized: row.is_regularized,
         working_hours: row.working_hours,
@@ -336,8 +338,8 @@ exports.syncBiometrics = async (req, res) => {
     }
 
     const result = await query(
-      `INSERT INTO attendance_records (emp_id, date, punch_in, status, biometric_sync, location, photo_url)
-       VALUES ($1, $2, CURRENT_TIME, 'Present', true, $3, $4) RETURNING *`,
+      `INSERT INTO attendance_records (emp_id, date, punch_in, actual_punch_in, status, biometric_sync, location, photo_url)
+       VALUES ($1, $2, CURRENT_TIME, CURRENT_TIME, 'Present', true, $3, $4) RETURNING *`,
       [emp_id, todayStr, locStr, photoUrl]
     );
     return success(res, result.rows[0], 'Biometric sync: Punched in successfully');
@@ -364,7 +366,7 @@ exports.punch = async (req, res) => {
       if (!existing.rows[0].punch_out) {
         if (!existing.rows[0].punch_in) {
           const result = await query(
-            `UPDATE attendance_records SET punch_in = CURRENT_TIME, status = 'Present', updated_at = NOW() WHERE id = $1 RETURNING *`,
+            `UPDATE attendance_records SET punch_in = CURRENT_TIME, actual_punch_in = CURRENT_TIME, status = 'Present', updated_at = NOW() WHERE id = $1 RETURNING *`,
             [existing.rows[0].id]
           );
           return success(res, result.rows[0], 'Punched in successfully');
@@ -390,7 +392,7 @@ exports.punch = async (req, res) => {
         }
 
         const result = await query(
-          `UPDATE attendance_records SET punch_out = $1, working_hours = $2, status = $3, updated_at = NOW() WHERE id = $4 RETURNING *`,
+          `UPDATE attendance_records SET punch_out = $1, actual_punch_out = $1, working_hours = $2, status = $3, updated_at = NOW() WHERE id = $4 RETURNING *`,
           [outTime, workingHours.toFixed(1), outStatus, existing.rows[0].id]
         );
         return success(res, result.rows[0], 'Punched out successfully');
@@ -399,8 +401,8 @@ exports.punch = async (req, res) => {
     }
 
     const result = await query(
-      `INSERT INTO attendance_records (emp_id, date, punch_in, status, biometric_sync)
-       VALUES ($1, CURRENT_DATE, CURRENT_TIME,
+      `INSERT INTO attendance_records (emp_id, date, punch_in, actual_punch_in, status, biometric_sync)
+       VALUES ($1, CURRENT_DATE, CURRENT_TIME, CURRENT_TIME,
          CASE WHEN CURRENT_TIME > ($2::TIME + ($3 || ' minutes')::INTERVAL) THEN 'Late' ELSE 'Present' END,
          false) RETURNING *`,
       [emp_id, shift.shift_start, shift.grace_period_mins]
