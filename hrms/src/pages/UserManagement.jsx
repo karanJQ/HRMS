@@ -21,11 +21,15 @@ export default function UserManagement() {
   const [msg, setMsg] = useState('');
 
   const handleCreate = async () => {
-    await call(() => authAPI.createUser(form), () => {
-      setMsg('User created successfully'); setShowForm(false);
-      setForm({ username: '', email: '', password: '', role: 'hr_staff', emp_id: '' });
-      refetch();
-    });
+    try {
+      await call(() => authAPI.createUser(form), () => {
+        setMsg('User created successfully'); setShowForm(false);
+        setForm({ username: '', email: '', password: '', role: 'hr_staff', emp_id: '' });
+        refetch();
+      });
+    } catch (err) {
+      setMsg(err.response?.data?.message || 'Error creating user');
+    }
   };
 
   const handleToggle = async (id) => {

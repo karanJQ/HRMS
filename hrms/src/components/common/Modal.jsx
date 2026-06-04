@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 export default function Modal({ title, onClose, children, wide, theme }) {
   const isLight = theme === 'light';
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div 
         className="modal" 
         style={{ 
