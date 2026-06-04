@@ -155,9 +155,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      )}
-
-      )}
 
       {/* Reports & Analytics Header (Admins Only) */}
       {user?.role !== 'employee' && (

@@ -5,7 +5,7 @@ import Modal from '../components/common/Modal';
 import Loader from '../components/common/Loader';
 import { useApi, useApiCall } from '../hooks/useApi';
 import { authAPI, deptAPI, empAPI } from '../api/endpoints';
-import { Plus, ToggleLeft, ToggleRight, Shield } from 'lucide-react';
+import { Plus, ToggleLeft, ToggleRight, Shield, Eye, EyeOff } from 'lucide-react';
 
 const roleColors = { super_admin: '#7c3aed', hr_manager: '#2563eb', dept_head: '#0891b2', hr_staff: '#16a34a', employee: '#64748b' };
 
@@ -16,13 +16,14 @@ export default function UserManagement() {
   const employees = empData?.employees || [];
   const { call } = useApiCall();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ username: '', email: '', password: '', role: 'hr_staff', dept_id: '', emp_id: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [form, setForm] = useState({ username: '', email: '', password: '', role: 'hr_staff', emp_id: '' });
   const [msg, setMsg] = useState('');
 
   const handleCreate = async () => {
     await call(() => authAPI.createUser(form), () => {
       setMsg('User created successfully'); setShowForm(false);
-      setForm({ username: '', email: '', password: '', role: 'hr_staff', dept_id: '', emp_id: '' });
+      setForm({ username: '', email: '', password: '', role: 'hr_staff', emp_id: '' });
       refetch();
     });
   };
@@ -35,13 +36,7 @@ export default function UserManagement() {
     <span style={{ padding: '2px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: `${roleColors[role]}15`, color: roleColors[role] }}>{role.replace('_', ' ')}</span>
   );
 
-  const F = ({ k, l, type = 'text', opts, pattern, title }) => (
-    <div><label className="text-xs text-slate-400 block mb-1">{l}</label>
-      {opts ? <select className="input" required value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })}>
-        <option value="">Select</option>{opts.map(o => <option key={o.v || o} value={o.v || o}>{o.l || o}</option>)}
-      </select> : <input type={type} className="input" required pattern={pattern} title={title} value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} />}
-    </div>
-  );
+
 
   return (
     <Layout title="User Management" theme="light" bg="#F8F8FF">
@@ -134,17 +129,31 @@ export default function UserManagement() {
         <Modal title="Create System User" onClose={() => setShowForm(false)} theme="light">
           <form onSubmit={(e) => { e.preventDefault(); handleCreate(); }}>
           <div className="grid grid-cols-2 gap-3">
-            <F k="username" l="Username" />
-            <F k="email" l="Email" type="email" pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Valid email address" />
-            <F k="password" l="Password" type="password" />
-            <F k="role" l="Role" opts={[
-              { v: 'hr_manager', l: 'HR Manager' }, { v: 'dept_head', l: 'Department Head' },
-              { v: 'hr_staff', l: 'HR Staff' }, { v: 'employee', l: 'Employee' }
-            ]} />
-            <div className="col-span-2"><label className="text-xs text-slate-400 block mb-1">Department</label>
-              <select className="input" value={form.dept_id} onChange={e => setForm({ ...form, dept_id: e.target.value })}>
-                <option value="">Select Department</option>
-                {(depts || []).map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Username</label>
+              <input type="text" className="input" required value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Email</label>
+              <input type="email" className="input" required pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Valid email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Password</label>
+              <div className="relative">
+                <input type={showPassword ? "text" : "password"} className="input w-full pr-10" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Role</label>
+              <select className="input" required value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
+                <option value="">Select</option>
+                {[
+                  { v: 'hr_manager', l: 'HR Manager' }, { v: 'dept_head', l: 'Department Head' },
+                  { v: 'hr_staff', l: 'HR Staff' }, { v: 'employee', l: 'Employee' }
+                ].map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
               </select>
             </div>
             <div className="col-span-2">

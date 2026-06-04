@@ -152,6 +152,7 @@ const F = ({ k, l, type = 'text', opts, full, req, pattern, title, maxLength, re
   const handleChange = (e) => {
     let val = e.target.value;
     if (restrict === 'number') val = val.replace(/\D/g, '');
+    if (restrict === 'text') val = val.replace(/[^a-zA-Z\s]/g, '');
     if (restrict === 'pan') val = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (restrict === 'ifsc') val = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (restrict === 'pf') val = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -558,11 +559,12 @@ export default function EmployeeMaster() {
               <F form={form} setForm={setForm} k="pan_number" l="PAN No." pattern="^[A-Z]{5}\d{4}[A-Z]{1}$" title="Valid PAN format (e.g., ABCDE1234F)" restrict="pan" maxLength={10} />
               <F form={form} setForm={setForm} k="aadhaar_number" l="Aadhaar No." pattern="^\d{12}$" title="12-digit Aadhaar number" restrict="number" maxLength={12} />
               <F form={form} setForm={setForm} k="pf_number" l="PF No." pattern="^[A-Z0-9]{10,22}$" title="10 to 22 alphanumeric characters" restrict="pf" maxLength={22} />
-              <F form={form} setForm={setForm} k="bank_name" l="Bank Name" />
+              <F form={form} setForm={setForm} k="bank_name" l="Bank Name" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
               <F form={form} setForm={setForm} k="account_number" l="Account No." pattern="^\d{9,18}$" title="9 to 18 digits" restrict="number" maxLength={18} />
               <F form={form} setForm={setForm} k="ifsc_code" l="IFSC Code" pattern="^[A-Z]{4}0[A-Z0-9]{6}$" title="Valid IFSC code" restrict="ifsc" maxLength={11} />
-              <F form={form} setForm={setForm} k="nominee_name" l="Nominee Name" /><F form={form} setForm={setForm} k="nominee_relation" l="Relation" />
-              <F form={form} setForm={setForm} k="emergency_contact_name" l="Emergency Contact" />
+              <F form={form} setForm={setForm} k="nominee_name" l="Nominee Name" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
+              <F form={form} setForm={setForm} k="nominee_relation" l="Relation" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
+              <F form={form} setForm={setForm} k="emergency_contact_name" l="Emergency Contact Name" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
               <F form={form} setForm={setForm} k="emergency_contact_mobile" l="Emergency Mobile" pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9" restrict="number" maxLength={10} />
               <F form={form} setForm={setForm} k="status" l="Status" opts={['Active', 'On Leave', 'Retired', 'Suspended', 'Resigned']} />
             </div>

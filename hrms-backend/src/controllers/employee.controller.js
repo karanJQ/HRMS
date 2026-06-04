@@ -101,7 +101,7 @@ exports.create = async (req, res) => {
     );
     // Create leave balance for current year
     const yr = new Date().getFullYear();
-    await query('INSERT INTO leave_balances(emp_id,year) VALUES($1,$2) ON CONFLICT DO NOTHING', [emp_id, yr]);
+    await query('INSERT INTO leave_balances(emp_id, year, cl_entitled, el_entitled, ml_entitled, ccl_entitled, sl_entitled) VALUES($1, $2, 0, 0, 0, 0, 0) ON CONFLICT DO NOTHING', [emp_id, yr]);
     // Auto create service book joining entry
     await query(
       `INSERT INTO service_book_entries(emp_id,event_date,event_type,details,recorded_by,recorded_by_name,is_verified)
