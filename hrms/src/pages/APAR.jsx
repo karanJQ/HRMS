@@ -455,13 +455,7 @@ const GradeTag = ({ val }) => val
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function APAR() {
   const { isMin, user } = useAuth();
-  const FY_OPTIONS = [
-    'Q4 2027', 'Q3 2027', 'Q2 2027', 'Q1 2027',
-    'Q4 2026', 'Q3 2026', 'Q2 2026', 'Q1 2026',
-    'Q4 2025', 'Q3 2025', 'Q2 2025', 'Q1 2025',
-    'Q4 2024', 'Q3 2024', 'Q2 2024', 'Q1 2024',
-    'Q4 2023', 'Q3 2023', 'Q2 2023', 'Q1 2023'
-  ];
+
 
   // Shared state
   const [tab, setTab]             = useState('kpi');
@@ -479,12 +473,21 @@ export default function APAR() {
   const [showItemsEditor, setShowItemsEditor]   = useState(null);
   const [submitLoading, setSubmitLoading]       = useState(null);
   const [createReportForm, setCreateReportForm] = useState({ cycle_id: '', emp_id: '' });
-  const [cycleForm, setCycleForm] = useState({ quarter: '', year: new Date().getFullYear(), start_date: '', end_date: '' });
+  const [cycleForm, setCycleForm] = useState({ quarter: '', year: new Date().getFullYear() });
+
+  const currentYear = new Date().getFullYear();
+  const maxCycleYear = Math.max(currentYear + 1, ...kpiCycles.map(c => parseInt(c.year) || 0));
+  const FY_OPTIONS = [];
+  for (let y = maxCycleYear; y >= 2023; y--) {
+    for (let q = 4; q >= 1; q--) {
+      FY_OPTIONS.push(`Q${q} ${y}`);
+    }
+  }
 
   // APAR state
   const [aparData, setAparData]       = useState([]);
   const [aparLoading, setAparLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState('Q4 2026');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selected, setSelected]         = useState(null);
   const [fillMode, setFillMode]         = useState(null);
   const [aparForm, setAparForm]         = useState({ grade: '', remarks: '' });
@@ -560,11 +563,20 @@ export default function APAR() {
 
   const createKPICycle = async () => {
     try {
-      await kpiAPI.createCycle({ ...cycleForm, name: `Q${cycleForm.quarter}-${cycleForm.year}` });
+      if (!cycleForm.quarter || !cycleForm.year) throw new Error("Quarter and Year are required.");
+      const year = cycleForm.year;
+      const q = parseInt(cycleForm.quarter);
+      let start_date = '', end_date = '';
+      if (q === 1) { start_date = `${year}-01-01`; end_date = `${year}-03-31`; }
+      else if (q === 2) { start_date = `${year}-04-01`; end_date = `${year}-06-30`; }
+      else if (q === 3) { start_date = `${year}-07-01`; end_date = `${year}-09-30`; }
+      else if (q === 4) { start_date = `${year}-10-01`; end_date = `${year}-12-31`; }
+
+      await kpiAPI.createCycle({ ...cycleForm, start_date, end_date, name: `Q${cycleForm.quarter}-${cycleForm.year}` });
       showMsg('Cycle created'); setShowCreateCycle(false);
-      setCycleForm({ quarter:'', year:new Date().getFullYear(), start_date:'', end_date:'' });
+      setCycleForm({ quarter:'', year:new Date().getFullYear() });
       loadKPI();
-    } catch(e) { showMsg('Error: '+(e.response?.data?.message||e.message)); }
+    } catch(e) { showMsg('Error: '+(e.response?.data?.message||e.message||e)); }
   };
 
   // APAR actions
@@ -640,9 +652,11 @@ export default function APAR() {
 
   const KPI_SUB_TABS = [
     { id: 'overview', label: 'Overview' },
-    { id: 'all',      label: 'All Reports' },
-    { id: 'review',   label: `Review Queue${kpiPending.length > 0 ? ` (${kpiPending.length})` : ''}` },
-    { id: 'manage',   label: 'Manage' },
+    ...(isMin('dept_head') ? [
+      { id: 'all',      label: 'All Reports' },
+      { id: 'review',   label: `Review Queue${kpiPending.length > 0 ? ` (${kpiPending.length})` : ''}` },
+      { id: 'manage',   label: 'Manage' }
+    ] : []),
   ];
   const [kpiSubTab, setKpiSubTab] = useState('overview');
 
@@ -672,14 +686,16 @@ export default function APAR() {
       {tab === 'kpi' && (
         <div className="pa-anim">
           {/* KPI sub-tabs */}
-          <div style={{ display:'flex', gap:4, marginBottom:14, flexWrap:'wrap' }}>
-            {KPI_SUB_TABS.map(t => (
-              <button key={t.id} onClick={() => setKpiSubTab(t.id)}
-                style={{ padding:'5px 14px', borderRadius:16, fontSize:12, fontWeight:600, cursor:'pointer', background:kpiSubTab===t.id?'rgba(22,38,96,0.1)':'transparent', color:kpiSubTab===t.id?BRAND:'rgba(22,38,96,0.5)', border:kpiSubTab===t.id?'1px solid rgba(22,38,96,0.15)':'1px solid transparent' }}>
-                {t.label}
-              </button>
-            ))}
-          </div>
+          {KPI_SUB_TABS.length > 1 && (
+            <div style={{ display:'flex', gap:4, marginBottom:14, flexWrap:'wrap' }}>
+              {KPI_SUB_TABS.map(t => (
+                <button key={t.id} onClick={() => setKpiSubTab(t.id)}
+                  style={{ padding:'5px 14px', borderRadius:16, fontSize:12, fontWeight:600, cursor:'pointer', background:kpiSubTab===t.id?'rgba(22,38,96,0.1)':'transparent', color:kpiSubTab===t.id?BRAND:'rgba(22,38,96,0.5)', border:kpiSubTab===t.id?'1px solid rgba(22,38,96,0.15)':'1px solid transparent' }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {kpiLoading ? <Loader/> : (
             <>
@@ -718,7 +734,7 @@ export default function APAR() {
                 {kpiReports.length === 0 && (
                   <div style={{ textAlign:'center', padding:'48px 0', color:'#94a3b8' }}>
                     <Target size={34} style={{ marginBottom:8, opacity:0.3 }}/><div style={{ fontWeight:600 }}>No KPI reports yet</div>
-                    <div style={{ fontSize:12, marginTop:4 }}>Create a report from the "Manage" tab</div>
+                    {isMin('dept_head') && <div style={{ fontSize:12, marginTop:4 }}>Create a report from the "Manage" tab</div>}
                   </div>
                 )}
               </div>
@@ -804,7 +820,9 @@ export default function APAR() {
               <span style={{ fontSize:15, fontWeight:700, color:BRAND }}>APAR Records</span>
               <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)}
                 style={{ padding:'6px 10px', borderRadius:8, border:'1px solid rgba(22,38,96,0.15)', fontSize:12, color:BRAND, outline:'none', background:'#fff', color:'#1e293b' }}>
-                {FY_OPTIONS.map(y => <option key={y}>{y}</option>)}
+                {Array.from(new Set(FY_OPTIONS.map(o => o.split(' ')[1]))).map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
               </select>
             </div>
             {isMin('hr_staff') && (
@@ -952,18 +970,7 @@ export default function APAR() {
                   style={{ width:'100%', padding:'7px 10px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
               </div>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-              <div>
-                <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:3 }}>START DATE</label>
-                <input type="date" value={cycleForm.start_date} onChange={e => setCycleForm(p => ({...p, start_date:e.target.value}))}
-                  style={{ width:'100%', padding:'7px 10px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
-              </div>
-              <div>
-                <label style={{ fontSize:10, fontWeight:700, color:'rgba(22,38,96,0.5)', display:'block', marginBottom:3 }}>END DATE</label>
-                <input type="date" value={cycleForm.end_date} onChange={e => setCycleForm(p => ({...p, end_date:e.target.value}))}
-                  style={{ width:'100%', padding:'7px 10px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}/>
-              </div>
-            </div>
+
             <button onClick={createKPICycle}
               style={{ padding:'10px', borderRadius:10, background:'linear-gradient(135deg,#162660,#1e40af)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', marginTop:4 }}>
               Create Cycle
@@ -1033,7 +1040,11 @@ export default function APAR() {
               <select value={initForm.cycle_name} onChange={e => setInitForm({...initForm, cycle_name:e.target.value})}
                 style={{ width:'100%', padding:'8px 12px', borderRadius:9, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', background:'#fff', color:'#1e293b' }}>
                 <option value="">Select…</option>
-                {FY_OPTIONS.map(y => <option key={y}>{y}</option>)}
+                {Array.from(new Set(FY_OPTIONS.map(o => o.split(' ')[1]))).map(year => (
+                  <optgroup key={year} label={`Year ${year}`}>
+                    {FY_OPTIONS.filter(o => o.endsWith(year)).map(y => <option key={y} value={y}>{y}</option>)}
+                  </optgroup>
+                ))}
               </select>
             </div>
           </div>

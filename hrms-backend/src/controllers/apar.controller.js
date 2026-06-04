@@ -3,10 +3,20 @@ const { success, error } = require('../utils/response');
 
 exports.list = async (req, res) => {
   const { year, status } = req.query;
-  // Default to 2024-25 (active appraisal cycle) if no year specified
-  const cycle = year || 'Q1 2024-25';
-  const conditions = ['a.cycle_name=$1'], params = [cycle];
-  let idx = 2;
+  const cycle = year || '2026';
+  
+  const conditions = [];
+  const params = [];
+  let idx = 1;
+  
+  if (cycle.startsWith('Q')) {
+    conditions.push(`a.cycle_name=$${idx++}`);
+    params.push(cycle);
+  } else {
+    conditions.push(`a.cycle_name LIKE $${idx++}`);
+    params.push(`%${cycle}%`);
+  }
+  
   if (status) { conditions.push(`a.status=$${idx++}`); params.push(status); }
   if (req.user.role==='employee') { conditions.push(`a.emp_id=$${idx++}`); params.push(req.user.emp_id); }
   if (req.user.role==='dept_head') { conditions.push(`e.dept_id=$${idx++}`); params.push(req.user.dept_id); }
