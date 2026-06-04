@@ -59,7 +59,7 @@ exports.getSlip = async (req, res) => {
 
 exports.process = async (req, res) => {
   const { emp_id, month, year, ctc: rawCtc, basic_pay: fallbackCtc,
-          professional_tax=200, tds=0, other_deductions=0, lwp_days=0, payment_mode='Bank Transfer', status='Processed' } = req.body;
+          professional_tax=200, tds=0, other_deductions=0, lwp_days=0, compensation=0, payment_mode='Bank Transfer', status='Processed' } = req.body;
   
   const ctc = parseFloat(rawCtc || fallbackCtc || 0);
   if (!emp_id||!month||!year||!ctc) return error(res,'emp_id, month, year, and ctc required.',400);
@@ -70,7 +70,7 @@ exports.process = async (req, res) => {
       return error(res, `Employee with ID '${emp_id}' does not exist.`, 404);
     }
 
-    const gross = ctc; // the input field is re-purposed as Monthly Gross Salary
+    const gross = Math.max(0, ctc);
     const basic = Math.round(gross / 2);
     const hra = Math.round(basic * 0.40);
     const conveyance = Math.round(basic * 0.60);
@@ -82,10 +82,11 @@ exports.process = async (req, res) => {
     const esic_emp = basic > 21000 ? 0 : Math.round(basic * 0.0075);
     const esic_er = basic > 21000 ? 0 : Math.round(basic * 0.0325);
 
-    const pt = 200;
-    const total_ded = pf_emp + esic_emp + pt + parseFloat(tds) + parseFloat(other_deductions);
+    const pt = gross > 0 ? 200 : 0;
+    const initial_total_ded = pf_emp + esic_emp + pt + (parseFloat(tds) || 0) + (parseFloat(other_deductions) || 0);
     
-    // Calculate initial Net
+    // Calculate initial Net, capped so it never goes negative
+    let total_ded = Math.min(gross, initial_total_ded);
     let net = gross - total_ded;
     
     // Auto-LWP from Leave Balances
@@ -112,19 +113,24 @@ exports.process = async (req, res) => {
     
     // LWP Calculation
     const daysInMonth = new Date(year, month, 0).getDate();
-    const lwp_amount = Math.round((net / daysInMonth) * final_lwp_days);
+    let lwp_amount = Math.round((net / daysInMonth) * final_lwp_days);
+    if (lwp_amount > net) lwp_amount = net; // Cap LWP
     
     // Final Net after LWP
     net = net - lwp_amount;
     const final_total_ded = total_ded + lwp_amount; // LWP is part of deductions
+
+    // Add compensation
+    const comp_amount = parseFloat(compensation) || 0;
+    net = net + comp_amount;
 
     const real_ctc = gross + pf_er; // User's formula: CTC = Gross salary + Employer PF
 
     const result = await query(
       `INSERT INTO payroll_records(emp_id,month,year,ctc,basic_pay,hra_amount,ta_amount,
         gross_pay,pf_employee,esic_employee,pf_employer,esic_employer,professional_tax,tds,
-        other_deductions,lwp_days,lwp_amount,total_deductions,net_pay,payment_mode,status,processed_by)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+        other_deductions,lwp_days,lwp_amount,total_deductions,compensation,net_pay,payment_mode,status,processed_by)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
        ON CONFLICT(emp_id,month,year) DO UPDATE SET
          ctc=EXCLUDED.ctc, basic_pay=EXCLUDED.basic_pay, hra_amount=EXCLUDED.hra_amount,
          ta_amount=EXCLUDED.ta_amount, gross_pay=EXCLUDED.gross_pay,
@@ -132,12 +138,12 @@ exports.process = async (req, res) => {
          pf_employer=EXCLUDED.pf_employer, esic_employer=EXCLUDED.esic_employer,
          professional_tax=EXCLUDED.professional_tax, tds=EXCLUDED.tds,
          other_deductions=EXCLUDED.other_deductions, lwp_days=EXCLUDED.lwp_days, lwp_amount=EXCLUDED.lwp_amount, 
-         total_deductions=EXCLUDED.total_deductions,
+         total_deductions=EXCLUDED.total_deductions, compensation=EXCLUDED.compensation,
          net_pay=EXCLUDED.net_pay, payment_mode=EXCLUDED.payment_mode, status=EXCLUDED.status,
          processed_by=EXCLUDED.processed_by, updated_at=NOW()
        RETURNING *`,
       [emp_id, month, year, real_ctc, basic, hra, conveyance, gross, pf_emp, esic_emp, pf_er, esic_er,
-       pt, tds, other_deductions, final_lwp_days, lwp_amount, final_total_ded, net, payment_mode, status, req.user.id]
+       pt, tds, other_deductions, final_lwp_days, lwp_amount, final_total_ded, comp_amount, net, payment_mode, status, req.user.id]
     );
     return success(res, result.rows[0], 'Payroll processed');
   } catch (err) { return error(res, err.message); }
@@ -153,7 +159,7 @@ exports.processAll = async (req, res) => {
       const ctc = parseFloat(e.ctc || e.basic_pay || 0);
       if (!ctc) continue;
 
-      const gross = ctc; // Input is treated as Gross Salary
+      const gross = Math.max(0, ctc); // Input is treated as Gross Salary
       const basic = Math.round(gross / 2);
       const hra = Math.round(basic * 0.40);
       const conveyance = Math.round(basic * 0.60);
@@ -164,10 +170,11 @@ exports.processAll = async (req, res) => {
       const esic_emp = basic > 21000 ? 0 : Math.round(basic * 0.0075);
       const esic_er = basic > 21000 ? 0 : Math.round(basic * 0.0325);
       
-      const pt = 200;
+      const pt = gross > 0 ? 200 : 0;
       const tds_val = gross > 50000 ? Math.round((gross - 50000) * 0.1) : 0;
       
-      const total_ded = pf_emp + esic_emp + pt + tds_val;
+      const initial_total_ded = pf_emp + esic_emp + pt + tds_val;
+      let total_ded = Math.min(gross, initial_total_ded);
       let net = gross - total_ded;
 
       let auto_lwp_days = 0;
@@ -192,7 +199,8 @@ exports.processAll = async (req, res) => {
       // Calculate LWP for processAll
       const final_lwp_days = auto_lwp_days;
       const daysInMonth = new Date(year, month, 0).getDate();
-      const lwp_amount = Math.round((net / daysInMonth) * final_lwp_days);
+      let lwp_amount = Math.round((net / daysInMonth) * final_lwp_days);
+      if (lwp_amount > net) lwp_amount = net; // Cap LWP
       
       net = net - lwp_amount;
       const final_total_ded = total_ded + lwp_amount;

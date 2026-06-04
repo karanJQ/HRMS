@@ -1,0 +1,1 @@
+ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS compensation NUMERIC(12,2) DEFAULT 0;
