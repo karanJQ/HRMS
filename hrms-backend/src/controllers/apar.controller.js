@@ -212,6 +212,14 @@ exports.generateYearlyReportAI = async (req, res) => {
   if (!emp_id || !year) return error(res, 'emp_id and year are required.', 400);
 
   try {
+    const existing = await query(`SELECT final_remarks FROM apar_records WHERE emp_id = $1 AND cycle_name = $2`, [emp_id, year.toString()]);
+    if (existing.rows.length > 0 && existing.rows[0].final_remarks) {
+      try {
+        const savedInsights = JSON.parse(existing.rows[0].final_remarks);
+        return success(res, savedInsights, 'Yearly report retrieved from records');
+      } catch (e) {}
+    }
+
     const records = await query(`
       SELECT r.overall_score, r.manager_remarks, c.name as cycle_name,
              e.first_name||' '||e.last_name as emp_name, d.name as dept_name
@@ -330,7 +338,15 @@ Output exactly a JSON object with these 5 keys (no markdown code blocks):
       };
     }
 
-    return success(res, insights, 'Yearly AI report generated successfully');
+    // Save the generated report to apar_records
+    await query(`
+      INSERT INTO apar_records (emp_id, cycle_name, final_grade, final_remarks, status)
+      VALUES ($1, $2, $3, $4, 'Completed')
+      ON CONFLICT (emp_id, cycle_name)
+      DO UPDATE SET final_grade = EXCLUDED.final_grade, final_remarks = EXCLUDED.final_remarks, status = 'Completed', updated_at = NOW()
+    `, [emp_id, year.toString(), insights.suggested_annual_grade, JSON.stringify(insights)]);
+
+    return success(res, insights, 'Yearly AI report generated and saved successfully');
   } catch (err) {
     return error(res, err.message);
   }

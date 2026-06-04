@@ -138,11 +138,6 @@ exports.saveItems = async (req, res) => {
   const { items, manager_remarks } = req.body;
   if (!Array.isArray(items)) return error(res, 'items must be an array.', 400);
 
-  // Validate weightage sums to 100 (allow small float error)
-  const totalWeight = items.reduce((s, i) => s + parseFloat(i.weightage || 0), 0);
-  if (Math.abs(totalWeight - 100) > 0.1)
-    return error(res, `Weightages must sum to 100%. Current total: ${totalWeight.toFixed(1)}%`, 400);
-
   try {
     const reportRes = await query('SELECT * FROM kpi_reports WHERE id=$1', [id]);
     if (!reportRes.rows.length) return error(res, 'Report not found.', 404);
@@ -151,17 +146,18 @@ exports.saveItems = async (req, res) => {
 
     // Delete existing items and re-insert
     await query('DELETE FROM kpi_items WHERE report_id=$1', [id]);
-    let overallScore = 0;
+    let totalScoreSum = 0;
     for (let i = 0; i < items.length; i++) {
-      const { item_name, description, weightage, target, score, manager_remarks: ir } = items[i];
-      const ws = (parseFloat(weightage || 0) * parseFloat(score || 0)) / 100;
-      overallScore += ws;
+      const { item_name, description, target, score, manager_remarks: ir } = items[i];
+      totalScoreSum += parseFloat(score || 0);
       await query(
         `INSERT INTO kpi_items(report_id, item_name, description, weightage, target, score, manager_remarks, sort_order)
          VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [id, item_name, description || null, weightage, target || null, score || 0, ir || null, i]
+        [id, item_name, description || null, '100', target || null, score || 0, ir || null, i]
       );
     }
+
+    let overallScore = items.length > 0 ? (totalScoreSum / items.length) : 0;
 
     await query(
       `UPDATE kpi_reports SET overall_score=$1, manager_remarks=$2, updated_at=NOW() WHERE id=$3`,
