@@ -53,7 +53,7 @@ function WorkflowTree({ approvals, onAction, canActCPO, canActCOO, canActMD, rep
   const getNode = (role) => approvals?.find(a => a.approver_role === role) || { status: 'Waiting', approver_role: role };
   const cpo = getNode('cpo'), coo = getNode('coo'), md = getNode('md');
 
-  const NodeCard = ({ node, canAct, label, roleLabel }) => {
+  const renderNodeCard = (node, canAct, label, roleLabel) => {
     const color = NODE_COLOR[node.status] || NODE_COLOR.Waiting;
     const isActing = actingOn === node.approver_role;
     return (
@@ -115,8 +115,8 @@ function WorkflowTree({ approvals, onAction, canActCPO, canActCOO, canActMD, rep
               <line x1="200" y1="12" x2="200" y2="36" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4,2"/>
             </svg>
           </div>
-          <div style={{ marginTop: 28 }}><NodeCard node={cpo} canAct={canActCPO} label="CPO" roleLabel="HR Manager"/></div>
-          <div style={{ marginTop: 28 }}><NodeCard node={coo} canAct={canActCOO} label="COO" roleLabel="Super Admin"/></div>
+          <div style={{ marginTop: 28 }}>{renderNodeCard(cpo, canActCPO, "CPO", "HR Manager")}</div>
+          <div style={{ marginTop: 28 }}>{renderNodeCard(coo, canActCOO, "COO", "Super Admin")}</div>
         </div>
 
         {/* Converge → MD */}
@@ -127,7 +127,7 @@ function WorkflowTree({ approvals, onAction, canActCPO, canActCOO, canActMD, rep
             <line x1="40"  y1="14" x2="200" y2="14" stroke="#cbd5e1" strokeWidth="2"/>
             <line x1="120" y1="14" x2="120" y2="36" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4,2"/>
           </svg>
-          <div style={{ marginTop: 36 }}><NodeCard node={md} canAct={canActMD} label="MD" roleLabel="Managing Director"/></div>
+          <div style={{ marginTop: 36 }}>{renderNodeCard(md, canActMD, "MD", "Managing Director")}</div>
         </div>
 
         {/* Published terminal */}
@@ -844,7 +844,7 @@ export default function APAR() {
                     <select value={yearlyForm.emp_id} onChange={e => setYearlyForm({...yearlyForm, emp_id:e.target.value})}
                       style={{ width:'100%', padding:'10px 14px', borderRadius:10, border:'1px solid rgba(22,38,96,0.15)', fontSize:13, outline:'none', background:'#fff', color:'#1e293b', boxShadow:'0 2px 4px rgba(0,0,0,0.02)' }}>
                       <option value="">Select Employee...</option>
-                      <option value="all" style={{ fontWeight: 'bold', color: '#10b981' }}>⚡ All Employees (Batch Generate)</option>
+                      <option value="all" style={{ fontWeight: 'bold', color: '#10b981' }}>All Employees (Batch Generate)</option>
                       {employees.map(e => <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name} ({e.emp_id})</option>)}
                     </select>
                   </div>
