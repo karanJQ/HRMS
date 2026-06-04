@@ -30,7 +30,19 @@ exports.headcount = async (req, res) => {
       query(`SELECT d.name as dept, COUNT(e.id) as count FROM departments d LEFT JOIN employees e ON e.dept_id=d.id AND e.status='Active' GROUP BY d.name ORDER BY count DESC`),
       query(`SELECT category, COUNT(*) as count FROM employees WHERE status='Active' GROUP BY category`),
       query(`SELECT grade, COUNT(*) as count FROM employees WHERE status='Active' AND grade IS NOT NULL GROUP BY grade ORDER BY grade`),
-      query(`SELECT status, COUNT(*) as count FROM employees GROUP BY status`),
+      query(`SELECT 
+        CASE 
+          WHEN a.is_wfh = true THEN 'WFH' 
+          WHEN a.id IS NOT NULL THEN 'Present' 
+          WHEN l.id IS NOT NULL THEN 'On Leave' 
+          ELSE 'Absent' 
+        END as status, 
+        COUNT(e.id) as count 
+      FROM employees e 
+      LEFT JOIN attendance_records a ON a.emp_id = e.emp_id AND a.date = CURRENT_DATE 
+      LEFT JOIN leave_applications l ON l.emp_id = e.emp_id AND l.status = 'Approved' AND CURRENT_DATE BETWEEN l.from_date AND l.to_date 
+      WHERE e.status = 'Active' 
+      GROUP BY 1`),
       query(`SELECT EXTRACT(YEAR FROM AGE(NOW(),doj)) as service_years, COUNT(*) as count FROM employees WHERE status='Active' GROUP BY service_years ORDER BY service_years`),
     ]);
     return success(res, { by_dept:byDept.rows, by_category:byCategory.rows, by_grade:byGrade.rows, by_status:byStatus.rows, by_seniority:bySeniority.rows });

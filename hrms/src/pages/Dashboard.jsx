@@ -226,18 +226,19 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Employee Status Donut */}
+            {/* Today's Attendance Donut */}
             <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-800 mb-6">Employee Status</h3>
+              <h3 className="text-sm font-bold text-slate-800 mb-6">Today's Attendance</h3>
               <div className="h-64 flex items-center justify-between">
                 <ResponsiveContainer width="50%" height="100%">
                   <PieChart>
                     <Pie data={(headcount?.by_status || []).map(d => ({ ...d, count: Number(d.count) }))} innerRadius={60} outerRadius={85} paddingAngle={2} dataKey="count" stroke="none">
                       { (headcount?.by_status || []).map((entry, index) => {
                         let c = '#cbd5e1';
-                        if(entry.status === 'Active') c = '#10b981';
-                        if(entry.status === 'On Probation') c = '#f59e0b';
-                        if(entry.status === 'Resigned') c = '#f43f5e';
+                        if(entry.status === 'Present') c = '#10b981';
+                        if(entry.status === 'On Leave') c = '#f59e0b';
+                        if(entry.status === 'Absent') c = '#f43f5e';
+                        if(entry.status === 'WFH') c = '#3b82f6';
                         return <Cell key={`cell-${index}`} fill={c} />;
                       })}
                     </Pie>
@@ -247,9 +248,10 @@ export default function Dashboard() {
                 <div className="w-[50%] flex flex-col gap-4 justify-center pl-4">
                   {(headcount?.by_status || []).map((d, i) => {
                     let c = '#cbd5e1';
-                    if(d.status === 'Active') c = '#10b981';
-                    if(d.status === 'On Probation') c = '#f59e0b';
-                    if(d.status === 'Resigned') c = '#f43f5e';
+                    if(d.status === 'Present') c = '#10b981';
+                    if(d.status === 'On Leave') c = '#f59e0b';
+                    if(d.status === 'Absent') c = '#f43f5e';
+                    if(d.status === 'WFH') c = '#3b82f6';
                     return (
                       <div key={i} className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">

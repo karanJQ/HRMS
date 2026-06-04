@@ -566,7 +566,6 @@ export default function EmployeeMaster() {
               <F form={form} setForm={setForm} k="nominee_relation" l="Relation" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
               <F form={form} setForm={setForm} k="emergency_contact_name" l="Emergency Contact Name" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
               <F form={form} setForm={setForm} k="emergency_contact_mobile" l="Emergency Mobile" pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9" restrict="number" maxLength={10} />
-              <F form={form} setForm={setForm} k="status" l="Status" opts={['Active', 'On Leave', 'Retired', 'Suspended', 'Resigned']} />
             </div>
             <button 
               type="submit"

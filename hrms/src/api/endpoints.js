@@ -80,6 +80,7 @@ export const aparAPI = {
 export const sbAPI = {
   get: (empId) => API.get(`/service-book/${empId}`),
   addEntry: (empId, data) => API.post(`/service-book/${empId}`, data),
+  deleteEntry: (id) => API.delete(`/service-book/${id}`),
 };
 
 // Training

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout/Layout';
 import Modal from '../components/common/Modal';
 import Loader from '../components/common/Loader';
-import { BookOpen, Plus, Shield } from 'lucide-react';
+import { BookOpen, Plus, Shield, Trash2 } from 'lucide-react';
 import { sbAPI, empAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 
@@ -38,6 +38,15 @@ export default function ServiceBook() {
       await sbAPI.addEntry(selected.emp_id, form);
       setMsg('Entry added'); setShowAdd(false);
       setForm({ event_date:'', event_type:'Increment', details:'', order_number:'' });
+      loadEntries(selected);
+    } catch(e) { setMsg('Error: '+e.response?.data?.message); }
+  };
+
+  const deleteEntry = async (id) => {
+    if(!window.confirm('Are you sure you want to delete this entry?')) return;
+    try {
+      await sbAPI.deleteEntry(id);
+      setMsg('Entry deleted');
       loadEntries(selected);
     } catch(e) { setMsg('Error: '+e.response?.data?.message); }
   };
@@ -215,7 +224,14 @@ export default function ServiceBook() {
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-semibold text-sm" style={{color:EVT_COLORS[e.event_type]||'#64748b'}}>{e.event_type}</span>
-                        <span className="text-xs font-semibold font-mono" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{e.event_date?.split('T')[0]}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-semibold font-mono" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{e.event_date?.split('T')[0]}</span>
+                          {isMin('hr_staff') && (
+                            <button onClick={() => deleteEntry(e.id)} className="p-1 rounded-full text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete Entry">
+                              <Trash2 size={14}/>
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <p className="text-sm font-medium" style={{ color: '#334155' }}>{e.details}</p>
                       {e.order_number && <p className="text-xs font-semibold mt-1" style={{ color: '#3b82f6' }}>Order: {e.order_number}</p>}

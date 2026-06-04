@@ -33,3 +33,20 @@ exports.addEntry = async (req, res) => {
     return success(res, result.rows[0], 'Entry added', 201);
   } catch (err) { return error(res, err.message); }
 };
+
+exports.deleteEntry = async (req, res) => {
+  const { id } = req.params;
+  if (!['super_admin','hr_manager','hr_staff'].includes(req.user.role)) {
+    return error(res, 'Access denied.', 403);
+  }
+  try {
+    const result = await query(
+      'DELETE FROM service_book_entries WHERE id = $1 RETURNING *',
+      [id]
+    );
+    if (!result.rows.length) return error(res, 'Entry not found.', 404);
+    return success(res, null, 'Entry deleted successfully');
+  } catch (err) {
+    return error(res, err.message);
+  }
+};
