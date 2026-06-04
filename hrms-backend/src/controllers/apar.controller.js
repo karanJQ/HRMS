@@ -190,6 +190,7 @@ The JSON must contain exactly these 5 keys (do not add additional root keys, mar
 exports.getYearlyReport = async (req, res) => {
   const { emp_id, year } = req.query;
   if (!emp_id || !year) return error(res, 'emp_id and year are required.', 400);
+  if (req.user.role === 'employee' && req.user.emp_id !== emp_id) return error(res, 'Access denied.', 403);
 
   try {
     const records = await query(`
@@ -210,6 +211,7 @@ exports.getYearlyReport = async (req, res) => {
 exports.generateYearlyReportAI = async (req, res) => {
   const { emp_id, year, manual } = req.query;
   if (!emp_id || !year) return error(res, 'emp_id and year are required.', 400);
+  if (req.user.role === 'employee' && req.user.emp_id !== emp_id) return error(res, 'Access denied.', 403);
 
   try {
     const existing = await query(`SELECT final_remarks FROM apar_records WHERE emp_id = $1 AND cycle_name = $2`, [emp_id, year.toString()]);
