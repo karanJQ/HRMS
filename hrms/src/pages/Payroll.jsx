@@ -248,11 +248,11 @@ export default function Payroll() {
       return;
     }
     const headers = [
-      "Emp ID", "Employee Name", "Department", "Payment Mode", 
-      "Status", "Gross Salary", "Basic Pay", "HRA", "Conveyance", 
+      "Emp ID", "Employee Name", "Department", "Payment Mode",
+      "Status", "Gross Salary", "Basic Pay", "HRA", "Conveyance",
       "LWP Days", "LWP Deduction", "Total Deductions", "Net Payable"
     ];
-    
+
     const rows = records.map(p => [
       p.emp_id,
       `"${p.emp_name}"`,
@@ -268,15 +268,15 @@ export default function Payroll() {
       p.total_deductions || 0,
       p.net_pay || 0
     ]);
-    
-    let csvContent = "data:text/csv;charset=utf-8," 
+
+    let csvContent = "data:text/csv;charset=utf-8,"
       + headers.join(",") + "\n"
       + rows.map(e => e.join(",")).join("\n");
-      
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Payroll_Export_${months[month-1]}_${year}.csv`);
+    link.setAttribute("download", `Payroll_Export_${months[month - 1]}_${year}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -566,7 +566,7 @@ export default function Payroll() {
                 </div>
                 <div class="total-row earnings" style="background:#fef08a; color:#854d0e; border-top: 1px solid #fde047;">
                   <span>Total</span>
-                  <span>₹${(parseFloat(slip.pf_employer||0) + parseFloat(slip.esic_employer||0)).toLocaleString()}</span>
+                  <span>₹${(parseFloat(slip.pf_employer || 0) + parseFloat(slip.esic_employer || 0)).toLocaleString()}</span>
                 </div>
               </div>
               
@@ -611,7 +611,7 @@ export default function Payroll() {
             <div class="net-pay-box" style="margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fef08a; border: 2px solid #fde047;">
               <div style="display:flex; justify-content:space-between; margin-bottom: 8px; font-weight: bold; color: #854d0e;">
                 <span>Total CTC (A+B):</span>
-                <span>₹${(parseFloat(slip.gross_pay||0) + parseFloat(slip.pf_employer||0) + parseFloat(slip.esic_employer||0)).toLocaleString()}</span>
+                <span>₹${(parseFloat(slip.gross_pay || 0) + parseFloat(slip.pf_employer || 0) + parseFloat(slip.esic_employer || 0)).toLocaleString()}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-weight: bold; color: #0f172a; font-size: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #854d0e40;">
                 <span>Net Payable (Take Home salary):</span>
@@ -797,8 +797,8 @@ export default function Payroll() {
       {msg && (
         <div
           className={`px-4 py-3 rounded-xl text-sm mb-4 border transition-all duration-300 ${msg.startsWith('Error')
-              ? 'bg-red-50 text-red-800 border-red-200'
-              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+            ? 'bg-red-50 text-red-800 border-red-200'
+            : 'bg-emerald-50 text-emerald-800 border-emerald-200'
             }`}
           style={{
             boxShadow: '0 4px 12px rgba(22, 38, 96, 0.03)'
@@ -1041,7 +1041,7 @@ export default function Payroll() {
                       <span>{k}</span><span className="font-medium">₹{parseFloat(v || 0).toLocaleString()}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-sm py-2 font-bold text-emerald-700"><span>Total</span><span>₹{(parseFloat(slip.pf_employer||0) + parseFloat(slip.esic_employer||0)).toLocaleString()}</span></div>
+                  <div className="flex justify-between text-sm py-2 font-bold text-emerald-700"><span>Total</span><span>₹{(parseFloat(slip.pf_employer || 0) + parseFloat(slip.esic_employer || 0)).toLocaleString()}</span></div>
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-sm mb-2 text-rose-600">Employee Contribution</p>
@@ -1065,7 +1065,7 @@ export default function Payroll() {
               )}
               <div className="border rounded-lg p-3 mt-3 flex justify-between items-center bg-amber-50 border-amber-200">
                 <span className="font-bold text-amber-800">Total CTC </span>
-                <span className="font-bold text-amber-800 text-lg">₹{(parseFloat(slip.gross_pay||0) + parseFloat(slip.pf_employer||0) + parseFloat(slip.esic_employer||0)).toLocaleString()}</span>
+                <span className="font-bold text-amber-800 text-lg">₹{(parseFloat(slip.gross_pay || 0) + parseFloat(slip.pf_employer || 0) + parseFloat(slip.esic_employer || 0)).toLocaleString()}</span>
               </div>
               <div className="border rounded-lg p-3 mt-3 flex justify-between items-center" style={{ background: 'rgba(16, 185, 129, 0.06)', borderColor: 'rgba(16, 185, 129, 0.15)' }}>
                 <span className="font-bold text-emerald-800">Net Payable </span>
