@@ -69,7 +69,7 @@ exports.update = async (req, res) => {
       // b. Split name into first and last name
       const nameParts = candidate.name.trim().split(/\s+/);
       const firstName = nameParts[0] || 'Employee';
-      const lastName = nameParts.slice(1).join(' ') || 'Master';
+      const lastName = nameParts.slice(1).join(' ') || null;
 
       // c. Find a default designation if none is specified
       let designationId = null;
@@ -78,15 +78,15 @@ exports.update = async (req, res) => {
         if (desigRes.rows.length) designationId = desigRes.rows[0].id;
       }
 
-      const dob = '1995-01-01'; // placeholder dob
-      const dor = '2055-01-01'; // 60 years after dob
+      const dob = null; // Blank dob
+      const dor = null; // Blank dor
       const doj = candidate.joining_date || new Date().toISOString().split('T')[0];
 
       // d. Create employee master record
       await query(
         `INSERT INTO employees(emp_id, first_name, last_name, gender, dob, dor, mobile, dept_id, designation_id, doj, status, category, created_by)
-         VALUES($1, $2, $3, 'Male', $4, $5, '9999999999', $6, $7, $8, 'Active', 'General', $9)`,
-        [empId, firstName, lastName, dob, dor, candidate.dept_id, designationId, doj, req.user.id]
+         VALUES($1, $2, $3, null, $4, $5, null, $6, $7, $8, 'Active', 'General', $9)`,
+        [empId, firstName, lastName, dob, dor, candidate.dept_id || null, designationId, doj, req.user.id]
       );
 
       // e. Create service book joining entry
@@ -100,15 +100,7 @@ exports.update = async (req, res) => {
       const yr = new Date().getFullYear();
       await query('INSERT INTO leave_balances(emp_id, year) VALUES($1, $2) ON CONFLICT DO NOTHING', [empId, yr]);
 
-      // g. Create User Login
-      const username = (firstName.toLowerCase() + empId.toLowerCase()).replace(/[^a-z0-9]/g, '');
-      const email = `${username}@gujarat.gov.in`;
-      const defaultPasswordHash = await bcrypt.hash('Emp@123456', 12);
-      await query(
-        `INSERT INTO users(username, email, password_hash, role, dept_id, emp_id, must_change_pw)
-         VALUES($1, $2, $3, 'employee', $4, $5, true) ON CONFLICT DO NOTHING`,
-        [username, email, defaultPasswordHash, candidate.dept_id, empId]
-      );
+      // g. (User creation removed per request: HR will create user manually)
 
       // h. Create retirement tracking record
       await query(

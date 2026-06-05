@@ -277,7 +277,7 @@ export default function Onboarding() {
 
   return (
     <Layout title="Employee Onboarding" theme="light">
-      {msg && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
+      {(!selected && !showAdd && !showLetter && msg) && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
           <p className="text-sm font-medium" style={{ color: 'rgba(22, 38, 96, 0.7)' }}>
@@ -531,7 +531,7 @@ export default function Onboarding() {
         <Modal title="Add Candidate to Onboarding" onClose={()=>setShowAdd(false)} theme="light">
           {msg && <div className={`px-4 py-3 rounded-xl text-sm mb-6 border ${msg.startsWith('Error') ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>{msg}</div>}
           <div className="grid grid-cols-2 gap-4">
-            {[['candidate_ref_id','Candidate Ref ID'],['name','Full Name'],['post','Post Applied']].map(([k,l])=>(
+            {[['name','Full Name'],['candidate_ref_id','Candidate Ref ID'],['post','Post Applied']].map(([k,l])=>(
               <div key={k}><label className="text-xs text-slate-400 block mb-1">{l}</label><input className="input" value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})}/></div>
             ))}
             <div><label className="text-xs text-slate-400 block mb-1">Department</label>
