@@ -417,8 +417,8 @@ exports.applyRegularization = async (req, res) => {
   const { date, reason, requested_in, requested_out, half_day_type, regularization_type } = req.body;
   const emp_id = req.user.role === 'employee' ? req.user.emp_id : (req.body.emp_id || req.user.emp_id);
   try {
-    const existing = await query(`SELECT * FROM regularization_requests WHERE emp_id = $1 AND date = $2 AND status = 'Pending'`, [emp_id, date]);
-    if (existing.rows.length > 0) return error(res, 'A pending regularization request already exists for this date', 400);
+    const existing = await query(`SELECT * FROM regularization_requests WHERE emp_id = $1 AND date = $2 AND status IN ('Pending', 'Approved')`, [emp_id, date]);
+    if (existing.rows.length > 0) return error(res, 'A pending or approved regularization request already exists for this date', 400);
 
     const result = await query(
       `INSERT INTO regularization_requests (emp_id, date, reason, requested_in, requested_out, half_day_type, regularization_type)

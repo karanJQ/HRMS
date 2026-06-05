@@ -629,38 +629,65 @@ export default function Attendance() {
 
                   <p className="text-xs font-semibold mb-3" style={{ color:'rgba(22,38,96,0.5)' }}>QUICK ACTIONS</p>
                   {!['super_admin','hr_manager','hr_staff'].includes(user.role) ? (
-                    <div className="space-y-2.5">
-                      {/* Miss Punch: show Regularize prominently first */}
-                      {selectedDayData.status === 'Miss Punch' && (
-                        <button className="w-full text-sm font-bold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                          style={{ background:'#ea580c', color:'#fff' }}
-                          onClick={()=>handleDateAction('regularize')}>
-                          <Activity size={16}/> Regularize This Day
-                        </button>
-                      )}
-                      <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                        style={{ background:'#162660', color:'#fff' }}
-                        onClick={()=>handleDateAction('leave')}><Calendar size={16}/> Apply Full Day Leave</button>
+                    (() => {
+                      const hasPendingLeave = leaves.some(l => selectedDate >= l.from_date.split('T')[0] && selectedDate <= l.to_date.split('T')[0] && l.status === 'Pending' && l.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
+                      const hasApprovedLeave = selectedDayData.status === 'Leave' || leaves.some(l => selectedDate >= l.from_date.split('T')[0] && selectedDate <= l.to_date.split('T')[0] && l.status === 'Approved' && l.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
+                      const hasPendingWFH = wfhRequests.some(w => w.date.split('T')[0] === selectedDate && w.status === 'Pending' && w.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
+                      const hasApprovedWFH = selectedDayData.status === 'WFH' || wfhRequests.some(w => w.date.split('T')[0] === selectedDate && w.status === 'Approved' && w.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
+                      const hasPendingReg = regularizations.some(r => r.date.split('T')[0] === selectedDate && r.status === 'Pending' && r.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
+                      const hasApprovedReg = regularizations.some(r => r.date.split('T')[0] === selectedDate && r.status === 'Approved' && r.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
+
+                      const applicationStatus = hasApprovedLeave ? 'Leave already approved' :
+                                                hasPendingLeave ? 'Leave application pending' :
+                                                hasApprovedWFH ? 'WFH already approved' :
+                                                hasPendingWFH ? 'WFH application pending' :
+                                                hasApprovedReg ? 'Regularization already approved' :
+                                                hasPendingReg ? 'Regularization pending' : null;
+
+                      if (applicationStatus) {
+                        return (
+                          <div className="p-4 rounded-xl text-center border border-indigo-100 bg-indigo-50/50">
+                            <CheckCircle className="mx-auto text-indigo-400 mb-2" size={24}/>
+                            <p className="text-sm font-semibold text-indigo-900">{applicationStatus}</p>
+                          </div>
+                        );
+                      }
                       
-                      <div className="grid grid-cols-2 gap-2.5">
-                        <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
-                          style={{ background:'#8b5cf6', color:'#fff' }}
-                          onClick={()=>handleDateAction('first_half')}>First Half Leave</button>
-                        <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
-                          style={{ background:'#8b5cf6', color:'#fff' }}
-                          onClick={()=>handleDateAction('second_half')}>Second Half Leave</button>
-                      </div>
+                      return (
+                        <div className="space-y-2.5">
+                          {/* Miss Punch: show Regularize prominently first */}
+                          {selectedDayData.status === 'Miss Punch' && (
+                            <button className="w-full text-sm font-bold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                              style={{ background:'#ea580c', color:'#fff' }}
+                              onClick={()=>handleDateAction('regularize')}>
+                              <Activity size={16}/> Regularize This Day
+                            </button>
+                          )}
+                          <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                            style={{ background:'#162660', color:'#fff' }}
+                            onClick={()=>handleDateAction('leave')}><Calendar size={16}/> Apply Full Day Leave</button>
+                          
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
+                              style={{ background:'#8b5cf6', color:'#fff' }}
+                              onClick={()=>handleDateAction('first_half')}>First Half Leave</button>
+                            <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
+                              style={{ background:'#8b5cf6', color:'#fff' }}
+                              onClick={()=>handleDateAction('second_half')}>Second Half Leave</button>
+                          </div>
 
-                      <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                        style={{ background:'#f59e0b', color:'#fff' }}
-                        onClick={()=>handleDateAction('wfh')}><Home size={16}/> Apply Work From Home</button>
+                          <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                            style={{ background:'#f59e0b', color:'#fff' }}
+                            onClick={()=>handleDateAction('wfh')}><Home size={16}/> Apply Work From Home</button>
 
-                      {selectedDate <= todayStr && selectedDayData.status !== 'Miss Punch' && (
-                        <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md"
-                          style={{ background:'rgba(22,38,96,0.04)', color:'#162660', border:'1px solid rgba(22,38,96,0.12)' }}
-                          onClick={()=>handleDateAction('regularize')}>Request Regularization</button>
-                      )}
-                    </div>
+                          {selectedDate <= todayStr && selectedDayData.status !== 'Miss Punch' && (
+                            <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md"
+                              style={{ background:'rgba(22,38,96,0.04)', color:'#162660', border:'1px solid rgba(22,38,96,0.12)' }}
+                              onClick={()=>handleDateAction('regularize')}>Request Regularization</button>
+                          )}
+                        </div>
+                      );
+                    })()
                   ) : (
                     <p className="text-xs text-center py-4" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>Not available for admin accounts</p>
                   )}

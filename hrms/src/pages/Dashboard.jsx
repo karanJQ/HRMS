@@ -452,7 +452,7 @@ export default function Dashboard() {
           {holidays.length === 0 ? (
             <p className="text-slate-400 text-sm text-center py-8">No holidays found</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-y-auto pr-2" style={{ maxHeight: '360px' }}>
               {holidays.map((h, i) => {
                 const d = new Date(h.date + 'T00:00:00');
                 const today = new Date();
@@ -582,7 +582,7 @@ export default function Dashboard() {
             <AlertTriangle size={20} className="text-red-500" />
             <h3 className="text-lg font-semibold text-red-600">Probation Ending Soon / Overdue</h3>
           </div>
-          <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
+          <div className="table-wrap overflow-y-auto" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto', maxHeight: '360px' }}>
             <table>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
