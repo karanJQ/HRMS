@@ -88,7 +88,7 @@ exports.create = async (req, res) => {
               $28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49,
               $51,$52,$53)
        RETURNING *`,
-      [emp_id, b.first_name, b.last_name, b.father_name||null, b.mother_name||null, b.gender, b.dob, dor.toISOString().split('T')[0],
+      [emp_id, b.first_name, b.last_name || '', b.father_name||null, b.mother_name||null, b.gender, b.dob, dor.toISOString().split('T')[0],
        b.mobile, b.alternate_mobile||null, b.official_email||null, b.personal_email||null, b.aadhaar_number||null,
        b.pan_number||null, b.voter_id||null, b.dept_id, b.designation_id||null, b.grade||null, b.pay_level||null,
        b.pay_step||1, b.basic_pay||null, b.category||'General', b.religion||null, b.caste||null,

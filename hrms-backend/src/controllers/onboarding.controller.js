@@ -69,7 +69,7 @@ exports.update = async (req, res) => {
       // b. Split name into first and last name
       const nameParts = candidate.name.trim().split(/\s+/);
       const firstName = nameParts[0] || 'Employee';
-      const lastName = nameParts.slice(1).join(' ') || null;
+      const lastName = nameParts.slice(1).join(' ') || '';
 
       // c. Find a default designation if none is specified
       let designationId = null;
