@@ -58,9 +58,9 @@ exports.update = async (req, res) => {
     if (!result.rows.length) return error(res,'Not found.',404);
     const updatedCandidate = result.rows[0];
 
-    // 3. If status is set to 'Completed' OR service_book_created is toggled to true,
-    // and they don't have an emp_id_assigned yet, automatically create employee, service book entry, and user account.
-    if ((status === 'Completed' || service_book_created === true) && !candidate.emp_id_assigned) {
+    // 3. If status is set to 'Completed' and they don't have an emp_id_assigned yet,
+    // automatically create employee, service book entry, and user account.
+    if (status === 'Completed' && !candidate.emp_id_assigned) {
       // a. Generate emp_id
       const countRes = await query('SELECT COUNT(*) FROM employees');
       const num = parseInt(countRes.rows[0].count) + 1;

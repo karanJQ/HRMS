@@ -60,6 +60,18 @@ exports.apply = async (req, res) => {
     const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [eid]);
     if (!empCheck.rows.length) return error(res, `Employee with ID '${eid}' does not exist.`, 404);
 
+    // Overlapping leave check
+    const overlapCheck = await query(
+      `SELECT * FROM leave_applications 
+       WHERE emp_id = $1 
+         AND status IN ('Pending', 'Approved') 
+         AND from_date <= $3 AND to_date >= $2`,
+      [eid, from_date, to_date]
+    );
+    if (overlapCheck.rows.length > 0) {
+      return error(res, 'A leave application already exists for the selected dates.', 400);
+    }
+
     // For half-day, days is always 0.5
     const actualDays = half_day_type ? 0.5 : days;
     const result = await query(

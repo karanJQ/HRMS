@@ -46,7 +46,7 @@ export default function Onboarding() {
       const r = await onboardingAPI.update(id, { [field]: value });
       setData(d=>d.map(x=>x.id===id?r.data.data:x));
       if (selected?.id===id) setSelected(r.data.data);
-    } catch(e) { setMsg('Error: '+e.response?.data?.message); }
+    } catch(e) { setMsg('Error: '+e.response?.data?.message); throw e; }
   };
 
   const loadDocuments = async (ownerId) => {
@@ -439,39 +439,51 @@ export default function Onboarding() {
             <div className="flex items-center justify-between py-3 px-4">
               <span className="text-sm text-slate-700 font-medium">Overall Status</span>
               <select className="text-xs border border-slate-300 bg-white text-slate-800 rounded px-3 py-1.5 outline-none" value={selected.status}
-                onChange={e=>updateField(selected.id,'status',e.target.value)}>
-                {['Pending Documents','Documents Verified','Medical Pending','Police Verification Pending','Joining Formalities','Completed','Cancelled'].map(v=><option key={v}>{v}</option>)}
+                onChange={e=>updateField(selected.id,'status',e.target.value)} disabled={selected.status === 'Completed'}>
+                {['Pending Documents','Documents Verified','Medical Pending','Police Verification Pending','Joining Formalities','Cancelled', ...(selected.status === 'Completed' ? ['Completed'] : [])].map(v=><option key={v}>{v}</option>)}
               </select>
             </div>
           </div>
-          <div className="flex gap-4 mt-6">
-            {!selected.appointment_letter_sent ? (
-              <button className="btn btn-success flex-1" onClick={()=>handleAction('appointment_letter_sent', 'Appointment Letter Generated Successfully!')}>Generate Appointment Letter</button>
-            ) : (
-              <button className="btn btn-success flex-1" onClick={() => setShowLetter(true)}>
-                <svg 
-                  viewBox="0 0 24 24" 
-                  width="16" 
-                  height="16" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  className="inline mr-2 align-middle"
-                >
-                  <path d="M2.5 12C4.5 7.5 8 4.5 12 4.5s7.5 3 9.5 7.5c-2 4.5-5.5 7.5-9.5 7.5s-7.5-3-9.5-7.5z" />
-                  <path 
-                    d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" 
-                    fill="currentColor" 
-                    fillRule="evenodd" 
-                    stroke="none" 
-                  />
-                </svg>
-                View Appointment Letter
-              </button>
+          <div className="flex flex-col gap-4 mt-6">
+            <div className="flex gap-4">
+              {!selected.appointment_letter_sent ? (
+                <button className="btn btn-success flex-1" onClick={()=>handleAction('appointment_letter_sent', 'Appointment Letter Generated Successfully!')}>Generate Appointment Letter</button>
+              ) : (
+                <button className="btn btn-success flex-1" onClick={() => setShowLetter(true)}>
+                  <svg 
+                    viewBox="0 0 24 24" 
+                    width="16" 
+                    height="16" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className="inline mr-2 align-middle"
+                  >
+                    <path d="M2.5 12C4.5 7.5 8 4.5 12 4.5s7.5 3 9.5 7.5c-2 4.5-5.5 7.5-9.5 7.5s-7.5-3-9.5-7.5z" />
+                    <path 
+                      d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" 
+                      fill="currentColor" 
+                      fillRule="evenodd" 
+                      stroke="none" 
+                    />
+                  </svg>
+                  View Appointment Letter
+                </button>
+              )}
+              <button className="btn btn-primary flex-1" onClick={()=>handleAction('service_book_created', 'Service Book Created Successfully!')}>Create Service Book</button>
+            </div>
+            {selected.status !== 'Completed' && (
+              <button className="btn w-full font-bold shadow-md hover:-translate-y-0.5 transition-all" style={{ background:'#162660', color:'#fff' }} onClick={async () => {
+                try {
+                  await updateField(selected.id, 'status', 'Completed');
+                  setMsg('Candidate moved to Employee Master successfully!');
+                } catch(e) {
+                  setMsg('Error: ' + e.message);
+                }
+              }}>Move to Employee Master</button>
             )}
-            <button className="btn btn-primary flex-1" onClick={()=>handleAction('service_book_created', 'Service Book Created Successfully!')}>Create Service Book</button>
           </div>
 
 
