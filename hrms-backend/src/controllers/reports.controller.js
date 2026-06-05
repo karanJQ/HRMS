@@ -32,7 +32,7 @@ exports.headcount = async (req, res) => {
       query(`SELECT grade, COUNT(*) as count FROM employees WHERE status='Active' AND grade IS NOT NULL GROUP BY grade ORDER BY grade`),
       query(`SELECT 
         CASE 
-          WHEN a.is_wfh = true THEN 'WFH' 
+          WHEN a.status = 'WFH' THEN 'WFH' 
           WHEN a.id IS NOT NULL THEN 'Present' 
           WHEN l.id IS NOT NULL THEN 'On Leave' 
           ELSE 'Absent' 
