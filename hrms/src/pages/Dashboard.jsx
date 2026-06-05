@@ -274,7 +274,7 @@ export default function Dashboard() {
       {/* Quick Actions + Birthdays + Anniversaries */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         {/* Quick Punch Card */}
-        <div className="flex flex-col justify-between p-4 self-start hover-scale transition-all duration-300"
+        <div className="flex flex-col justify-between p-4 hover-scale transition-all duration-300 h-[140px]"
           style={{
             background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
             borderRadius: '16px', boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
@@ -291,14 +291,24 @@ export default function Dashboard() {
           </div>
           <div className="mt-3">
             {!['super_admin','hr_manager','hr_staff'].includes(user.role) ? (
-              <button
-                className="w-full btn btn-success flex items-center justify-center gap-2 py-2 font-bold text-white rounded-lg transition-all"
-                onClick={() => setShowPunchModal(true)}
-                disabled={punchLoading}
-                style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none' }}
-              >
-                {punchLoading ? <span>Syncing...</span> : <><Fingerprint size={16} /><span>Punch In/Out</span></>}
-              </button>
+              <div className="flex gap-2 w-full">
+                <button
+                  className="flex-1 btn btn-success flex items-center justify-center gap-1.5 py-2 font-bold text-white rounded-lg transition-all text-sm"
+                  onClick={() => setShowPunchModal(true)}
+                  disabled={punchLoading}
+                  style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none' }}
+                >
+                  <Fingerprint size={14} /><span>Punch In</span>
+                </button>
+                <button
+                  className="flex-1 btn btn-danger flex items-center justify-center gap-1.5 py-2 font-bold text-white rounded-lg transition-all text-sm"
+                  onClick={() => setShowPunchModal(true)}
+                  disabled={punchLoading}
+                  style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', border: 'none' }}
+                >
+                  <Fingerprint size={14} /><span>Punch Out</span>
+                </button>
+              </div>
             ) : (
               <p className="text-xs text-center py-1.5" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>Not available for admin accounts</p>
             )}
@@ -308,30 +318,30 @@ export default function Dashboard() {
         <PunchModal isOpen={showPunchModal} onClose={() => setShowPunchModal(false)} onPunch={submitPunch} />
 
         {/* Birthdays Card */}
-        <div className="p-4 transition-all duration-300"
+        <div className="p-4 transition-all duration-300 flex flex-col h-[140px]"
           style={{
             background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
             borderRadius: '16px', boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
           }}
         >
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3 shrink-0">
             <Cake size={18} className="text-pink-500" />
             <h4 className="text-sm font-bold" style={{ color: '#162660' }}>Birthdays — {MONTHS[new Date().getMonth()]}</h4>
           </div>
           {birthdays.length === 0 ? (
             <p className="text-xs text-center py-4" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>No birthdays this month</p>
           ) : (
-            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1 custom-scrollbar">
+            <div className="space-y-2 flex-1 overflow-y-auto pr-1 custom-scrollbar">
               {birthdays.map((b, i) => (
                 <div key={b.emp_id} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: i % 2 === 0 ? 'rgba(236, 72, 153, 0.04)' : 'transparent' }}>
-                  <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-xs font-bold">
+                  <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-xs font-bold shrink-0">
                     {b.first_name?.[0]}{b.last_name?.[0]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold truncate" style={{ color: '#162660' }}>{b.first_name} {b.last_name}</p>
                     <p className="text-[10px]" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{b.dept_name}</p>
                   </div>
-                  <span className="text-xs font-bold text-pink-500">{new Date(b.dob).getDate()} {MONTHS[new Date(b.dob).getMonth()]}</span>
+                  <span className="text-xs font-bold text-pink-500 shrink-0">{new Date(b.dob).getDate()} {MONTHS[new Date(b.dob).getMonth()]}</span>
                 </div>
               ))}
             </div>
@@ -339,30 +349,30 @@ export default function Dashboard() {
         </div>
 
         {/* Anniversaries Card */}
-        <div className="p-4 transition-all duration-300"
+        <div className="p-4 transition-all duration-300 flex flex-col h-[140px]"
           style={{
             background: '#fff', border: '1px solid rgba(22, 38, 96, 0.08)',
             borderRadius: '16px', boxShadow: '0 8px 24px rgba(22, 38, 96, 0.04)',
           }}
         >
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3 shrink-0">
             <Briefcase size={18} className="text-amber-500" />
             <h4 className="text-sm font-bold" style={{ color: '#162660' }}>Work Anniversaries — {MONTHS[new Date().getMonth()]}</h4>
           </div>
           {anniversaries.length === 0 ? (
             <p className="text-xs text-center py-4" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>No anniversaries this month</p>
           ) : (
-            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1 custom-scrollbar">
+            <div className="space-y-2 flex-1 overflow-y-auto pr-1 custom-scrollbar">
               {anniversaries.map((a, i) => (
                 <div key={a.emp_id} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: i % 2 === 0 ? 'rgba(245, 158, 11, 0.04)' : 'transparent' }}>
-                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-xs font-bold">
+                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-xs font-bold shrink-0">
                     {a.first_name?.[0]}{a.last_name?.[0]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold truncate" style={{ color: '#162660' }}>{a.first_name} {a.last_name}</p>
                     <p className="text-[10px]" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{a.dept_name}</p>
                   </div>
-                  <span className="text-xs font-bold text-amber-500">{new Date(a.doj).getDate()} {MONTHS[new Date(a.doj).getMonth()]} • {a.years_completed} {parseInt(a.years_completed) === 1 ? 'Year' : 'Years'} 🎉</span>
+                  <span className="text-xs font-bold text-amber-500 shrink-0">{new Date(a.doj).getDate()} {MONTHS[new Date(a.doj).getMonth()]} • {a.years_completed} {parseInt(a.years_completed) === 1 ? 'Year' : 'Years'} 🎉</span>
                 </div>
               ))}
             </div>

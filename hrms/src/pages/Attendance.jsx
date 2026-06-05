@@ -859,13 +859,7 @@ export default function Attendance() {
                 </select>
               )}
             </div>
-            {!['super_admin','hr_manager','hr_staff'].includes(user.role) && (
-              <button className="text-xs font-semibold px-4 py-2 rounded-lg border transition-all hover:bg-slate-50"
-                style={{ color:'#162660', borderColor:'rgba(22,38,96,0.2)' }}
-                onClick={syncBiometrics}>
-                <Fingerprint size={15} className="inline mr-1.5"/>Simulate Punch
-              </button>
-            )}
+
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
