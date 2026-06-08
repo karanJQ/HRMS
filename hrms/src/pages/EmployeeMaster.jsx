@@ -7,6 +7,7 @@ import ErrorMsg from '../components/common/ErrorMsg';
 import { Plus, Eye, Edit2, Search } from 'lucide-react';
 import { empAPI, deptAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
+import Pagination from '../components/common/Pagination';
 
 const blank = { first_name: '', last_name: '', father_name: '', gender: 'Male', dob: '', doj: '', mobile: '', alternate_mobile: '', official_email: '', personal_email: '', aadhaar_number: '', pan_number: '', dept_id: '', pay_level: '', basic_pay: '', ctc: '', posting_station: '', blood_group: '', qualification: '', subject_specialization: '', experience_years: 0, account_number: '', bank_name: '', ifsc_code: '', pf_number: '', nominee_name: '', nominee_relation: '', emergency_contact_name: '', emergency_contact_mobile: '', status: 'Active', probation_days: 90 };
 
@@ -184,6 +185,13 @@ export default function EmployeeMaster() {
   const [total, setTotal] = useState(0);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(emps.length / itemsPerPage) || 1;
+  const paginatedEmps = emps.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => { setCurrentPage(1); }, [emps]);
 
   const load = () => {
     setLoading(true);
@@ -381,7 +389,7 @@ export default function EmployeeMaster() {
                     <th style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>Actions</th>
                   </tr>
                 </thead>
-                <tbody>{emps.map((e, idx) => (
+                <tbody>{paginatedEmps.map((e, idx) => (
                   <tr 
                     key={e.emp_id} 
                     className="transition-all duration-300"
@@ -502,6 +510,7 @@ export default function EmployeeMaster() {
                 ))}</tbody>
               </table>
             </div>
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         )}
 
@@ -585,3 +594,7 @@ export default function EmployeeMaster() {
     </Layout>
   );
 }
+
+
+
+

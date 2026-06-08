@@ -494,15 +494,27 @@ exports.reviewRegularization = async (req, res) => {
 };
 
 exports.applyWFH = async (req, res) => {
-  const { date, reason } = req.body;
+  const { date, reason, half_day_type, wfh_type } = req.body;
   const emp_id = req.user.emp_id;
   try {
-    const existing = await query(`SELECT * FROM wfh_requests WHERE emp_id = $1 AND date = $2`, [emp_id, date]);
-    if (existing.rows.length > 0) return error(res, 'A WFH request already exists for this date', 400);
+    // Check for conflicting WFH on same slot
+    const existing = await query(
+      `SELECT * FROM wfh_requests WHERE emp_id = $1 AND date = $2 AND status IN ('Pending', 'Approved')`,
+      [emp_id, date]
+    );
+    for (const ex of existing.rows) {
+      const exSlot = ex.half_day_type || 'FULL_DAY';
+      const newSlot = (wfh_type === 'half_day' && half_day_type) ? half_day_type : 'FULL_DAY';
+      // Full day blocks everything, same slot blocks
+      if (exSlot === 'FULL_DAY' || newSlot === 'FULL_DAY' || exSlot === newSlot) {
+        return error(res, `A WFH request already exists for this slot on ${date}`, 400);
+      }
+    }
 
+    const finalHalfDay = (wfh_type === 'half_day' && half_day_type) ? half_day_type : null;
     const result = await query(
-      `INSERT INTO wfh_requests (emp_id, date, reason) VALUES ($1, $2, $3) RETURNING *`,
-      [emp_id, date, reason]
+      `INSERT INTO wfh_requests (emp_id, date, reason, half_day_type, wfh_type) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [emp_id, date, reason, finalHalfDay, wfh_type || 'full_day']
     );
     return success(res, result.rows[0], 'Work from home request submitted');
   } catch (err) {
@@ -911,4 +923,106 @@ exports.exportCSV = async (req, res) => {
     console.error('Export CSV Error:', err);
     return error(res, err.message, 500);
   }
+};
+
+// ─── CANCEL WFH ───
+exports.cancelWFH = async (req, res) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+  try {
+    const wfhData = await query(`SELECT * FROM wfh_requests WHERE id = $1`, [id]);
+    if (!wfhData.rows.length) return error(res, 'WFH request not found', 404);
+    const w = wfhData.rows[0];
+    const isAdmin = ['super_admin', 'hr_manager', 'hr_staff'].includes(req.user.role);
+    const isOwner = req.user.emp_id === w.emp_id;
+
+    if (w.status === 'Cancelled') return error(res, 'Already cancelled', 400);
+    if (w.status === 'Rejected') return error(res, 'Cannot cancel a rejected request', 400);
+    if (w.status === 'Approved' && !isAdmin) return error(res, 'Only Admin/HR can cancel approved requests', 403);
+    if (w.status === 'Pending' && !isOwner && !isAdmin) return error(res, 'Not authorized', 403);
+
+    await query(
+      `UPDATE wfh_requests SET status = 'Cancelled', cancelled_by = $1, cancel_reason = $2, updated_at = NOW() WHERE id = $3`,
+      [req.user.id, reason || null, id]
+    );
+
+    // If it was approved, revert attendance
+    if (w.status === 'Approved') {
+      await query(
+        `DELETE FROM attendance_records WHERE emp_id = $1 AND date = $2 AND status = 'WFH' AND punch_in IS NULL`,
+        [w.emp_id, w.date]
+      );
+    }
+
+    return success(res, null, 'WFH request cancelled');
+  } catch (err) { return error(res, err.message, 500); }
+};
+
+// ─── CANCEL REGULARIZATION ───
+exports.cancelRegularization = async (req, res) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+  try {
+    const regData = await query(`SELECT * FROM regularization_requests WHERE id = $1`, [id]);
+    if (!regData.rows.length) return error(res, 'Regularization request not found', 404);
+    const r = regData.rows[0];
+    const isAdmin = ['super_admin', 'hr_manager', 'hr_staff'].includes(req.user.role);
+    const isOwner = req.user.emp_id === r.emp_id;
+
+    if (r.status === 'Cancelled') return error(res, 'Already cancelled', 400);
+    if (r.status === 'Rejected') return error(res, 'Cannot cancel a rejected request', 400);
+    if (r.status === 'Approved' && !isAdmin) return error(res, 'Only Admin/HR can cancel approved requests', 403);
+    if (r.status === 'Pending' && !isOwner && !isAdmin) return error(res, 'Not authorized', 403);
+
+    await query(
+      `UPDATE regularization_requests SET status = 'Cancelled', cancelled_by = $1, cancel_reason = $2, updated_at = NOW() WHERE id = $3`,
+      [req.user.id, reason || null, id]
+    );
+
+    // If it was approved, completely revert the attendance record changes
+    if (r.status === 'Approved') {
+      const attData = await query(`SELECT * FROM attendance_records WHERE emp_id = $1 AND date = $2 AND is_regularized = true`, [r.emp_id, r.date]);
+      if (attData.rows.length > 0) {
+        const att = attData.rows[0];
+        
+        if (!att.actual_punch_in && !att.actual_punch_out) {
+          // Record was purely created by regularization (Absent day)
+          // We can just delete it, or reset to absent
+          await query(`DELETE FROM attendance_records WHERE id = $1`, [att.id]);
+        } else {
+          // Revert to original actual punches
+          const origIn = att.actual_punch_in;
+          const origOut = att.actual_punch_out;
+          
+          let origWh = null;
+          if (origIn && origOut) {
+            const [ih, im] = origIn.split(':');
+            const [oh, om] = origOut.split(':');
+            const diff = (parseInt(oh)*60 + parseInt(om)) - (parseInt(ih)*60 + parseInt(im));
+            origWh = Math.max(0, diff / 60).toFixed(1);
+          }
+
+          let origStatus = 'Absent';
+          if (origIn && !origOut) origStatus = 'Miss Punch';
+          else if (origIn && origOut) {
+            const settings = await query(`SELECT * FROM attendance_settings LIMIT 1`);
+            let expectedHours = 9;
+            if (settings.rows[0]?.shift_start && settings.rows[0]?.shift_end) {
+              const [sh, sm] = settings.rows[0].shift_start.split(':');
+              const [eh, em] = settings.rows[0].shift_end.split(':');
+              expectedHours = (parseInt(eh)*60 + parseInt(em) - (parseInt(sh)*60 + parseInt(sm))) / 60.0;
+            }
+            origStatus = (origWh < expectedHours) ? 'Half Day' : 'Present';
+          }
+
+          await query(
+            `UPDATE attendance_records SET punch_in = $1, punch_out = $2, working_hours = $3, status = $4, is_regularized = false, updated_at = NOW() WHERE id = $5`,
+            [origIn, origOut, origWh, origStatus, att.id]
+          );
+        }
+      }
+    }
+
+    return success(res, null, 'Regularization request cancelled');
+  } catch (err) { return error(res, err.message, 500); }
 };

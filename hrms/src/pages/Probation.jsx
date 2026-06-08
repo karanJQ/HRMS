@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout/Layout';
 import Loader from '../components/common/Loader';
-import { ShieldAlert, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, Search } from 'lucide-react';
 import { reportsAPI, empAPI } from '../api/endpoints';
+import { usePaginationAndSearch } from '../hooks/usePaginationAndSearch';
+import Pagination from '../components/common/Pagination';
 
 export default function Probation() {
   const [probationAlerts, setProbationAlerts] = useState([]);
@@ -11,6 +13,12 @@ export default function Probation() {
   const [extendDays, setExtendDays] = useState(30);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
+
+  const {
+    searchQuery, setSearchQuery,
+    currentPage, setCurrentPage,
+    paginatedData, totalPages, totalItems
+  } = usePaginationAndSearch(probationAlerts, ['first_name', 'last_name', 'emp_id', 'dept_name', 'designation_name'], 10);
 
   const loadAlerts = async () => {
     try {
@@ -63,9 +71,21 @@ export default function Probation() {
       )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <div className="flex items-center gap-2 mb-6">
-          <ShieldAlert size={24} className="text-[#162660]" />
-          <h2 className="text-xl font-bold text-[#162660]">Active Probation Periods</h2>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <ShieldAlert size={24} className="text-[#162660]" />
+            <h2 className="text-xl font-bold text-[#162660]">Active Probation Periods ({totalItems})</h2>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input 
+              type="text" 
+              placeholder="Search probation alerts..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+            />
+          </div>
         </div>
 
         {probationAlerts.length === 0 ? (
@@ -73,6 +93,7 @@ export default function Probation() {
             <p className="text-gray-400">No employees currently on probation.</p>
           </div>
         ) : (
+          <>
           <div className="table-wrap border border-gray-100 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
@@ -85,7 +106,7 @@ export default function Probation() {
                 </tr>
               </thead>
               <tbody>
-                {probationAlerts.map(p => {
+                {paginatedData.map(p => {
                   const isOverdue = new Date(p.probation_end_date) < new Date();
                   const isEndingSoon = new Date(p.probation_end_date) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
@@ -116,6 +137,8 @@ export default function Probation() {
               </tbody>
             </table>
           </div>
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          </>
         )}
       </div>
 
@@ -158,3 +181,7 @@ export default function Probation() {
     </Layout>
   );
 }
+
+
+
+

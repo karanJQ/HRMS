@@ -6,11 +6,13 @@ import Loader from '../components/common/Loader';
 import {
   Star, Plus, ChevronDown, ChevronUp, Check, X, Sparkles,
   Send, Settings, TrendingUp, Award, AlertCircle, Layers,
-  RefreshCw, FileText, Target, Eye
+  RefreshCw, FileText, Target, Eye, Search
 } from 'lucide-react';
 import { aparAPI, kpiAPI, empAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { usePaginationAndSearch } from '../hooks/usePaginationAndSearch';
+import Pagination from '../components/common/Pagination';
 
 const BRAND  = '#162660';
 const GRADES = ['Outstanding', 'Very Good', 'Good', 'Average', 'Poor'];
@@ -678,15 +680,27 @@ export default function APAR() {
     return acc;
   }, {})).sort((a,b) => a.emp_name.localeCompare(b.emp_name));
 
+  const {
+    searchQuery: kpiSearch, setSearchQuery: setKpiSearch,
+    currentPage: kpiPage, setCurrentPage: setKpiPage,
+    paginatedData: paginatedKpiGroups, totalPages: kpiTotalPages
+  } = usePaginationAndSearch(groupedKpiReports, ['emp_name', 'emp_id', 'dept_name'], 10);
+
+  const {
+    searchQuery: aparSearch, setSearchQuery: setAparSearch,
+    currentPage: aparPage, setCurrentPage: setAparPage,
+    paginatedData: paginatedAparData, totalPages: aparTotalPages
+  } = usePaginationAndSearch(aparData, ['emp_name', 'emp_id', 'dept_name', 'cycle_name', 'final_grade'], 10);
+
   const TABS = [
     { id: 'kpi',    label: 'KPI Appraisal',   icon: Target },
     { id: 'apar',   label: 'Annual Reports',   icon: Star   },
-    ...(isMin('hr_manager') ? [{ id: 'cycles', label: 'Cycles', icon: TrendingUp }] : []),
+    ...(isMin('hr_staff') ? [{ id: 'cycles', label: 'Cycles', icon: TrendingUp }] : []),
   ];
 
   const KPI_SUB_TABS = [
     { id: 'overview', label: 'Overview' },
-    ...(isMin('dept_head') ? [
+    ...(isMin('hr_staff') ? [
       { id: 'review',   label: `Review Queue${kpiPending.length > 0 ? ` (${kpiPending.length})` : ''}` },
       { id: 'manage',   label: 'Manage' }
     ] : []),
@@ -761,13 +775,30 @@ export default function APAR() {
                   </div>
                 )}
 
-                {groupedKpiReports.map(group => (
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Employee KPI Groups</h3>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input 
+                      type="text" 
+                      placeholder="Search groups..." 
+                      value={kpiSearch}
+                      onChange={e => setKpiSearch(e.target.value)}
+                      className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+                    />
+                  </div>
+                </div>
+
+                {paginatedKpiGroups.map(group => (
                   <EmployeeKPIGroup key={group.emp_id} group={group} onAction={handleKPIAction} onAIInsights={id => handleAIInsights(id,false)} currentUser={user} />
                 ))}
+                
+                {groupedKpiReports.length > 0 && <Pagination currentPage={kpiPage} totalPages={kpiTotalPages} onPageChange={setKpiPage} />}
+
                 {kpiReports.length === 0 && (
                   <div style={{ textAlign:'center', padding:'48px 0', color:'#94a3b8' }}>
                     <Target size={34} style={{ marginBottom:8, opacity:0.3 }}/><div style={{ fontWeight:600 }}>No KPI reports yet</div>
-                    {isMin('dept_head') && <div style={{ fontSize:12, marginTop:4 }}>Create a report from the "Manage" tab</div>}
+                    {isMin('hr_staff') && <div style={{ fontSize:12, marginTop:4 }}>Create a report from the "Manage" tab</div>}
                   </div>
                 )}
               </div>
@@ -793,7 +824,7 @@ export default function APAR() {
               <div className="pa-anim">
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
                   <div style={{ fontSize:13, fontWeight:700, color:BRAND }}>Draft / Returned Reports</div>
-                  {isMin('dept_head') && (
+                  {isMin('hr_staff') && (
                     <button onClick={() => setShowCreateReport(true)}
                       style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:10, background:BRAND, color:'#fff', border:'none', fontWeight:700, fontSize:12, cursor:'pointer' }}>
                       <Plus size={13}/> New Report
@@ -996,6 +1027,19 @@ export default function APAR() {
                 ))}
               </select>
             </div>
+            
+            <div className="flex items-center justify-end mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Search APAR reports..." 
+                  value={aparSearch}
+                  onChange={e => setAparSearch(e.target.value)}
+                  className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+                />
+              </div>
+            </div>
 
             {aparLoading ? <div style={{ display:'flex', justifyContent:'center', padding:40 }}><Loader/></div> : (
               <div style={{ overflowX:'auto' }}>
@@ -1011,7 +1055,7 @@ export default function APAR() {
                     {aparData.length === 0 && (
                       <tr><td colSpan={5} style={{ padding:'40px', textAlign:'center', color:'#94a3b8', fontSize:13 }}>No reports saved for {selectedYear}</td></tr>
                     )}
-                    {aparData.map(a => (
+                    {paginatedAparData.map(a => (
                       <tr key={a.id} style={{ borderBottom:'1px solid rgba(22,38,96,0.04)', transition:'background 0.2s' }}
                         onMouseEnter={e => e.currentTarget.style.background='rgba(22,38,96,0.02)'}
                         onMouseLeave={e => e.currentTarget.style.background='transparent'}>
@@ -1043,12 +1087,14 @@ export default function APAR() {
                 </table>
               </div>
             )}
+            
+            {aparData.length > 0 && <Pagination currentPage={aparPage} totalPages={aparTotalPages} onPageChange={setAparPage} />}
           </div>
         </div>
       )}
 
       {/* ══════════════════════════════ CYCLES TAB ══════════════════════════════ */}
-      {tab === 'cycles' && isMin('hr_manager') && (
+      {tab === 'cycles' && isMin('hr_staff') && (
         <div className="pa-anim">
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
             <div style={{ fontSize:13, fontWeight:700, color:BRAND }}>KPI Cycles</div>
@@ -1214,3 +1260,6 @@ export default function APAR() {
     </Layout>
   );
 }
+
+
+

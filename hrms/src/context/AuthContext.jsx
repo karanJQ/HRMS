@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
 
   const can = (...roles) => user && roles.includes(user.role);
   const isMin = (role) => {
-    const levels = { super_admin:5, hr_manager:4, dept_head:3, hr_staff:2, employee:1 };
+    const levels = { super_admin:3, hr_manager:2, dept_head:2, hr_staff:2, hr:2, employee:1 };
     return user && (levels[user.role]||0) >= (levels[role]||0);
   };
 

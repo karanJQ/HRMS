@@ -4,9 +4,11 @@ import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import StatsCard from '../components/common/StatsCard';
 import Loader from '../components/common/Loader';
-import { IndianRupee, Download, FileText, Check, RefreshCw, Plus, Edit2, CreditCard } from 'lucide-react';
+import { IndianRupee, Download, FileText, Check, RefreshCw, Plus, Edit2, CreditCard, Search } from 'lucide-react';
 import { payrollAPI, empAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
+import { usePaginationAndSearch } from '../hooks/usePaginationAndSearch';
+import Pagination from '../components/common/Pagination';
 
 function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -183,6 +185,38 @@ export default function Payroll() {
     payment_mode: 'Bank Transfer',
     status: 'Processed'
   });
+
+  const {
+    searchQuery: payrollSearch, setSearchQuery: setPayrollSearch,
+    currentPage: payrollPage, setCurrentPage: setPayrollPage,
+    paginatedData: paginatedRecords, totalPages: payrollTotalPages
+  } = usePaginationAndSearch(records, ['emp_id', 'emp_name', 'dept_name', 'status'], 10);
+
+  const employeeSalariesList = React.useMemo(() => {
+    if (!annualSummary || !annualSummary.records) return [];
+    const salaries = {};
+    annualSummary.records.forEach(rec => {
+      if (!salaries[rec.emp_id]) {
+        salaries[rec.emp_id] = {
+          emp_id: rec.emp_id,
+          emp_name: rec.emp_name,
+          dept_name: rec.dept_name,
+          gross: 0, net: 0, pf: 0, tds: 0,
+        };
+      }
+      salaries[rec.emp_id].gross += parseFloat(rec.gross_pay || 0);
+      salaries[rec.emp_id].net += parseFloat(rec.net_pay || 0);
+      salaries[rec.emp_id].pf += parseFloat(rec.pf_employee || 0);
+      salaries[rec.emp_id].tds += parseFloat(rec.tds || 0);
+    });
+    return Object.values(salaries);
+  }, [annualSummary]);
+
+  const {
+    searchQuery: annualSearch, setSearchQuery: setAnnualSearch,
+    currentPage: annualPage, setCurrentPage: setAnnualPage,
+    paginatedData: paginatedAnnual, totalPages: annualTotalPages
+  } = usePaginationAndSearch(employeeSalariesList, ['emp_id', 'emp_name', 'dept_name'], 10);
 
   useEffect(() => {
     if (isMin('hr_staff')) {
@@ -663,7 +697,7 @@ export default function Payroll() {
           placeholder="Select Year"
           width={100}
         />
-        {isMin('hr_manager') && <>
+        {isMin('hr_staff') && <>
           <button
             className="btn font-semibold transition-all duration-200"
             style={{
@@ -827,11 +861,23 @@ export default function Payroll() {
             animationDelay: '240ms'
           }}
         >
-          <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Salary Register — {months[month - 1]} {year}</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Salary Register — {months[month - 1]} {year}</h3>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder="Search payroll..." 
+                value={payrollSearch}
+                onChange={e => setPayrollSearch(e.target.value)}
+                className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+              />
+            </div>
+          </div>
           {records.length === 0 ? (
             <div className="text-center py-12">
               <p className="mb-3 font-medium" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>No payroll records for this month.</p>
-              {isMin('hr_manager') && (
+              {isMin('hr_staff') && (
                 <button
                   className="btn font-semibold transition-all duration-200"
                   style={{
@@ -868,7 +914,7 @@ export default function Payroll() {
                     ))}
                   </tr>
                 </thead>
-                <tbody>{records.map((p, idx) => (
+                <tbody>{paginatedRecords.map((p, idx) => (
                   <tr
                     key={p.id}
                     className="transition-all duration-300"
@@ -963,7 +1009,7 @@ export default function Payroll() {
                             <Edit2 size={12} />Edit
                           </button>
                         )}
-                        {isMin('hr_manager') && p.status === 'Processed' && (
+                        {isMin('hr_staff') && p.status === 'Processed' && (
                           <button
                             className="btn font-semibold transition-all duration-300"
                             style={{
@@ -1006,6 +1052,7 @@ export default function Payroll() {
               </table>
             </div>
           )}
+          {records.length > 0 && <Pagination currentPage={payrollPage} totalPages={payrollTotalPages} onPageChange={setPayrollPage} />}
         </div>
       )}
 
@@ -1148,6 +1195,18 @@ export default function Payroll() {
           ) : (
             <div>
               {/* For HR / Admin, show employee-wise annual summary */}
+              <div className="flex items-center justify-end mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <input 
+                    type="text" 
+                    placeholder="Search annual summary..." 
+                    value={annualSearch}
+                    onChange={e => setAnnualSearch(e.target.value)}
+                    className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+                  />
+                </div>
+              </div>
               <div className="table-wrap">
                 <table>
                   <thead>
@@ -1162,37 +1221,17 @@ export default function Payroll() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(() => {
-                      const employeeSalaries = {};
-                      annualSummary.records.forEach(rec => {
-                        if (!employeeSalaries[rec.emp_id]) {
-                          employeeSalaries[rec.emp_id] = {
-                            emp_id: rec.emp_id,
-                            emp_name: rec.emp_name,
-                            dept_name: rec.dept_name,
-                            gross: 0,
-                            net: 0,
-                            pf: 0,
-                            tds: 0,
-                          };
-                        }
-                        employeeSalaries[rec.emp_id].gross += parseFloat(rec.gross_pay || 0);
-                        employeeSalaries[rec.emp_id].net += parseFloat(rec.net_pay || 0);
-                        employeeSalaries[rec.emp_id].pf += parseFloat(rec.pf_employee || 0);
-                        employeeSalaries[rec.emp_id].tds += parseFloat(rec.tds || 0);
-                      });
-                      return Object.values(employeeSalaries).map(emp => (
-                        <tr key={emp.emp_id}>
-                          <td className="font-mono text-blue-600 text-xs">{emp.emp_id}</td>
-                          <td><div className="font-medium">{emp.emp_name}</div></td>
-                          <td><span className="text-xs text-slate-400">{emp.dept_name}</span></td>
-                          <td className="font-semibold text-slate-200">₹{Math.round(emp.gross).toLocaleString()}</td>
-                          <td className="text-red-400">-₹{Math.round(emp.pf).toLocaleString()}</td>
-                          <td className="text-red-400">-₹{Math.round(emp.tds).toLocaleString()}</td>
-                          <td className="font-bold text-green-400">₹{Math.round(emp.net).toLocaleString()}</td>
-                        </tr>
-                      ));
-                    })()}
+                    {paginatedAnnual.map(emp => (
+                      <tr key={emp.emp_id}>
+                        <td className="font-mono text-blue-600 text-xs">{emp.emp_id}</td>
+                        <td><div className="font-medium">{emp.emp_name}</div></td>
+                        <td><span className="text-xs text-slate-400">{emp.dept_name}</span></td>
+                        <td className="font-semibold text-slate-200">₹{Math.round(emp.gross).toLocaleString()}</td>
+                        <td className="text-red-400">-₹{Math.round(emp.pf).toLocaleString()}</td>
+                        <td className="text-red-400">-₹{Math.round(emp.tds).toLocaleString()}</td>
+                        <td className="font-bold text-green-400">₹{Math.round(emp.net).toLocaleString()}</td>
+                      </tr>
+                    ))}
                   </tbody>
                   <tfoot>
                     <tr style={{ background: 'rgba(255, 255, 255, 0.1)' }}>
@@ -1205,6 +1244,7 @@ export default function Payroll() {
                   </tfoot>
                 </table>
               </div>
+              {employeeSalariesList.length > 0 && <Pagination currentPage={annualPage} totalPages={annualTotalPages} onPageChange={setAnnualPage} />}
             </div>
           )}
         </Modal>
@@ -1308,3 +1348,6 @@ export default function Payroll() {
     </Layout>
   );
 }
+
+
+

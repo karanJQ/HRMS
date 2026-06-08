@@ -5,9 +5,11 @@ import Modal from '../components/common/Modal';
 import Loader from '../components/common/Loader';
 import { useApi, useApiCall } from '../hooks/useApi';
 import { authAPI, deptAPI, empAPI } from '../api/endpoints';
-import { Plus, ToggleLeft, ToggleRight, Shield, Eye, EyeOff } from 'lucide-react';
+import { Plus, ToggleLeft, ToggleRight, Shield, Eye, EyeOff, Search } from 'lucide-react';
+import { usePaginationAndSearch } from '../hooks/usePaginationAndSearch';
+import Pagination from '../components/common/Pagination';
 
-const roleColors = { super_admin: '#7c3aed', hr_manager: '#2563eb', dept_head: '#0891b2', hr_staff: '#16a34a', employee: '#64748b' };
+const roleColors = { super_admin: '#7c3aed', hr_staff: '#2563eb', employee: '#64748b' };
 
 export default function UserManagement() {
   const { data: users, loading, refetch } = useApi(authAPI.listUsers, null, []);
@@ -19,6 +21,12 @@ export default function UserManagement() {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: '', email: '', password: '', role: 'hr_staff', emp_id: '' });
   const [msg, setMsg] = useState('');
+
+  const {
+    searchQuery, setSearchQuery,
+    currentPage, setCurrentPage,
+    paginatedData, totalPages, totalItems
+  } = usePaginationAndSearch(users || [], ['username', 'email', 'role', 'dept_name'], 10);
 
   const handleCreate = async () => {
     try {
@@ -45,7 +53,19 @@ export default function UserManagement() {
   return (
     <Layout title="User Management" theme="light" bg="#F8F8FF">
       <div className="flex items-center justify-between mb-4">
-        <p style={{ fontSize: '14px', color: 'rgba(22, 38, 96, 0.6)' }}>{(users || []).length} system users</p>
+        <div className="flex items-center gap-4">
+          <p style={{ fontSize: '14px', color: 'rgba(22, 38, 96, 0.6)' }}>{totalItems} system users</p>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input 
+              type="text" 
+              placeholder="Search users..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+            />
+          </div>
+        </div>
         <button className="btn btn-primary" onClick={() => setShowForm(true)}><Plus size={16} />Create User</button>
       </div>
       {msg && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-4">{msg}</div>}
@@ -70,7 +90,7 @@ export default function UserManagement() {
                   ))}
                 </tr>
               </thead>
-              <tbody>{(users || []).map(u => (
+              <tbody>{paginatedData.map(u => (
                 <tr 
                   key={u.id}
                   className="transition-all duration-300"
@@ -126,6 +146,7 @@ export default function UserManagement() {
               ))}</tbody>
             </table>
           </div>
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       )}
 
@@ -155,17 +176,18 @@ export default function UserManagement() {
               <select className="input" required value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
                 <option value="">Select</option>
                 {[
-                  { v: 'hr_manager', l: 'HR Manager' }, { v: 'dept_head', l: 'Department Head' },
-                  { v: 'hr_staff', l: 'HR Staff' }, { v: 'employee', l: 'Employee' }
+                  { v: 'super_admin', l: 'Super Admin' },
+                  { v: 'hr_staff', l: 'HR' },
+                  { v: 'employee', l: 'Employee' }
                 ].map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
               </select>
             </div>
             <div className="col-span-2">
               <label className="text-xs text-slate-400 block mb-1">
-                Link to Employee Profile {form.role === 'hr_manager' ? '(Optional)' : <span className="text-red-500">*</span>}
+                Link to Employee Profile {form.role === 'super_admin' ? '(Optional)' : <span className="text-red-500">*</span>}
               </label>
-              <select className="input" required={form.role !== 'hr_manager'} value={form.emp_id} onChange={e => setForm({ ...form, emp_id: e.target.value })}>
-                <option value="">{form.role === 'hr_manager' ? 'No Link (Admin / System User)' : 'Select Employee Profile'}</option>
+              <select className="input" required={form.role !== 'super_admin'} value={form.emp_id} onChange={e => setForm({ ...form, emp_id: e.target.value })}>
+                <option value="">{form.role === 'super_admin' ? 'No Link (Admin / System User)' : 'Select Employee Profile'}</option>
                 {employees.map(e => <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name} ({e.emp_id})</option>)}
               </select>
             </div>
@@ -180,3 +202,7 @@ export default function UserManagement() {
     </Layout>
   );
 }
+
+
+
+
