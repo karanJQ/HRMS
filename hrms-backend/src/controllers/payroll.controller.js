@@ -95,17 +95,20 @@ exports.process = async (req, res) => {
     if (lbRes.rows.length > 0) {
        const lb = lbRes.rows[0];
        const types = ['cl', 'el', 'ml', 'ccl', 'sl', 'dl'];
-       let toUpdate = [];
+       let total_negative_balance = 0;
        for (let t of types) {
            const entitled = parseFloat(lb[`${t}_entitled`] || 0);
            const used = parseFloat(lb[`${t}_used`] || 0);
            if (used > entitled) {
-               auto_lwp_days += (used - entitled);
-               toUpdate.push(`${t}_entitled = ${used}`);
+               total_negative_balance += (used - entitled);
            }
        }
-       if (toUpdate.length > 0) {
-           await query(`UPDATE leave_balances SET ${toUpdate.join(', ')}, updated_at=NOW() WHERE id=$1`, [lb.id]);
+       
+       if (total_negative_balance > 0) {
+           const prevLwpRes = await query('SELECT SUM(lwp_days) as total_prev_lwp FROM payroll_records WHERE emp_id=$1 AND year=$2 AND month < $3', [emp_id, year, month]);
+           const prev_lwp = parseFloat(prevLwpRes.rows[0].total_prev_lwp || 0);
+           auto_lwp_days = total_negative_balance - prev_lwp;
+           if (auto_lwp_days < 0) auto_lwp_days = 0;
        }
     }
     
@@ -182,17 +185,20 @@ exports.processAll = async (req, res) => {
       if (lbRes.rows.length > 0) {
          const lb = lbRes.rows[0];
          const types = ['cl', 'el', 'ml', 'ccl', 'sl', 'dl'];
-         let toUpdate = [];
+         let total_negative_balance = 0;
          for (let t of types) {
              const entitled = parseFloat(lb[`${t}_entitled`] || 0);
              const used = parseFloat(lb[`${t}_used`] || 0);
              if (used > entitled) {
-                 auto_lwp_days += (used - entitled);
-                 toUpdate.push(`${t}_entitled = ${used}`);
+                 total_negative_balance += (used - entitled);
              }
          }
-         if (toUpdate.length > 0) {
-             await query(`UPDATE leave_balances SET ${toUpdate.join(', ')}, updated_at=NOW() WHERE id=$1`, [lb.id]);
+         
+         if (total_negative_balance > 0) {
+             const prevLwpRes = await query('SELECT SUM(lwp_days) as total_prev_lwp FROM payroll_records WHERE emp_id=$1 AND year=$2 AND month < $3', [e.emp_id, year, month]);
+             const prev_lwp = parseFloat(prevLwpRes.rows[0].total_prev_lwp || 0);
+             auto_lwp_days = total_negative_balance - prev_lwp;
+             if (auto_lwp_days < 0) auto_lwp_days = 0;
          }
       }
 
