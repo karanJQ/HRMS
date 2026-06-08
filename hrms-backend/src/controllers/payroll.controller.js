@@ -91,14 +91,20 @@ exports.process = async (req, res) => {
     
     // Auto-LWP from Leave Balances
     let auto_lwp_days = 0;
-    const lbRes = await query('SELECT * FROM leave_balances WHERE emp_id=$1 AND year=$2', [emp_id, year]);
+    const lbRes = await query('SELECT lb.*, e.probation_status FROM leave_balances lb JOIN employees e ON e.emp_id=lb.emp_id WHERE lb.emp_id=$1 AND lb.year=$2', [emp_id, year]);
     if (lbRes.rows.length > 0) {
        const lb = lbRes.rows[0];
+       const isProbation = lb.probation_status === 'Pending';
        const types = ['cl', 'el', 'ml', 'ccl', 'sl', 'dl'];
        let total_negative_balance = 0;
        for (let t of types) {
-           const entitled = parseFloat(lb[`${t}_entitled`] || 0);
+           let entitled = parseFloat(lb[`${t}_entitled`] || 0);
            const used = parseFloat(lb[`${t}_used`] || 0);
+           
+           if (isProbation) {
+               entitled = (t === 'sl') ? 2 : 0;
+           }
+           
            if (used > entitled) {
                total_negative_balance += (used - entitled);
            }
@@ -181,14 +187,20 @@ exports.processAll = async (req, res) => {
       let net = gross - total_ded;
 
       let auto_lwp_days = 0;
-      const lbRes = await query('SELECT * FROM leave_balances WHERE emp_id=$1 AND year=$2', [e.emp_id, year]);
+      const lbRes = await query('SELECT lb.*, e.probation_status FROM leave_balances lb JOIN employees e ON e.emp_id=lb.emp_id WHERE lb.emp_id=$1 AND lb.year=$2', [e.emp_id, year]);
       if (lbRes.rows.length > 0) {
          const lb = lbRes.rows[0];
+         const isProbation = lb.probation_status === 'Pending';
          const types = ['cl', 'el', 'ml', 'ccl', 'sl', 'dl'];
          let total_negative_balance = 0;
          for (let t of types) {
-             const entitled = parseFloat(lb[`${t}_entitled`] || 0);
+             let entitled = parseFloat(lb[`${t}_entitled`] || 0);
              const used = parseFloat(lb[`${t}_used`] || 0);
+             
+             if (isProbation) {
+                 entitled = (t === 'sl') ? 2 : 0;
+             }
+             
              if (used > entitled) {
                  total_negative_balance += (used - entitled);
              }

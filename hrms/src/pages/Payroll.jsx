@@ -231,6 +231,7 @@ export default function Payroll() {
     setFormObj(prev => ({
       ...prev,
       emp_id: empId,
+      ctc: emp ? parseFloat(emp.ctc || emp.basic_pay || 0) : 0,
       basic_pay: emp ? emp.basic_pay || '' : ''
     }));
   };
@@ -997,7 +998,7 @@ export default function Payroll() {
                             onClick={() => {
                               setFormObj({
                                 ...p,
-                                ctc: parseFloat(p.ctc || p.basic_pay || 0),
+                                ctc: parseFloat(p.gross_pay || p.ctc || p.basic_pay || 0),
                                 professional_tax: parseFloat(p.professional_tax || 200),
                                 tds: parseFloat(p.tds || 0),
                                 other_deductions: parseFloat(p.other_deductions || 0),
@@ -1302,7 +1303,7 @@ export default function Payroll() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs text-slate-400 block mb-1">Monthly Gross Salary (₹)<span className="text-red-400">*</span></label>
-                    <input type="number" min="0" className="input text-xs" placeholder="0" value={formObj.ctc || formObj.basic_pay || ''} onChange={e => setFormObj({ ...formObj, ctc: Math.max(0, parseFloat(e.target.value)) || '' })} />
+                    <input type="number" min="0" className="input text-xs" placeholder="0" value={formObj.ctc !== undefined ? formObj.ctc : ''} onChange={e => setFormObj({ ...formObj, ctc: e.target.value === '' ? 0 : Math.max(0, parseFloat(e.target.value)) })} />
                   </div>
                   <div>
                     <label className="text-xs text-slate-400 block mb-1">Compensation / Bonus (₹)</label>

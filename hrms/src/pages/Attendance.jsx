@@ -993,10 +993,10 @@ export default function Attendance() {
               <tbody>{paginatedBalances.map((b,i)=>(
                 <tr key={b.id} className="hover:bg-gray-50/50" style={{ borderBottom:'1px solid rgba(22,38,96,0.04)' }}>
                   <td className="p-3"><div className="font-medium text-sm" style={{ color:'#162660' }}>{b.emp_name}</div></td>
-                  <td className="p-3 font-semibold text-emerald-600">{(b.sl_entitled||0)-(b.sl_used||0)}</td>
-                  <td className="p-3 font-semibold text-purple-600">{(b.ml_entitled||0)-(b.ml_used||0)}</td>
-                  <td className="p-3 font-semibold text-blue-600">{(b.el_entitled||0)-(b.el_used||0)}</td>
-                  <td className="p-3 font-semibold text-amber-600">{(b.dl_entitled||0)-(b.dl_used||0)}</td>
+                  <td className="p-3 font-semibold text-emerald-600">{(b.probation_status==='Pending'?2:(b.sl_entitled||0))-(b.sl_used||0)}</td>
+                  <td className="p-3 font-semibold text-purple-600">{(b.probation_status==='Pending'?0:(b.ml_entitled||0))-(b.ml_used||0)}</td>
+                  <td className="p-3 font-semibold text-blue-600">{(b.probation_status==='Pending'?0:(b.el_entitled||0))-(b.el_used||0)}</td>
+                  <td className="p-3 font-semibold text-amber-600">{(b.probation_status==='Pending'?0:(b.dl_entitled||0))-(b.dl_used||0)}</td>
                   <td className="p-3 text-red-500 font-medium">{b.sl_used||0}</td>
                   <td className="p-3 text-red-500 font-medium">{b.ml_used||0}</td>
                   <td className="p-3 text-red-500 font-medium">{b.el_used||0}</td>

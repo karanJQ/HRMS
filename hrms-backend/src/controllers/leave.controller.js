@@ -161,7 +161,7 @@ exports.listBalances = async (req, res) => {
   if (req.user.role==='dept_head') { conditions.push(`e.dept_id=$${idx++}`); params.push(req.user.dept_id); }
   try {
     const result = await query(
-      `SELECT lb.*, e.first_name||' '||e.last_name as emp_name, d.name as dept_name, e.doj
+      `SELECT lb.*, e.first_name||' '||e.last_name as emp_name, d.name as dept_name, e.doj, e.probation_status
        FROM leave_balances lb
        JOIN employees e ON e.emp_id=lb.emp_id
        JOIN departments d ON d.id=e.dept_id
@@ -175,12 +175,24 @@ exports.myLeaveBalances = async (req, res) => {
   const yr = parseInt(req.query.year) || new Date().getFullYear();
   try {
     const result = await query(
-      `SELECT lb.*, e.first_name||' '||e.last_name as emp_name
+      `SELECT lb.*, e.first_name||' '||e.last_name as emp_name, e.probation_status
        FROM leave_balances lb
        JOIN employees e ON e.emp_id=lb.emp_id
        WHERE lb.emp_id=$1 AND lb.year=$2`, [req.user.emp_id, yr]
     );
-    return success(res, result.rows[0] || {});
+    if (result.rows.length > 0) {
+      const lb = result.rows[0];
+      if (lb.probation_status === 'Pending') {
+         lb.cl_entitled = 0;
+         lb.el_entitled = 0;
+         lb.ml_entitled = 0;
+         lb.ccl_entitled = 0;
+         lb.sl_entitled = 2;
+         lb.dl_entitled = 0;
+      }
+      return success(res, lb);
+    }
+    return success(res, {});
   } catch (err) { return error(res, err.message); }
 };
 
