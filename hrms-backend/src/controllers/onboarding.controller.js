@@ -78,15 +78,17 @@ exports.update = async (req, res) => {
         if (desigRes.rows.length) designationId = desigRes.rows[0].id;
       }
 
-      const dob = null; // Blank dob
+      const dob = '1990-01-01'; // Default placeholder (NOT NULL in DB)
       const dor = null; // Blank dor
       const doj = candidate.joining_date || new Date().toISOString().split('T')[0];
+      const gender = 'Other'; // Placeholder (NOT NULL in DB)
+      const mobile = '0000000000'; // Placeholder (NOT NULL in DB)
 
       // d. Create employee master record
       await query(
         `INSERT INTO employees(emp_id, first_name, last_name, gender, dob, dor, mobile, dept_id, designation_id, doj, status, category, created_by)
-         VALUES($1, $2, $3, null, $4, $5, null, $6, $7, $8, 'Active', 'General', $9)`,
-        [empId, firstName, lastName, dob, dor, candidate.dept_id || null, designationId, doj, req.user.id]
+         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Active', 'General', $11)`,
+        [empId, firstName, lastName, gender, dob, dor, mobile, candidate.dept_id || null, designationId, doj, req.user.id]
       );
 
       // e. Create service book joining entry
