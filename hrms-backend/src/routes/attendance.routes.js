@@ -21,11 +21,13 @@ router.post('/sync', logAudit('SYNC_BIOMETRICS', 'Attendance'), attendanceContro
 router.post('/regularize', logAudit('APPLY_REGULARIZATION', 'Attendance'), attendanceController.applyRegularization);
 router.get('/regularize', attendanceController.getRegularization);
 router.put('/regularize/:id', minRole('hr_staff'), logAudit('REVIEW_REGULARIZATION', 'Attendance'), attendanceController.reviewRegularization);
+router.delete('/regularize/:id', logAudit('CANCEL_REGULARIZATION', 'Attendance'), attendanceController.cancelRegularization);
 
 // WFH routes
 router.post('/wfh', logAudit('APPLY_WFH', 'Attendance'), attendanceController.applyWFH);
 router.get('/wfh', attendanceController.getWFH);
 router.put('/wfh/:id', minRole('hr_staff'), logAudit('REVIEW_WFH', 'Attendance'), attendanceController.reviewWFH);
+router.delete('/wfh/:id', logAudit('CANCEL_WFH', 'Attendance'), attendanceController.cancelWFH);
 
 // Holiday routes
 router.get('/holidays', attendanceController.getHolidays);

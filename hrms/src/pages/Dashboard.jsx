@@ -37,6 +37,7 @@ export default function Dashboard() {
   const [annForm, setAnnForm] = useState({ title: '', type: 'General', content: '', sendMail: false });
   const [annSubmitting, setAnnSubmitting] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [todayAttendance, setTodayAttendance] = useState(null);
 
   useEffect(() => {
     const currentMonth = new Date().getMonth() + 1;
@@ -54,7 +55,8 @@ export default function Dashboard() {
       attendanceAPI.getHolidays({ year: currentYear }).catch(() => ({ data: { data: [] } })),
       isAdmin ? reportsAPI.probationAlerts({ recentOnly: 'true' }).catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
       announcementAPI.list().catch(() => ({ data: { data: [] } })),
-    ]).then(([s, h, l, o, b, a, hol, prob, ann]) => {
+      attendanceAPI.get({ month: currentMonth, year: currentYear }).catch(() => ({ data: { data: [] } })),
+    ]).then(([s, h, l, o, b, a, hol, prob, ann, att]) => {
       setStats(s?.data?.data || null);
       setHeadcount(h?.data?.data || null);
       setLeaves((l?.data?.data || []).slice(0, 5));
@@ -65,6 +67,10 @@ export default function Dashboard() {
       setHolidays(hol?.data?.data?.slice(0, 6) || []);
       setProbationAlerts(prob?.data?.data || []);
       setAnnouncements(ann?.data?.data || []);
+      
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      const tRecord = (att?.data?.data || []).find(r => r.date.startsWith(todayStr));
+      setTodayAttendance(tRecord || null);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -82,6 +88,12 @@ export default function Dashboard() {
       setTimeout(() => setMsg(''), 5000);
     } finally {
       setPunchLoading(false);
+      // Refresh today's attendance
+      attendanceAPI.get({ month: new Date().getMonth() + 1, year: new Date().getFullYear() }).then(res => {
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const tRecord = (res.data?.data || []).find(r => r.date.startsWith(todayStr));
+        setTodayAttendance(tRecord || null);
+      });
     }
   };
 
@@ -290,26 +302,29 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="mt-3">
-            {!['super_admin','hr_manager','hr_staff'].includes(user.role) ? (
+            {!['super_admin', 'hr_manager', 'hr_staff'].includes(user.role) ? (() => {
+              const hasPunchedIn = !!todayAttendance?.punch_in;
+              const hasPunchedOut = !!todayAttendance?.punch_out;
+              return (
               <div className="flex gap-2 w-full">
                 <button
-                  className="flex-1 btn btn-success flex items-center justify-center gap-1.5 py-2 font-bold text-white rounded-lg transition-all text-sm"
+                  className="flex-1 btn btn-success flex items-center justify-center gap-1.5 py-2 font-bold text-white rounded-lg transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => setShowPunchModal(true)}
-                  disabled={punchLoading}
+                  disabled={punchLoading || hasPunchedIn}
                   style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none' }}
                 >
                   <Fingerprint size={14} /><span>Punch In</span>
                 </button>
                 <button
-                  className="flex-1 btn btn-danger flex items-center justify-center gap-1.5 py-2 font-bold text-white rounded-lg transition-all text-sm"
+                  className="flex-1 btn btn-danger flex items-center justify-center gap-1.5 py-2 font-bold text-white rounded-lg transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => setShowPunchModal(true)}
-                  disabled={punchLoading}
+                  disabled={punchLoading || !hasPunchedIn || hasPunchedOut}
                   style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', border: 'none' }}
                 >
                   <Fingerprint size={14} /><span>Punch Out</span>
                 </button>
               </div>
-            ) : (
+            )})() : (
               <p className="text-xs text-center py-1.5" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>Not available for admin accounts</p>
             )}
           </div>
@@ -392,7 +407,7 @@ export default function Dashboard() {
             <Bell size={20} className="text-blue-500" />
             <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Announcements</h3>
           </div>
-          {['hr_manager', 'super_admin', 'hr_staff'].includes(user?.role) && (
+          {['super_admin', 'hr_manager', 'hr_staff'].includes(user?.role) && (
             <button onClick={() => setShowAnnModal(true)} className="btn btn-primary text-xs px-3 py-1.5 rounded-lg flex items-center justify-center font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all whitespace-nowrap flex-shrink-0">
               <span className="hidden sm:inline">+ Add Announcement</span>
               <span className="sm:hidden">+ Add</span>
@@ -411,7 +426,7 @@ export default function Dashboard() {
                       a.type === 'Important' ? 'bg-red-50 text-red-600' :
                       a.type === 'Event' ? 'bg-pink-50 text-pink-600' : 'bg-blue-50 text-blue-600'
                     }`}>{a.type}</span>
-                    {['hr_manager', 'super_admin', 'hr_staff'].includes(user?.role) && (
+                    {['super_admin', 'hr_manager', 'hr_staff'].includes(user?.role) && (
                       <button onClick={(e) => { e.stopPropagation(); deleteAnnouncement(a.id); }} className="text-slate-400 hover:text-red-500 bg-slate-50 p-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100">
                         <Trash2 size={14} />
                       </button>
@@ -733,3 +748,7 @@ export default function Dashboard() {
     </Layout>
   );
 }
+
+
+
+

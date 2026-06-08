@@ -513,3 +513,6 @@ export default function Training() {
     </Layout>
   );
 }
+
+
+

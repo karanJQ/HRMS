@@ -179,7 +179,7 @@ export default function Transfer() {
                   <td style={{ color: '#162660' }} className="text-xs">{t.request_date?.split('T')[0]||'—'}</td>
                   <td style={{ color: '#162660' }} className="font-mono text-xs">{t.order_number||'—'}</td>
                   <td><Badge text={t.status}/></td>
-                  <td>{t.status==='Pending Approval' && isMin('hr_manager') && (
+                  <td>{t.status==='Pending Approval' && isMin('hr_staff') && (
                     <div className="flex gap-1.5">
                       <button 
                         className="btn btn-success" 
@@ -252,3 +252,6 @@ export default function Transfer() {
     </Layout>
   );
 }
+
+
+

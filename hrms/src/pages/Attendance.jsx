@@ -7,10 +7,13 @@ import {
   Calendar, Plus, Check, X, Fingerprint, Clock, Settings, Home,
   ChevronLeft, ChevronRight, FileText, Activity, Sun, LogIn, LogOut,
   Coffee, MapPin, Smartphone, AlertCircle, AlertTriangle, CheckCircle2,
-  XCircle, CoffeeIcon, CalendarDays, Watch
+  XCircle, CoffeeIcon, CalendarDays, Watch, CheckCircle, Trash2, Ban, Search
 } from 'lucide-react';
 import { leaveAPI, empAPI, attendanceAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
+import { usePaginationAndSearch } from '../hooks/usePaginationAndSearch';
+import Pagination from '../components/common/Pagination';
+import { getActiveRequestsForDate, getBlockedSlots, checkDateRules, canApply, isAnySlotAvailable } from '../utils/conflictValidator';
 
 // Status → visual config (soft light tints — professional, corporate look)
 const STATUS_STYLES = {
@@ -57,11 +60,41 @@ export default function Attendance() {
   const [msg, setMsg] = useState('');
   const [form, setForm] = useState({ emp_id:'', leave_type:'SL', from_date:'', to_date:'', reason:'', half_day_type:'', contact_number:'', leave_address:'' });
   const [regForm, setRegForm] = useState({ date: '', requested_in: '', requested_out: '', reason: '', half_day_type: '', regularization_type: 'full_day' });
-  const [wfhForm, setWfhForm] = useState({ date: '', reason: '' });
+  const [wfhForm, setWfhForm] = useState({ date: '', reason: '', half_day_type: '', wfh_type: 'full_day' });
   const [employees, setEmployees] = useState([]);
   const [selectedEmpId, setSelectedEmpId] = useState('');
   const [holidayForm, setHolidayForm] = useState({ date: '', name: '', type: 'Festival' });
   const [showHolidayForm, setShowHolidayForm] = useState(false);
+
+  const {
+    searchQuery: leaveSearch, setSearchQuery: setLeaveSearch,
+    currentPage: leavePage, setCurrentPage: setLeavePage,
+    paginatedData: paginatedLeaves, totalPages: leaveTotalPages
+  } = usePaginationAndSearch(leaves, ['emp_name', 'emp_id', 'leave_type', 'dept_name', 'status'], 10);
+
+  const {
+    searchQuery: balSearch, setSearchQuery: setBalSearch,
+    currentPage: balPage, setCurrentPage: setBalPage,
+    paginatedData: paginatedBalances, totalPages: balTotalPages
+  } = usePaginationAndSearch(balances, ['emp_name'], 10);
+
+  const {
+    searchQuery: wfhSearch, setSearchQuery: setWfhSearch,
+    currentPage: wfhPage, setCurrentPage: setWfhPage,
+    paginatedData: paginatedWfh, totalPages: wfhTotalPages
+  } = usePaginationAndSearch(wfhRequests, ['first_name', 'last_name', 'reason', 'status'], 10);
+
+  const {
+    searchQuery: regSearch, setSearchQuery: setRegSearch,
+    currentPage: regPage, setCurrentPage: setRegPage,
+    paginatedData: paginatedRegs, totalPages: regTotalPages
+  } = usePaginationAndSearch(regularizations, ['first_name', 'last_name', 'reason', 'status'], 10);
+
+  const {
+    searchQuery: attSearch, setSearchQuery: setAttSearch,
+    currentPage: attPage, setCurrentPage: setAttPage,
+    paginatedData: paginatedAtt, totalPages: attTotalPages
+  } = usePaginationAndSearch(attendanceRecords, ['status'], 10);
 
   const daysDiff = (f,t) => f&&t ? Math.max(0, Math.ceil((new Date(t)-new Date(f))/86400000)+1) : 0;
 
@@ -137,8 +170,35 @@ export default function Attendance() {
     catch(e) { showMsg('Error: '+e.response?.data?.message); }
   };
 
+  const cancelLeave = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this leave application?')) return;
+    try { await leaveAPI.cancel(id); showMsg('Leave cancelled'); load(); }
+    catch(e) { showMsg('Error: '+(e.response?.data?.message || e.message)); }
+  };
+  const cancelWFH = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this WFH request?')) return;
+    try { await attendanceAPI.cancelWFH(id); showMsg('WFH request cancelled'); load(); }
+    catch(e) { showMsg('Error: '+(e.response?.data?.message || e.message)); }
+  };
+  const cancelRegularization = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this regularization request?')) return;
+    try { await attendanceAPI.cancelRegularization(id); showMsg('Regularization cancelled'); load(); }
+    catch(e) { showMsg('Error: '+(e.response?.data?.message || e.message)); }
+  };
+
   const submitLeave = async () => {
     try {
+      const empId = user.role==='employee' ? user.emp_id : (form.emp_id || user.emp_id);
+      const slot = form.half_day_type ? form.half_day_type : 'FULL_DAY';
+      const start = new Date(form.from_date);
+      const end = new Date(form.to_date);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toLocaleDateString('en-CA');
+        const activeReqs = getActiveRequestsForDate(dateStr, empId, leaves, wfhRequests, regularizations);
+        const { allowed, reason } = canApply(dateStr, 'leave', slot, activeReqs, holidays, isMin('hr_staff'));
+        if (!allowed) return showMsg(`Validation Error on ${dateStr}: ` + reason);
+      }
+
       const payload = user.role==='employee' ? { ...form, emp_id: user.emp_id } : form;
       await leaveAPI.apply(payload);
       showMsg('Leave application submitted'); setShowForm(false);
@@ -148,6 +208,15 @@ export default function Attendance() {
   };
   const submitRegularization = async () => {
     try {
+      const empId = user?.role === 'employee' ? user.emp_id : selectedEmpId;
+      const slot = regForm.regularization_type === 'half_day' ? regForm.half_day_type : 'FULL_DAY';
+      if (regForm.regularization_type === 'half_day' && !regForm.half_day_type) {
+        return showMsg('Please select a half day type (First or Second half)');
+      }
+      const activeReqs = getActiveRequestsForDate(regForm.date, empId, leaves, wfhRequests, regularizations);
+      const { allowed, reason } = canApply(regForm.date, 'regularize', slot, activeReqs, holidays, isMin('hr_staff'));
+      if (!allowed) return showMsg('Validation Error: ' + reason);
+
       const payload = user?.role === 'employee' ? regForm : { ...regForm, emp_id: selectedEmpId };
       await attendanceAPI.applyRegularization(payload);
       showMsg('Regularization request submitted'); setShowRegForm(false);
@@ -157,9 +226,18 @@ export default function Attendance() {
   };
   const submitWFH = async () => {
     try {
+      const empId = user?.role === 'employee' ? user.emp_id : selectedEmpId;
+      const slot = wfhForm.wfh_type === 'half_day' ? wfhForm.half_day_type : 'FULL_DAY';
+      if (wfhForm.wfh_type === 'half_day' && !wfhForm.half_day_type) {
+        return showMsg('Please select a half day type (First or Second half)');
+      }
+      const activeReqs = getActiveRequestsForDate(wfhForm.date, empId, leaves, wfhRequests, regularizations);
+      const { allowed, reason } = canApply(wfhForm.date, 'wfh', slot, activeReqs, holidays, isMin('hr_staff'));
+      if (!allowed) return showMsg('Validation Error: ' + reason);
+
       await attendanceAPI.applyWFH(wfhForm);
       showMsg('Work from home request submitted'); setShowWfhForm(false);
-      setWfhForm({ date: '', reason: '' }); load();
+      setWfhForm({ date: '', reason: '', half_day_type: '', wfh_type: 'full_day' }); load();
     } catch(e) { showMsg('Error: '+e.response?.data?.message); }
   };
   const saveSettings = async () => {
@@ -245,11 +323,10 @@ export default function Attendance() {
     setShowDateAction(false);
     const dateStr = selectedDate;
     if (action === 'leave') setForm({ ...form, from_date: dateStr, to_date: dateStr, half_day_type: '' });
-    else if (action === 'first_half') setForm({ ...form, from_date: dateStr, to_date: dateStr, half_day_type: 'FIRST_HALF' });
-    else if (action === 'second_half') setForm({ ...form, from_date: dateStr, to_date: dateStr, half_day_type: 'SECOND_HALF' });
-    else if (action === 'wfh') setWfhForm({ ...wfhForm, date: dateStr });
-    else if (action === 'regularize') setRegForm({ ...regForm, date: dateStr });
-    if (action !== 'regularize' && action !== 'wfh') setShowForm(true);
+    else if (action === 'wfh') setWfhForm({ ...wfhForm, date: dateStr, half_day_type: '', wfh_type: 'full_day' });
+    else if (action === 'regularize') setRegForm({ ...regForm, date: dateStr, half_day_type: '' });
+    
+    if (action === 'leave') setShowForm(true);
     else if (action === 'wfh') setShowWfhForm(true);
     else if (action === 'regularize') setShowRegForm(true);
   };
@@ -411,7 +488,7 @@ export default function Attendance() {
                 const st = day.data?.status || day.status;
                 const style = STATUS_STYLES[st] || STATUS_STYLES.Upcoming;
                 const isPrevNext = day.status === 'prev' || day.status === 'next';
-                const hasData = day.date && day.data?.status && st !== 'Upcoming' && !isPrevNext;
+                const hasData = day.date && !isPrevNext;
                 const isWeekend = day.date && new Date(day.date + 'T00:00:00').getDay() % 6 === 0;
 
                 return (
@@ -441,29 +518,79 @@ export default function Attendance() {
                     </div>
 
                     {/* Status content */}
-                    {hasData && st !== 'Aggregate' && (
+                    {hasData && st !== 'Aggregate' && (() => {
+                      const empId = user?.role === 'employee' ? user.emp_id : selectedEmpId;
+                      const activeReqs = (day.date && empId && empId !== 'all') 
+                        ? getActiveRequestsForDate(day.date, empId, leaves, wfhRequests, regularizations)
+                        : [];
+
+                      // If no active reqs, just show the base status from backend
+                      // Base statuses we want to show even if no requests: Present, Absent, Miss Punch, Holiday, Weekend
+                      const showBaseStatus = activeReqs.length === 0 || ['Present', 'Absent', 'Miss Punch', 'Holiday'].includes(st);
+
+                      return (
+                        <div className="px-1.5 md:px-3 pb-1 md:pb-2.5 flex flex-col gap-1 mt-0.5 custom-scrollbar overflow-y-auto max-h-[64px]">
+                          {/* Base status or Holiday */}
+                          {showBaseStatus && (
+                            <span className="text-[9px] md:text-[11px] font-bold leading-tight" style={{ color: style.accent }}>
+                              {st === 'Leave' && activeReqs.length > 0 ? '' // hide backend generic leave if we have specific reqs
+                               : st === 'WFH' && activeReqs.length > 0 ? '' // hide backend generic wfh
+                               : st === 'Half Day' ? 'Half Day'
+                               : st === 'Upcoming' ? '' // DO NOT SHOW 'Upcoming' TEXT
+                               : st}
+                            </span>
+                          )}
+
+                          {/* Holiday Name */}
+                          {day.data?.holiday_name && (
+                            <span className="text-[10px] font-medium truncate" style={{ color: style.accent, opacity: 0.8 }}>
+                              {day.data.holiday_name}
+                            </span>
+                          )}
+
+                          {/* Punches */}
+                          {day.data?.punch_in && (
+                            <div className="flex flex-col mt-0.5 mb-0.5">
+                              <span className="text-[8px] md:text-[10px] font-medium leading-tight" style={{ color: day.data.is_regularized ? '#059669' : 'rgba(22,38,96,0.35)' }}>
+                                {day.data.is_regularized ? 'Reg: ' : ''}{day.data.punch_in.slice(0,5)}<span className="hidden sm:inline">{day.data.punch_out ? ` - ${day.data.punch_out.slice(0,5)}` : ''}</span>
+                              </span>
+                              {day.data.is_regularized && (
+                                <span className="text-[7px] md:text-[8px] font-medium leading-tight mt-0.5" style={{ color: 'rgba(22,38,96,0.35)' }}>
+                                  Act: {day.data.actual_punch_in ? day.data.actual_punch_in.slice(0,5) : '--'}
+                                  <span className="hidden sm:inline">{day.data.actual_punch_out ? ` - ${day.data.actual_punch_out.slice(0,5)}` : (day.data.actual_punch_in ? ' - --' : '')}</span>
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Render Active Requests as Badges */}
+                          {activeReqs.map((req, i) => {
+                            const isAppr = req.status === 'Approved';
+                            const colors = {
+                              leave: isAppr ? { bg:'#e0e7ff', text:'#4338ca', border:'#c7d2fe' } : { bg:'#fef3c7', text:'#d97706', border:'#fde68a' },
+                              wfh: isAppr ? { bg:'#dcfce7', text:'#15803d', border:'#bbf7d0' } : { bg:'#fef3c7', text:'#d97706', border:'#fde68a' },
+                              regularize: isAppr ? { bg:'#ffedd5', text:'#c2410c', border:'#fed7aa' } : { bg:'#fef3c7', text:'#d97706', border:'#fde68a' }
+                            };
+                            const c = colors[req.type];
+                            const label = req.type === 'leave' ? 'Lv' : req.type === 'wfh' ? 'WFH' : 'Reg';
+                            const slotLabel = req.slot === 'FIRST_HALF' ? 'H1' : req.slot === 'SECOND_HALF' ? 'H2' : 'Full';
+                            
+                            return (
+                              <div key={i} className="text-[9px] px-1.5 py-0.5 rounded shadow-sm border flex justify-between items-center whitespace-nowrap"
+                                style={{ background:c.bg, color:c.text, borderColor:c.border }}>
+                                <span className="font-bold">{label} {slotLabel}</span>
+                                {!isAppr && <span className="text-[8px] opacity-75 ml-1">Pend</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Aggregate text */}
+                    {st === 'Aggregate' && (
                       <div className="px-1.5 md:px-3 pb-1 md:pb-2.5 flex flex-col gap-0 md:gap-0.5 mt-0.5">
-                        <span className="text-[9px] md:text-[11px] font-bold leading-tight" style={{ color: style.accent }}>
-                          {st === 'Half Day' ? 'Half Day' : st === 'Leave' ? (day.data?.leave_type || 'Leave') : st}
-                        </span>
-
-                        {day.data?.punch_in && (
-                          <span className="text-[8px] md:text-[10px] font-medium leading-tight" style={{ color: 'rgba(22,38,96,0.35)' }}>
-                            {day.data.punch_in.slice(0,5)}<span className="hidden sm:inline">{day.data.punch_out ? ` - ${day.data.punch_out.slice(0,5)}` : ''}</span>
-                          </span>
-                        )}
-
-                        {day.data?.holiday_name && (
-                          <span className="text-[10px] font-medium truncate" style={{ color: style.accent, opacity: 0.8 }}>
-                            {day.data.holiday_name}
-                          </span>
-                        )}
-
-                        {day.data?.half_day_type && (
-                          <span className="text-[10px] font-medium" style={{ color: '#7c3aed' }}>
-                            {day.data.half_day_type === 'FIRST_HALF' ? '1st Half' : '2nd Half'}
-                          </span>
-                        )}
+                        <span className="text-[9px] md:text-[11px] font-bold leading-tight" style={{ color: style.accent }}>Aggregate</span>
                       </div>
                     )}
 
@@ -551,15 +678,15 @@ export default function Attendance() {
                       <div className="bg-white/60 rounded-lg p-2.5 text-center">
                         <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color:'rgba(22,38,96,0.35)' }}>In</div>
                         <div className="font-bold text-sm" style={{ color: dd.punch_in ? '#162660' : 'rgba(22,38,96,0.25)' }}>{dd.punch_in ? dd.punch_in.slice(0,5) : 'Not punched'}</div>
-                        {dd.is_regularized && dd.actual_punch_in && (
-                          <div className="text-[9px] mt-0.5 font-medium text-slate-400">Actual: {dd.actual_punch_in.slice(0,5)}</div>
+                        {dd.is_regularized && (
+                          <div className="text-[9px] mt-0.5 font-medium text-slate-400">Actual: {dd.actual_punch_in ? dd.actual_punch_in.slice(0,5) : 'Not punched'}</div>
                         )}
                       </div>
                       <div className="bg-white/60 rounded-lg p-2.5 text-center">
                         <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color:'rgba(22,38,96,0.35)' }}>Out</div>
                         <div className="font-bold text-sm" style={{ color: dd.punch_out ? '#162660' : 'rgba(22,38,96,0.25)' }}>{dd.punch_out ? dd.punch_out.slice(0,5) : 'Not punched'}</div>
-                        {dd.is_regularized && dd.actual_punch_out && (
-                          <div className="text-[9px] mt-0.5 font-medium text-slate-400">Actual: {dd.actual_punch_out.slice(0,5)}</div>
+                        {dd.is_regularized && (
+                          <div className="text-[9px] mt-0.5 font-medium text-slate-400">Actual: {dd.actual_punch_out ? dd.actual_punch_out.slice(0,5) : 'Not punched'}</div>
                         )}
                       </div>
                       <div className="bg-white/60 rounded-lg p-2.5 text-center">
@@ -597,12 +724,15 @@ export default function Attendance() {
                     {(dd.photo_url || dd.location) && (
                       <div className="mt-3 flex items-center gap-3">
                         {dd.photo_url && (
-                          <a href={`http://localhost:5000${dd.photo_url}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                          <a href={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '')}${dd.photo_url}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
                             <Smartphone size={14}/> View Photo
                           </a>
                         )}
                         {dd.location && (() => {
-                          const loc = typeof dd.location === 'string' ? JSON.parse(dd.location) : dd.location;
+                          let loc = null;
+                          try {
+                            loc = typeof dd.location === 'string' ? JSON.parse(dd.location) : dd.location;
+                          } catch (e) { loc = null; }
                           return loc?.lat ? (
                             <a href={`https://www.google.com/maps?q=${loc.lat},${loc.lng}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-emerald-600 hover:underline">
                               <MapPin size={14}/> View Map
@@ -628,68 +758,126 @@ export default function Attendance() {
                   )}
 
                   <p className="text-xs font-semibold mb-3" style={{ color:'rgba(22,38,96,0.5)' }}>QUICK ACTIONS</p>
-                  {!['super_admin','hr_manager','hr_staff'].includes(user.role) ? (
+                  {!['super_admin', 'hr_manager', 'hr_staff'].includes(user.role) ? (
                     (() => {
-                      const hasPendingLeave = leaves.some(l => selectedDate >= l.from_date.split('T')[0] && selectedDate <= l.to_date.split('T')[0] && l.status === 'Pending' && l.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
-                      const hasApprovedLeave = selectedDayData.status === 'Leave' || leaves.some(l => selectedDate >= l.from_date.split('T')[0] && selectedDate <= l.to_date.split('T')[0] && l.status === 'Approved' && l.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
-                      const hasPendingWFH = wfhRequests.some(w => w.date.split('T')[0] === selectedDate && w.status === 'Pending' && w.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
-                      const hasApprovedWFH = selectedDayData.status === 'WFH' || wfhRequests.some(w => w.date.split('T')[0] === selectedDate && w.status === 'Approved' && w.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
-                      const hasPendingReg = regularizations.some(r => r.date.split('T')[0] === selectedDate && r.status === 'Pending' && r.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
-                      const hasApprovedReg = regularizations.some(r => r.date.split('T')[0] === selectedDate && r.status === 'Approved' && r.emp_id === (user?.role === 'employee' ? user.emp_id : selectedEmpId));
+                      const empId = user?.role === 'employee' ? user.emp_id : selectedEmpId;
+                      const activeReqs = getActiveRequestsForDate(selectedDate, empId, leaves, wfhRequests, regularizations);
+                      const blocked = getBlockedSlots(activeReqs);
+                      const dateErr = checkDateRules(selectedDate, 'leave', holidays);
+                      const dateErrReg = checkDateRules(selectedDate, 'regularize', holidays);
+                      const dateErrWfh = checkDateRules(selectedDate, 'wfh', holidays);
 
-                      const applicationStatus = hasApprovedLeave ? 'Leave already approved' :
-                                                hasPendingLeave ? 'Leave application pending' :
-                                                hasApprovedWFH ? 'WFH already approved' :
-                                                hasPendingWFH ? 'WFH application pending' :
-                                                hasApprovedReg ? 'Regularization already approved' :
-                                                hasPendingReg ? 'Regularization pending' : null;
+                      const leaveAvail = !dateErr && (blocked.leave.FULL_DAY === null || blocked.leave.FIRST_HALF === null || blocked.leave.SECOND_HALF === null);
+                      const wfhAvail = !dateErrWfh && (blocked.wfh.FULL_DAY === null || blocked.wfh.FIRST_HALF === null || blocked.wfh.SECOND_HALF === null);
+                      const regAvail = !dateErrReg && (blocked.regularize.FULL_DAY === null || blocked.regularize.FIRST_HALF === null || blocked.regularize.SECOND_HALF === null);
 
-                      if (applicationStatus) {
-                        return (
-                          <div className="p-4 rounded-xl text-center border border-indigo-100 bg-indigo-50/50">
-                            <CheckCircle className="mx-auto text-indigo-400 mb-2" size={24}/>
-                            <p className="text-sm font-semibold text-indigo-900">{applicationStatus}</p>
-                          </div>
-                        );
-                      }
-                      
                       return (
                         <div className="space-y-2.5">
+                          {/* Show existing requests with cancel buttons */}
+                          {activeReqs.length > 0 && (
+                            <div className="space-y-1.5 mb-3">
+                              {activeReqs.map((req, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl border"
+                                  style={{ background: req.status === 'Approved' ? '#f0fdf4' : '#fffbeb', borderColor: req.status === 'Approved' ? '#bbf7d0' : '#fef08a' }}>
+                                  <div className="flex items-center gap-2">
+                                    <CheckCircle size={14} className={req.status === 'Approved' ? 'text-green-500' : 'text-amber-500'}/>
+                                    <span className="text-xs font-medium" style={{ color:'#162660' }}>{req.label}</span>
+                                  </div>
+                                  {(req.status === 'Pending' || isMin('hr_staff')) && (
+                                    <button
+                                      className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all hover:shadow-sm flex items-center gap-1"
+                                      style={{ background:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca' }}
+                                      onClick={() => {
+                                        if (req.type === 'leave') cancelLeave(req.id);
+                                        else if (req.type === 'wfh') cancelWFH(req.id);
+                                        else cancelRegularization(req.id);
+                                      }}>
+                                      <Trash2 size={11}/> Cancel
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Date-level warnings */}
+                          {dateErr && !dateErrReg && (
+                            <div className="p-2.5 rounded-xl text-xs font-medium flex items-center gap-2"
+                              style={{ background:'#fffbeb', border:'1px solid #fef08a', color:'#92400e' }}>
+                              <AlertTriangle size={14}/> {dateErr}
+                            </div>
+                          )}
+                          {dateErr && dateErrReg && (
+                            <div className="p-2.5 rounded-xl text-xs font-medium flex items-center gap-2"
+                              style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#991b1b' }}>
+                              <Ban size={14}/> {dateErr}
+                            </div>
+                          )}
+
                           {/* Miss Punch: show Regularize prominently first */}
-                          {selectedDayData.status === 'Miss Punch' && (
+                          {selectedDayData.status === 'Miss Punch' && regAvail && (
                             <button className="w-full text-sm font-bold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
                               style={{ background:'#ea580c', color:'#fff' }}
                               onClick={()=>handleDateAction('regularize')}>
                               <Activity size={16}/> Regularize This Day
                             </button>
                           )}
-                          <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                            style={{ background:'#162660', color:'#fff' }}
-                            onClick={()=>handleDateAction('leave')}><Calendar size={16}/> Apply Full Day Leave</button>
-                          
-                          <div className="grid grid-cols-2 gap-2.5">
-                            <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
-                              style={{ background:'#8b5cf6', color:'#fff' }}
-                              onClick={()=>handleDateAction('first_half')}>First Half Leave</button>
-                            <button className="text-sm font-semibold p-3 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5"
-                              style={{ background:'#8b5cf6', color:'#fff' }}
-                              onClick={()=>handleDateAction('second_half')}>Second Half Leave</button>
-                          </div>
 
-                          <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                            style={{ background:'#f59e0b', color:'#fff' }}
-                            onClick={()=>handleDateAction('wfh')}><Home size={16}/> Apply Work From Home</button>
+                          {leaveAvail && (
+                            <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                              style={{ background:'#162660', color:'#fff' }}
+                              onClick={()=>handleDateAction('leave')}><Calendar size={16}/> Apply Leave</button>
+                          )}
 
-                          {selectedDate <= todayStr && selectedDayData.status !== 'Miss Punch' && (
+                          {wfhAvail && (
+                            <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                              style={{ background:'#f59e0b', color:'#fff' }}
+                              onClick={()=>handleDateAction('wfh')}><Home size={16}/> Apply Work From Home</button>
+                          )}
+
+                          {regAvail && selectedDayData.status !== 'Miss Punch' && (
                             <button className="w-full text-sm font-semibold p-3.5 rounded-xl transition-all hover:shadow-md"
                               style={{ background:'rgba(22,38,96,0.04)', color:'#162660', border:'1px solid rgba(22,38,96,0.12)' }}
                               onClick={()=>handleDateAction('regularize')}>Request Regularization</button>
+                          )}
+
+                          {!leaveAvail && !wfhAvail && !regAvail && activeReqs.length === 0 && (
+                            <div className="p-4 rounded-xl text-center border border-slate-100 bg-slate-50/50">
+                              <Ban className="mx-auto text-slate-400 mb-2" size={24}/>
+                              <p className="text-sm font-semibold text-slate-600">No actions available for this date</p>
+                            </div>
                           )}
                         </div>
                       );
                     })()
                   ) : (
-                    <p className="text-xs text-center py-4" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>Not available for admin accounts</p>
+                    /* Admin view — show existing requests with cancel buttons */
+                    (() => {
+                      const empId = selectedEmpId;
+                      const activeReqs = empId ? getActiveRequestsForDate(selectedDate, empId, leaves, wfhRequests, regularizations) : [];
+                      return activeReqs.length > 0 ? (
+                        <div className="space-y-1.5">
+                          {activeReqs.map((req, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl border"
+                              style={{ background: req.status === 'Approved' ? '#f0fdf4' : '#fffbeb', borderColor: req.status === 'Approved' ? '#bbf7d0' : '#fef08a' }}>
+                              <span className="text-xs font-medium" style={{ color:'#162660' }}>{req.label}</span>
+                              <button
+                                className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-all hover:shadow-sm flex items-center gap-1"
+                                style={{ background:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca' }}
+                                onClick={() => {
+                                  if (req.type === 'leave') cancelLeave(req.id);
+                                  else if (req.type === 'wfh') cancelWFH(req.id);
+                                  else cancelRegularization(req.id);
+                                }}>
+                                <Trash2 size={11}/> Cancel
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-center py-4" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>No active requests for this date</p>
+                      );
+                    })()
                   )}
 
                 </>
@@ -714,12 +902,26 @@ export default function Attendance() {
                 </div>
               ))}
             </div>
-            {!['super_admin','hr_manager','hr_staff'].includes(user.role) && (
+            {!['super_admin', 'hr_manager', 'hr_staff'].includes(user.role) && (
               <button className="font-semibold px-5 py-2.5 rounded-xl transition-all hover:shadow-lg w-full md:w-auto"
                 style={{ background:'#162660', color:'#FEFEFA', whiteSpace:'nowrap' }}
                 onClick={()=>setShowForm(true)}><Plus size={16} className="inline mr-1"/>Apply Leave</button>
             )}
           </div>
+          
+          <div className="flex items-center justify-end mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder="Search applications..." 
+                value={leaveSearch}
+                onChange={e => setLeaveSearch(e.target.value)}
+                className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+              />
+            </div>
+          </div>
+
           <div className="rounded-xl overflow-hidden bg-white border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -730,7 +932,7 @@ export default function Attendance() {
                     ))}
                   </tr>
                 </thead>
-                <tbody>{leaves.map((l,i)=>(
+                <tbody>{paginatedLeaves.map((l,i)=>(
                   <tr key={l.id} className="hover:bg-gray-50/50 transition-colors" style={{ borderBottom:'1px solid rgba(22,38,96,0.04)' }}>
                     <td className="p-3"><div className="font-medium text-sm" style={{ color:'#162660' }}>{l.emp_name}</div><div className="text-[11px]" style={{ color:'rgba(22,38,96,0.4)' }}>{l.emp_id}</div></td>
                     <td className="p-3 text-xs" style={{ color:'rgba(22,38,96,0.5)' }}>{l.dept_name}</td>
@@ -741,21 +943,44 @@ export default function Attendance() {
                     <td className="p-3 font-semibold text-sm" style={{ color:'#162660' }}>{l.days}</td>
                     <td className="p-3 text-xs max-w-[150px] truncate" style={{ color:'rgba(22,38,96,0.5)' }}>{l.reason}</td>
                     <td className="p-3"><Badge text={l.status}/></td>
-                    <td className="p-3">{l.status==='Pending' && isMin('hr_staff') && (
+                    <td className="p-3">
                       <div className="flex gap-1.5">
-                        <button className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all" onClick={()=>review(l.id,'Approved')}><Check size={14}/></button>
-                        <button className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all" onClick={()=>review(l.id,'Rejected')}><X size={14}/></button>
+                        {l.status==='Pending' && isMin('hr_staff') && (
+                          <>
+                            <button className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all" onClick={()=>review(l.id,'Approved')}><Check size={14}/></button>
+                            <button className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all" onClick={()=>review(l.id,'Rejected')}><X size={14}/></button>
+                          </>
+                        )}
+                        {l.status==='Pending' && user.emp_id === l.emp_id && (
+                          <button className="p-1.5 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all" title="Cancel" onClick={()=>cancelLeave(l.id)}><Trash2 size={14}/></button>
+                        )}
+                        {l.status==='Approved' && isMin('hr_staff') && (
+                          <button className="p-1.5 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all" title="Cancel (Admin)" onClick={()=>cancelLeave(l.id)}><Trash2 size={14}/></button>
+                        )}
                       </div>
-                    )}</td>
+                    </td>
                   </tr>
                 ))}</tbody>
               </table>
             </div>
           </div>
+          <Pagination currentPage={leavePage} totalPages={leaveTotalPages} onPageChange={setLeavePage} />
         </div>
       ) : tab === 'balance' ? (
         <div className="animate-fadeIn rounded-xl bg-white p-6 border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
-          <h3 className="text-lg font-bold mb-4" style={{ color:'#162660' }}>Leave Balance — {new Date().getFullYear()}</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold" style={{ color:'#162660' }}>Leave Balance — {new Date().getFullYear()}</h3>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder="Search balances..." 
+                value={balSearch}
+                onChange={e => setBalSearch(e.target.value)}
+                className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+              />
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -765,7 +990,7 @@ export default function Attendance() {
                   ))}
                 </tr>
               </thead>
-              <tbody>{balances.map((b,i)=>(
+              <tbody>{paginatedBalances.map((b,i)=>(
                 <tr key={b.id} className="hover:bg-gray-50/50" style={{ borderBottom:'1px solid rgba(22,38,96,0.04)' }}>
                   <td className="p-3"><div className="font-medium text-sm" style={{ color:'#162660' }}>{b.emp_name}</div></td>
                   <td className="p-3 font-semibold text-emerald-600">{b.sl_entitled}</td>
@@ -790,55 +1015,92 @@ export default function Attendance() {
               ))}</tbody>
             </table>
           </div>
+          <Pagination currentPage={balPage} totalPages={balTotalPages} onPageChange={setBalPage} />
         </div>
       ) : tab === 'wfh' ? (
         <div className="animate-fadeIn rounded-xl bg-white p-6 border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold" style={{ color:'#162660' }}>Work From Home</h3>
-            {!['super_admin','hr_manager','hr_staff'].includes(user.role) && (
-              <button className="font-semibold px-5 py-2.5 rounded-xl transition-all"
-                style={{ background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff' }}
-                onClick={()=>setShowWfhForm(true)}><Plus size={16} className="inline mr-1"/>Request WFH</button>
-            )}
+            <div className="flex gap-4 items-center">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Search WFH..." 
+                  value={wfhSearch}
+                  onChange={e => setWfhSearch(e.target.value)}
+                  className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+                />
+              </div>
+              {!['super_admin', 'hr_manager', 'hr_staff'].includes(user.role) && (
+                <button className="font-semibold px-5 py-2.5 rounded-xl transition-all"
+                  style={{ background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff' }}
+                  onClick={()=>setShowWfhForm(true)}><Plus size={16} className="inline mr-1"/>Request WFH</button>
+              )}
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom:'1px solid rgba(22,38,96,0.08)', background:'rgba(22,38,96,0.02)' }}>
                   {user?.role!=='employee' && <th className="p-3 text-left text-xs font-semibold" style={{ color:'rgba(22,38,96,0.5)' }}>Employee</th>}
-                  {['Date','Reason','Status','Action'].map(h => (
+                  {['Date','Type','Reason','Status','Action'].map(h => (
                     <th key={h} className="p-3 text-left text-xs font-semibold" style={{ color:'rgba(22,38,96,0.5)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody>{wfhRequests.length===0 ? (
+              <tbody>{paginatedWfh.length===0 ? (
                 <tr><td colSpan={user?.role!=='employee'?5:4} className="p-8 text-center text-sm" style={{ color:'rgba(22,38,96,0.3)' }}>No WFH requests</td></tr>
-              ) : wfhRequests.map((w,i)=>(
+              ) : paginatedWfh.map((w,i)=>(
                 <tr key={w.id} className="hover:bg-gray-50/50" style={{ borderBottom:'1px solid rgba(22,38,96,0.04)' }}>
                   {user?.role!=='employee' && <td className="p-3"><span className="font-medium text-sm" style={{ color:'#162660' }}>{w.first_name} {w.last_name}</span></td>}
                   <td className="p-3 text-sm" style={{ color:'#162660' }}>{new Date(w.date).toLocaleDateString()}</td>
+                  <td className="p-3 text-xs">{w.wfh_type==='half_day' ? 'Half Day' : 'Full Day'}{w.half_day_type ? ` (${w.half_day_type==='FIRST_HALF'?'1st':'2nd'})` : ''}</td>
                   <td className="p-3 text-xs max-w-[200px] truncate" style={{ color:'rgba(22,38,96,0.5)' }}>{w.reason}</td>
                   <td className="p-3"><Badge text={w.status}/></td>
-                  <td className="p-3">{w.status==='Pending' && isMin('hr_staff') && (
+                  <td className="p-3">
                     <div className="flex gap-1.5">
-                      <button className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100" onClick={()=>reviewWFH(w.id,'Approved')}><Check size={14}/></button>
-                      <button className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100" onClick={()=>reviewWFH(w.id,'Rejected')}><X size={14}/></button>
+                      {w.status==='Pending' && isMin('hr_staff') && (
+                        <>
+                          <button className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100" onClick={()=>reviewWFH(w.id,'Approved')}><Check size={14}/></button>
+                          <button className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100" onClick={()=>reviewWFH(w.id,'Rejected')}><X size={14}/></button>
+                        </>
+                      )}
+                      {w.status==='Pending' && user.emp_id === w.emp_id && (
+                        <button className="p-1.5 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all" title="Cancel" onClick={()=>cancelWFH(w.id)}><Trash2 size={14}/></button>
+                      )}
+                      {w.status==='Approved' && isMin('hr_staff') && (
+                        <button className="p-1.5 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all" title="Cancel (Admin)" onClick={()=>cancelWFH(w.id)}><Trash2 size={14}/></button>
+                      )}
                     </div>
-                  )}</td>
+                  </td>
                 </tr>
               ))}</tbody>
             </table>
           </div>
+          <Pagination currentPage={wfhPage} totalPages={wfhTotalPages} onPageChange={setWfhPage} />
         </div>
       ) : tab === 'regularize' ? (
         <div className="animate-fadeIn rounded-xl bg-white p-6 border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold" style={{ color:'#162660' }}>Regularizations</h3>
-            {!['super_admin','hr_manager','hr_staff'].includes(user.role) && (
-              <button className="font-semibold px-5 py-2.5 rounded-xl transition-all"
-                style={{ background:'#fff', color:'#162660', border:'1px solid rgba(22,38,96,0.15)' }}
-                onClick={()=>setShowRegForm(true)}><Plus size={16} className="inline mr-1"/>Request Regularization</button>
-            )}
+            <div className="flex gap-4 items-center">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Search reqs..." 
+                  value={regSearch}
+                  onChange={e => setRegSearch(e.target.value)}
+                  className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+                />
+              </div>
+              {!['super_admin', 'hr_manager', 'hr_staff'].includes(user.role) && (
+                <button className="font-semibold px-5 py-2.5 rounded-xl transition-all"
+                  style={{ background:'#fff', color:'#162660', border:'1px solid rgba(22,38,96,0.15)' }}
+                  onClick={()=>setShowRegForm(true)}><Plus size={16} className="inline mr-1"/>Request Regularization</button>
+              )}
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -850,9 +1112,9 @@ export default function Attendance() {
                   ))}
                 </tr>
               </thead>
-              <tbody>{regularizations.length===0 ? (
+              <tbody>{paginatedRegs.length===0 ? (
                 <tr><td colSpan={user?.role!=='employee'?8:7} className="p-8 text-center text-sm" style={{ color:'rgba(22,38,96,0.3)' }}>No regularization requests</td></tr>
-              ) : regularizations.map((r,i)=>(
+              ) : paginatedRegs.map((r,i)=>(
                 <tr key={r.id} className="hover:bg-gray-50/50" style={{ borderBottom:'1px solid rgba(22,38,96,0.04)' }}>
                   {user?.role!=='employee' && <td className="p-3"><span className="font-medium text-sm" style={{ color:'#162660' }}>{r.first_name} {r.last_name}</span></td>}
                   <td className="p-3 text-sm" style={{ color:'#162660' }}>{new Date(r.date).toLocaleDateString()}</td>
@@ -861,16 +1123,27 @@ export default function Attendance() {
                   <td className="p-3 text-sm" style={{ color:'#162660' }}>{r.requested_out?.slice(0,5)||'--:--'}</td>
                   <td className="p-3 text-xs max-w-[150px] truncate" style={{ color:'rgba(22,38,96,0.5)' }}>{r.reason}</td>
                   <td className="p-3"><Badge text={r.status}/></td>
-                  <td className="p-3">{r.status==='Pending' && isMin('hr_staff') && (
+                  <td className="p-3">
                     <div className="flex gap-1.5">
-                      <button className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100" onClick={()=>reviewRegularization(r.id,'Approved')}><Check size={14}/></button>
-                      <button className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100" onClick={()=>reviewRegularization(r.id,'Rejected')}><X size={14}/></button>
+                      {r.status==='Pending' && isMin('hr_staff') && (
+                        <>
+                          <button className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100" onClick={()=>reviewRegularization(r.id,'Approved')}><Check size={14}/></button>
+                          <button className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100" onClick={()=>reviewRegularization(r.id,'Rejected')}><X size={14}/></button>
+                        </>
+                      )}
+                      {r.status==='Pending' && user.emp_id === r.emp_id && (
+                        <button className="p-1.5 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all" title="Cancel" onClick={()=>cancelRegularization(r.id)}><Trash2 size={14}/></button>
+                      )}
+                      {r.status==='Approved' && isMin('hr_staff') && (
+                        <button className="p-1.5 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all" title="Cancel (Admin)" onClick={()=>cancelRegularization(r.id)}><Trash2 size={14}/></button>
+                      )}
                     </div>
-                  )}</td>
+                  </td>
                 </tr>
               ))}</tbody>
             </table>
           </div>
+          <Pagination currentPage={regPage} totalPages={regTotalPages} onPageChange={setRegPage} />
         </div>
       ) : tab === 'biometrics' ? (
         <div className="animate-fadeIn rounded-xl bg-white p-6 border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
@@ -886,7 +1159,18 @@ export default function Attendance() {
                 </select>
               )}
             </div>
-
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Search logs..." 
+                  value={attSearch}
+                  onChange={e => setAttSearch(e.target.value)}
+                  className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+                />
+              </div>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -897,9 +1181,9 @@ export default function Attendance() {
                   ))}
                 </tr>
               </thead>
-              <tbody>{attendanceRecords.length===0 ? (
+              <tbody>{paginatedAtt.length===0 ? (
                 <tr><td colSpan="7" className="p-8 text-center text-sm" style={{ color:'rgba(22,38,96,0.3)' }}>No records</td></tr>
-              ) : attendanceRecords.map((a,i)=>(
+              ) : paginatedAtt.map((a,i)=>(
                 <tr key={a.id} className="hover:bg-gray-50/50" style={{ borderBottom:'1px solid rgba(22,38,96,0.04)' }}>
                   <td className="p-3 text-sm" style={{ color:'#162660' }}>{new Date(a.date).toLocaleDateString()}</td>
                   <td className="p-3 text-sm" style={{ color:'#162660' }}>{a.punch_in?.slice(0,5)||'--:--'}</td>
@@ -912,6 +1196,7 @@ export default function Attendance() {
               ))}</tbody>
             </table>
           </div>
+          <Pagination currentPage={attPage} totalPages={attTotalPages} onPageChange={setAttPage} />
         </div>
       ) : tab === 'holidays' ? (
         <div className="animate-fadeIn rounded-xl bg-white p-6 border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
@@ -1056,12 +1341,28 @@ export default function Attendance() {
               </select>
             </div>
             <div>
+              <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Duration</label>
+              <select className="input w-full" value={form.half_day_type || ''} onChange={e => {
+                const val = e.target.value;
+                setForm({...form, half_day_type: val, to_date: val ? form.from_date : form.to_date});
+              }}
+                style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}>
+                {(() => {
+                  const empId = user.role==='employee' ? user.emp_id : (form.emp_id || user.emp_id);
+                  const activeReqs = getActiveRequestsForDate(form.from_date, empId, leaves, wfhRequests, regularizations);
+                  const blocked = getBlockedSlots(activeReqs).leave;
+                  return (
+                    <>
+                      <option value="" disabled={!!blocked.FULL_DAY}>Full Day {blocked.FULL_DAY ? '(Blocked)' : ''}</option>
+                      <option value="FIRST_HALF" disabled={!!blocked.FIRST_HALF}>First Half {blocked.FIRST_HALF ? '(Blocked)' : ''}</option>
+                      <option value="SECOND_HALF" disabled={!!blocked.SECOND_HALF}>Second Half {blocked.SECOND_HALF ? '(Blocked)' : ''}</option>
+                    </>
+                  );
+                })()}
+              </select>
+            </div>
+            <div>
               <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Days: {form.half_day_type ? '0.5' : daysDiff(form.from_date,form.to_date)||'—'}</label>
-              {form.half_day_type && (
-                <span className="inline-block mt-2 text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-100 text-purple-700">
-                  {form.half_day_type==='FIRST_HALF'?'First Half':'Second Half'}
-                </span>
-              )}
             </div>
             <div>
               <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>From</label>
@@ -1106,20 +1407,38 @@ export default function Attendance() {
             </div>
             <div>
               <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Type</label>
-              <select className="input w-full" value={regForm.regularization_type} onChange={e=>setRegForm({...regForm,regularization_type:e.target.value})}
-                style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}>
-                <option value="full_day">Full Day</option>
-                <option value="half_day">Half Day / Short Leave</option>
-              </select>
+                <select className="input w-full" value={regForm.regularization_type} onChange={e=>setRegForm({...regForm,regularization_type:e.target.value})}
+                  style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}>
+                  {(() => {
+                    const empId = user.role==='employee' ? user.emp_id : selectedEmpId;
+                    const activeReqs = getActiveRequestsForDate(regForm.date, empId, leaves, wfhRequests, regularizations);
+                    const blocked = getBlockedSlots(activeReqs).regularize;
+                    return (
+                      <>
+                        <option value="full_day" disabled={!!blocked.FULL_DAY}>Full Day {blocked.FULL_DAY ? '(Blocked)' : ''}</option>
+                        <option value="half_day">Half Day / Short Leave</option>
+                      </>
+                    );
+                  })()}
+                </select>
             </div>
             {regForm.regularization_type==='half_day' && (
               <div>
                 <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Half Day</label>
                 <select className="input w-full" value={regForm.half_day_type} onChange={e=>setRegForm({...regForm,half_day_type:e.target.value})}
                   style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}>
-                  <option value="">Select</option>
-                  <option value="FIRST_HALF">First Half</option>
-                  <option value="SECOND_HALF">Second Half</option>
+                  {(() => {
+                    const empId = user.role==='employee' ? user.emp_id : selectedEmpId;
+                    const activeReqs = getActiveRequestsForDate(regForm.date, empId, leaves, wfhRequests, regularizations);
+                    const blocked = getBlockedSlots(activeReqs).regularize;
+                    return (
+                      <>
+                        <option value="">Select</option>
+                        <option value="FIRST_HALF" disabled={!!blocked.FIRST_HALF}>First Half {blocked.FIRST_HALF ? '(Blocked)' : ''}</option>
+                        <option value="SECOND_HALF" disabled={!!blocked.SECOND_HALF}>Second Half {blocked.SECOND_HALF ? '(Blocked)' : ''}</option>
+                      </>
+                    );
+                  })()}
                 </select>
               </div>
             )}
@@ -1155,6 +1474,43 @@ export default function Attendance() {
               <input type="date" className="input w-full" value={wfhForm.date} onChange={e=>setWfhForm({...wfhForm,date:e.target.value})}
                 style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
             </div>
+            <div>
+              <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Type</label>
+              <select className="input w-full" value={wfhForm.wfh_type} onChange={e=>setWfhForm({...wfhForm,wfh_type:e.target.value})}
+                style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}>
+                {(() => {
+                  const empId = user.role==='employee' ? user.emp_id : selectedEmpId;
+                  const activeReqs = getActiveRequestsForDate(wfhForm.date, empId, leaves, wfhRequests, regularizations);
+                  const blocked = getBlockedSlots(activeReqs).wfh;
+                  return (
+                    <>
+                      <option value="full_day" disabled={!!blocked.FULL_DAY}>Full Day {blocked.FULL_DAY ? '(Blocked)' : ''}</option>
+                      <option value="half_day">Half Day</option>
+                    </>
+                  );
+                })()}
+              </select>
+            </div>
+            {wfhForm.wfh_type === 'half_day' && (
+              <div>
+                <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Half Day</label>
+                <select className="input w-full" value={wfhForm.half_day_type} onChange={e=>setWfhForm({...wfhForm,half_day_type:e.target.value})}
+                  style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}>
+                  {(() => {
+                    const empId = user.role==='employee' ? user.emp_id : selectedEmpId;
+                    const activeReqs = getActiveRequestsForDate(wfhForm.date, empId, leaves, wfhRequests, regularizations);
+                    const blocked = getBlockedSlots(activeReqs).wfh;
+                    return (
+                      <>
+                        <option value="">Select</option>
+                        <option value="FIRST_HALF" disabled={!!blocked.FIRST_HALF}>First Half {blocked.FIRST_HALF ? '(Blocked)' : ''}</option>
+                        <option value="SECOND_HALF" disabled={!!blocked.SECOND_HALF}>Second Half {blocked.SECOND_HALF ? '(Blocked)' : ''}</option>
+                      </>
+                    );
+                  })()}
+                </select>
+              </div>
+            )}
             <div>
               <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Reason</label>
               <textarea className="input w-full min-h-[80px]" rows={3} value={wfhForm.reason} onChange={e=>setWfhForm({...wfhForm,reason:e.target.value})} placeholder="e.g. Medical reason, personal work..."
@@ -1231,3 +1587,7 @@ export default function Attendance() {
     </Layout>
   );
 }
+
+
+
+

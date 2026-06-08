@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout/Layout';
 import Modal from '../components/common/Modal';
 import Loader from '../components/common/Loader';
-import { BookOpen, Plus, Shield, Trash2 } from 'lucide-react';
+import { BookOpen, Plus, Shield, Trash2, Search } from 'lucide-react';
 import { sbAPI, empAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
+import { usePaginationAndSearch } from '../hooks/usePaginationAndSearch';
+import Pagination from '../components/common/Pagination';
 
 const EVT_COLORS = { Joining:'#3b82f6',Increment:'#22c55e',Transfer:'#f59e0b',Promotion:'#8b5cf6',Training:'#06b6d4',Leave:'#64748b',Disciplinary:'#ef4444' };
 
@@ -18,6 +20,18 @@ export default function ServiceBook() {
   const [showAdd, setShowAdd] = useState(false);
   const [msg, setMsg] = useState('');
   const [form, setForm] = useState({ event_date:'', event_type:'Increment', details:'', order_number:'' });
+
+  const {
+    searchQuery: empSearch, setSearchQuery: setEmpSearch,
+    currentPage: empPage, setCurrentPage: setEmpPage,
+    paginatedData: paginatedEmps, totalPages: empTotalPages
+  } = usePaginationAndSearch(emps, ['first_name', 'last_name', 'emp_id', 'dept_name'], 10);
+
+  const {
+    searchQuery: entrySearch, setSearchQuery: setEntrySearch,
+    currentPage: entryPage, setCurrentPage: setEntryPage,
+    paginatedData: paginatedEntries, totalPages: entryTotalPages
+  } = usePaginationAndSearch(entries, ['event_type', 'details', 'order_number'], 10);
 
   useEffect(() => {
     if (user.role==='employee') {
@@ -78,13 +92,26 @@ export default function ServiceBook() {
             boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
           }}
         >
-          <div className="flex items-center gap-2 mb-4">
-            <Shield size={20} style={{ color: '#162660' }}/>
-            <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Select Employee to View Service Book</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Shield size={20} style={{ color: '#162660' }}/>
+              <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Select Employee</h3>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder="Search employees..." 
+                value={empSearch}
+                onChange={e => setEmpSearch(e.target.value)}
+                className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+              />
+            </div>
           </div>
           {empsLoading ? <Loader/> : (
+            <>
             <div className="grid grid-cols-2 gap-3">
-              {emps.map(e=>(
+              {paginatedEmps.map(e=>(
                 <div 
                   key={e.emp_id} 
                   className="flex items-center gap-3 p-4 cursor-pointer transition-all duration-300" 
@@ -117,6 +144,8 @@ export default function ServiceBook() {
                 </div>
               ))}
             </div>
+            <Pagination currentPage={empPage} totalPages={empTotalPages} onPageChange={setEmpPage} />
+            </>
           )}
         </div>
       ) : (
@@ -199,11 +228,23 @@ export default function ServiceBook() {
               boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
             }}
           >
-            <h3 className="text-lg font-semibold mb-6" style={{ color: '#162660' }}>Service Book Entries ({entries.length})</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Service Book Entries ({entries.length})</h3>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Search entries..." 
+                  value={entrySearch}
+                  onChange={e => setEntrySearch(e.target.value)}
+                  className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+                />
+              </div>
+            </div>
             {loading ? <Loader/> : entries.length===0 ? <p className="text-sm py-8 text-center" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>No entries found.</p> : (
               <div className="relative">
                 <div className="absolute left-5 top-0 bottom-0 w-0.5" style={{ background: 'rgba(22, 38, 96, 0.1)' }}></div>
-                {entries.map((e,i)=>(
+                {paginatedEntries.map((e,i)=>(
                   <div key={i} className="flex gap-4 mb-5 relative">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold z-10 flex-shrink-0" style={{background:EVT_COLORS[e.event_type]||'#64748b', boxShadow: '0 3px 8px rgba(22, 38, 96, 0.15)'}}>{e.event_type?.[0]}</div>
                     <div 
@@ -239,6 +280,7 @@ export default function ServiceBook() {
                     </div>
                   </div>
                 ))}
+                <Pagination currentPage={entryPage} totalPages={entryTotalPages} onPageChange={setEntryPage} />
               </div>
             )}
           </div>
@@ -334,3 +376,6 @@ export default function ServiceBook() {
     </Layout>
   );
 }
+
+
+

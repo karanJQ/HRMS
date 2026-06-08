@@ -119,7 +119,7 @@ exports.review = async (req, res) => {
         const typesMap = { 'CL': 'cl_used', 'EL': 'el_used', 'ML': 'ml_used', 'SL': 'sl_used', 'DL': 'dl_used', 'CCL': 'ccl_used' };
         const col = typesMap[app.leave_type] || 'cl_used';
         await query(
-          `INSERT INTO leave_balances(emp_id,year,cl_entitled,ml_entitled) VALUES($1,$2,12,6) ON CONFLICT DO NOTHING`, [app.emp_id, yr]
+          `INSERT INTO leave_balances(emp_id,year) VALUES($1,$2) ON CONFLICT DO NOTHING`, [app.emp_id, yr]
         );
         const days = parseFloat(app.days);
         await query(
@@ -207,5 +207,55 @@ exports.updateBalance = async (req, res) => {
     );
     if (!result.rows.length) return error(res, 'Balance not found.', 404);
     return success(res, result.rows[0], 'Leave balance updated');
+  } catch (err) { return error(res, err.message); }
+};
+
+// ─── CANCEL LEAVE ───
+exports.cancelLeave = async (req, res) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+  try {
+    const appRes = await query('SELECT * FROM leave_applications WHERE id=$1', [id]);
+    if (!appRes.rows.length) return error(res, 'Application not found', 404);
+    const app = appRes.rows[0];
+    const isAdmin = ['super_admin', 'hr_manager', 'hr_staff'].includes(req.user.role);
+    const isOwner = req.user.emp_id === app.emp_id;
+
+    if (app.status === 'Cancelled') return error(res, 'Already cancelled', 400);
+    if (app.status === 'Rejected') return error(res, 'Cannot cancel a rejected application', 400);
+    if (app.status === 'Approved' && !isAdmin) return error(res, 'Only Admin/HR can cancel approved leave', 403);
+    if (app.status === 'Pending' && !isOwner && !isAdmin) return error(res, 'Not authorized', 403);
+
+    await query(
+      `UPDATE leave_applications SET status = 'Cancelled', cancelled_by = $1, cancel_reason = $2 WHERE id = $3`,
+      [req.user.id, reason || null, id]
+    );
+
+    // If it was approved, restore the leave balance
+    if (app.status === 'Approved') {
+      const yr = new Date(app.from_date).getFullYear();
+      const typesMap = { 'CL': 'cl_used', 'EL': 'el_used', 'ML': 'ml_used', 'SL': 'sl_used', 'DL': 'dl_used', 'CCL': 'ccl_used' };
+      const col = typesMap[app.leave_type];
+      if (col) {
+        const days = parseFloat(app.days);
+        await query(
+          `UPDATE leave_balances SET ${col} = GREATEST(0, ${col} - $1), updated_at = NOW() WHERE emp_id = $2 AND year = $3`,
+          [days, app.emp_id, yr]
+        );
+      }
+    }
+
+    // Clean up attendance records created for this leave
+    const startDate = new Date(app.from_date);
+    const endDate = new Date(app.to_date);
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dateStr = toLocalDateStr(d);
+      await query(
+        `DELETE FROM attendance_records WHERE emp_id = $1 AND date = $2 AND status IN ('Leave', 'Half Day') AND punch_in IS NULL AND punch_out IS NULL`,
+        [app.emp_id, dateStr]
+      );
+    }
+
+    return success(res, null, 'Leave application cancelled');
   } catch (err) { return error(res, err.message); }
 };

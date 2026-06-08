@@ -7,9 +7,11 @@ import { useAuth } from '../context/AuthContext';
 import {
   ClipboardList, Plus, Clock, CheckCircle, AlertCircle,
   Calendar, User, Trash2, Edit3, X, Flag, ChevronDown, AlertTriangle,
-  Archive, ArchiveRestore, Columns
+  Archive, ArchiveRestore, Columns, Search
 } from 'lucide-react';
 import { taskAPI, authAPI } from '../api/endpoints';
+import { usePaginationAndSearch } from '../hooks/usePaginationAndSearch';
+import Pagination from '../components/common/Pagination';
 
 // ── Priority config ──────────────────────────────────
 const PRIORITY = {
@@ -371,7 +373,7 @@ function ArchiveRow({ task, canManage, onRestore, onDelete }) {
 // ── Main Page ────────────────────────────────────────
 export default function Tasks() {
   const { user, isMin } = useAuth();
-  const canManage = isMin('dept_head');
+  const canManage = isMin('hr_staff');
 
   const [tasks, setTasks]     = useState([]);
   const [stats, setStats]     = useState(null);
@@ -381,7 +383,6 @@ export default function Tasks() {
   const [msg, setMsg]         = useState('');
   const [filter, setFilter]   = useState('all');   // 'all' | 'mine' | 'overdue'
   const [view, setView]       = useState('board');  // 'board' | 'archive'
-  const [archiveSearch, setArchiveSearch] = useState('');
 
   const showMsg = (m) => { setMsg(m); setTimeout(() => setMsg(''), 4000); };
 
@@ -457,18 +458,13 @@ export default function Tasks() {
   });
 
   // Archive tasks — only Done
-  const archiveTasks = tasks
-    .filter(t => t.status === 'Done')
-    .filter(t => {
-      if (!archiveSearch.trim()) return true;
-      const q = archiveSearch.toLowerCase();
-      return (
-        t.title?.toLowerCase().includes(q) ||
-        t.assignee_name?.toLowerCase().includes(q) ||
-        t.creator_name?.toLowerCase().includes(q) ||
-        t.description?.toLowerCase().includes(q)
-      );
-    });
+  const archiveTasksRaw = tasks.filter(t => t.status === 'Done');
+
+  const {
+    searchQuery: archiveSearch, setSearchQuery: setArchiveSearch,
+    currentPage: archivePage, setCurrentPage: setArchivePage,
+    paginatedData: paginatedArchive, totalPages: archiveTotalPages
+  } = usePaginationAndSearch(archiveTasksRaw, ['title', 'assignee_name', 'creator_name', 'description'], 10);
 
   return (
     <Layout title="Task Management" theme="light" bg="#F8F8FF">
@@ -484,11 +480,11 @@ export default function Tasks() {
       {/* Stats row */}
       {(() => {
         const displayStats = {
-          total: filteredTasks.length + archiveTasks.length,
+          total: filteredTasks.length + archiveTasksRaw.length,
           in_progress: filteredTasks.filter(t => t.status === 'In Progress').length,
           in_review: filteredTasks.filter(t => t.status === 'In Review').length,
           overdue: filteredTasks.filter(t => t.is_overdue).length,
-          done: archiveTasks.length,
+          done: archiveTasksRaw.length,
         };
         return (
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 w-full">
@@ -559,12 +555,16 @@ export default function Tasks() {
 
           {/* Archive search */}
           {view === 'archive' && (
-            <input
-              value={archiveSearch}
-              onChange={e => setArchiveSearch(e.target.value)}
-              placeholder="Search archive..."
-              className="input py-1.5 text-xs w-52"
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder="Search archive..." 
+                value={archiveSearch}
+                onChange={e => setArchiveSearch(e.target.value)}
+                className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+              />
+            </div>
           )}
 
           {canManage && view === 'board' && (
@@ -641,12 +641,12 @@ export default function Tasks() {
               <div>
                 <h3 className="font-semibold text-base" style={{ color: '#162660' }}>Completed Tasks</h3>
                 <p className="text-xs mt-0.5" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>
-                  {archiveTasks.length} task{archiveTasks.length !== 1 ? 's' : ''} archived{archiveSearch ? ' (filtered)' : ''}
+                  {archiveTasksRaw.length} task{archiveTasksRaw.length !== 1 ? 's' : ''} archived
                 </p>
               </div>
             </div>
 
-            {archiveTasks.length === 0 ? (
+            {archiveTasksRaw.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                 <Archive size={48} className="mb-3 opacity-20" />
                 <p className="text-sm font-medium">{archiveSearch ? 'No matching tasks' : 'No completed tasks yet'}</p>
@@ -665,7 +665,7 @@ export default function Tasks() {
                     </tr>
                   </thead>
                   <tbody>
-                    {archiveTasks.map(task => (
+                    {paginatedArchive.map(task => (
                       <ArchiveRow
                         key={task.id}
                         task={task}
@@ -678,6 +678,7 @@ export default function Tasks() {
                 </table>
               </div>
             )}
+            {archiveTasksRaw.length > 0 && <Pagination currentPage={archivePage} totalPages={archiveTotalPages} onPageChange={setArchivePage} />}
           </div>
         )
       )}
@@ -715,3 +716,7 @@ export default function Tasks() {
     </Layout>
   );
 }
+
+
+
+

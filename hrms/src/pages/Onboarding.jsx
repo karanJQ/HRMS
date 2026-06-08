@@ -3,9 +3,11 @@ import Layout from '../components/Layout/Layout';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Loader from '../components/common/Loader';
-import { Plus, Eye, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { Plus, Eye, CheckCircle, XCircle, Trash2, Search } from 'lucide-react';
 import { onboardingAPI, deptAPI, documentAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
+import { usePaginationAndSearch } from '../hooks/usePaginationAndSearch';
+import Pagination from '../components/common/Pagination';
 
 export default function Onboarding() {
   const { isMin } = useAuth();
@@ -23,6 +25,15 @@ export default function Onboarding() {
   const [docType, setDocType] = useState('Aadhar');
   const [fileToUpload, setFileToUpload] = useState(null);
   const [ocrLoading, setOcrLoading] = useState(null);
+
+  const activeCandidates = React.useMemo(() => data.filter(o => showCompleted || (o.status !== 'Completed' && o.status !== 'Cancelled')), [data, showCompleted]);
+
+  const {
+    searchQuery, setSearchQuery,
+    currentPage, setCurrentPage,
+    paginatedData, totalPages, totalItems
+  } = usePaginationAndSearch(activeCandidates, ['name', 'candidate_ref_id', 'post', 'dept_name', 'dept_name_full'], 10);
+
   const load = () => {
     setLoading(true);
     Promise.all([onboardingAPI.list(), deptAPI.list()])
@@ -279,10 +290,20 @@ export default function Onboarding() {
     <Layout title="Employee Onboarding" theme="light">
       {(!selected && !showAdd && !showLetter && msg) && <div className={`px-4 py-2 rounded-lg text-sm mb-4 ${msg.startsWith('Error')?'bg-red-900/50 text-red-200 border border-red-500/30':'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
           <p className="text-sm font-medium" style={{ color: 'rgba(22, 38, 96, 0.7)' }}>
-            {data.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled').length} candidates in active pipeline
+            {totalItems} candidates in active pipeline
           </p>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input 
+              type="text" 
+              placeholder="Search candidates..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+            />
+          </div>
           <label className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-colors"
             style={{
               color: '#162660',
@@ -342,7 +363,7 @@ export default function Onboarding() {
                   ))}
                 </tr>
               </thead>
-              <tbody>{data.filter(o => showCompleted || (o.status !== 'Completed' && o.status !== 'Cancelled')).map(o=>(
+              <tbody>{paginatedData.map(o=>(
                 <tr key={o.id} style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.05)' }}>
                   <td>
                     <div className="font-medium" style={{ color: '#162660' }}>{o.name}</div>
@@ -412,6 +433,7 @@ export default function Onboarding() {
               ))}</tbody>
             </table>
           </div>
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       )}
 
@@ -560,3 +582,7 @@ export default function Onboarding() {
     </Layout>
   );
 }
+
+
+
+

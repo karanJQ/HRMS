@@ -3,10 +3,12 @@ import Layout from '../components/Layout/Layout';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Loader from '../components/common/Loader';
-import { Plus, AlertTriangle, Shield, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Plus, AlertTriangle, Shield, CheckCircle, Clock, AlertCircle, Search } from 'lucide-react';
 import StatsCard from '../components/common/StatsCard';
 import { grievanceAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
+import { usePaginationAndSearch } from '../hooks/usePaginationAndSearch';
+import Pagination from '../components/common/Pagination';
 
 export default function Grievance() {
   const { isMin, user } = useAuth();
@@ -22,6 +24,18 @@ export default function Grievance() {
   const [resolveData, setResolveData] = useState(null);
   const [resolveRemarks, setResolveRemarks] = useState('');
   const [viewRemarksData, setViewRemarksData] = useState(null);
+
+  const {
+    searchQuery: gSearch, setSearchQuery: setGSearch,
+    currentPage: gPage, setCurrentPage: setGPage,
+    paginatedData: paginatedGrievances, totalPages: gTotalPages
+  } = usePaginationAndSearch(grievances, ['emp_name', 'emp_id', 'subject', 'grievance_type', 'dept_name'], 10);
+
+  const {
+    searchQuery: dSearch, setSearchQuery: setDSearch,
+    currentPage: dPage, setCurrentPage: setDPage,
+    paginatedData: paginatedDisc, totalPages: dTotalPages
+  } = usePaginationAndSearch(disc, ['emp_name', 'emp_id', 'charge_description', 'dept_name', 'inquiry_officer_name'], 10);
 
   const load = () => {
     setLoading(true);
@@ -91,6 +105,19 @@ export default function Grievance() {
               boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
             }}
           >
+            <div className="flex items-center justify-between mb-4 mt-6">
+              <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>All Grievances</h3>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Search grievances..." 
+                  value={gSearch}
+                  onChange={e => setGSearch(e.target.value)}
+                  className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+                />
+              </div>
+            </div>
             <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
               <table>
                 <thead>
@@ -100,7 +127,7 @@ export default function Grievance() {
                     ))}
                   </tr>
                 </thead>
-                <tbody>{grievances.map(g=>{
+                <tbody>{paginatedGrievances.map(g=>{
                   const [bg,col]=(pColor[g.priority]||'#f1f5f9:#475569').split(':');
                   return (
                     <tr 
@@ -143,6 +170,7 @@ export default function Grievance() {
                 })}</tbody>
               </table>
             </div>
+            <Pagination currentPage={gPage} totalPages={gTotalPages} onPageChange={setGPage} />
           </div>
         </>
       ) : (
@@ -156,7 +184,19 @@ export default function Grievance() {
             boxShadow: '0 10px 30px rgba(22, 38, 96, 0.05)'
           }}
         >
-          <h3 className="text-lg font-semibold mb-4" style={{ color: '#162660' }}>Disciplinary Cases</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold" style={{ color: '#162660' }}>Disciplinary Cases</h3>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder="Search cases..." 
+                value={dSearch}
+                onChange={e => setDSearch(e.target.value)}
+                className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+              />
+            </div>
+          </div>
           <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
             <table>
               <thead>
@@ -166,7 +206,7 @@ export default function Grievance() {
                   ))}
                 </tr>
               </thead>
-              <tbody>{disc.map(d=>(
+              <tbody>{paginatedDisc.map(d=>(
                 <tr 
                   key={d.id}
                   className="transition-all duration-300"
@@ -193,6 +233,7 @@ export default function Grievance() {
               ))}</tbody>
             </table>
           </div>
+          <Pagination currentPage={dPage} totalPages={dTotalPages} onPageChange={setDPage} />
         </div>
       )}
 
@@ -262,3 +303,6 @@ export default function Grievance() {
     </Layout>
   );
 }
+
+
+
