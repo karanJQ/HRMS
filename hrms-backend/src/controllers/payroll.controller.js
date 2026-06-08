@@ -143,7 +143,7 @@ exports.process = async (req, res) => {
          processed_by=EXCLUDED.processed_by, updated_at=NOW()
        RETURNING *`,
       [emp_id, month, year, real_ctc, basic, hra, conveyance, gross, pf_emp, esic_emp, pf_er, esic_er,
-       pt, tds, other_deductions, final_lwp_days, lwp_amount, final_total_ded, comp_amount, net, payment_mode, status, req.user.id]
+       pt, parseFloat(tds) || 0, parseFloat(other_deductions) || 0, final_lwp_days, lwp_amount, final_total_ded, comp_amount, net, payment_mode, status, req.user.id]
     );
     return success(res, result.rows[0], 'Payroll processed');
   } catch (err) { return error(res, err.message); }

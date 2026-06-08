@@ -537,7 +537,7 @@ export default function Payroll() {
             <div class="details-table">
               <!-- Earnings & Employer Contrib -->
               <div class="table-column">
-                <div class="table-column-header earnings" style="background:#fef08a; color:#854d0e;">(A) Earning Gross</div>
+                <div class="table-column-header earnings" style="background:#fef08a; color:#854d0e;">Earning Gross</div>
                 <div class="row">
                   <span>Basic</span>
                   <span>₹${parseFloat(slip.basic_pay || 0).toLocaleString()}</span>
@@ -555,7 +555,7 @@ export default function Payroll() {
                   <span>₹${parseFloat(slip.gross_pay || 0).toLocaleString()}</span>
                 </div>
 
-                <div class="table-column-header earnings" style="margin-top:20px; background:#fef08a; color:#854d0e;">(B) Employer Contribution</div>
+                <div class="table-column-header earnings" style="margin-top:20px; background:#fef08a; color:#854d0e;">Employer Contribution</div>
                 <div class="row">
                   <span>Employer PF</span>
                   <span>₹${parseFloat(slip.pf_employer || 0).toLocaleString()}</span>
@@ -610,11 +610,11 @@ export default function Payroll() {
             
             <div class="net-pay-box" style="margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fef08a; border: 2px solid #fde047;">
               <div style="display:flex; justify-content:space-between; margin-bottom: 8px; font-weight: bold; color: #854d0e;">
-                <span>Total CTC (A+B):</span>
+                <span>Total CTC:</span>
                 <span>₹${(parseFloat(slip.gross_pay || 0) + parseFloat(slip.pf_employer || 0) + parseFloat(slip.esic_employer || 0)).toLocaleString()}</span>
               </div>
               <div style="display:flex; justify-content:space-between; font-weight: bold; color: #0f172a; font-size: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #854d0e40;">
-                <span>Net Payable (Take Home salary):</span>
+                <span>Net Payable:</span>
                 <span>₹${parseFloat(slip.net_pay || 0).toLocaleString()}</span>
               </div>
             </div>
