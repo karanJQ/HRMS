@@ -985,7 +985,7 @@ export default function Attendance() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom:'1px solid rgba(22,38,96,0.08)', background:'rgba(22,38,96,0.02)' }}>
-                  {['Employee','SL','ML','EL','DL','Used SL','Used ML','Used EL','Used DL','SL Left','ML Left','EL Left','DL Left', ...(isMin('hr_staff') ? ['Action'] : [])].map(h => (
+                  {['Employee','SL','ML','EL','DL','Used SL','Used ML','Used EL','Used DL', ...(isMin('hr_staff') ? ['Action'] : [])].map(h => (
                     <th key={h} className="p-3 text-left text-xs font-semibold" style={{ color:'rgba(22,38,96,0.5)' }}>{h}</th>
                   ))}
                 </tr>
@@ -993,18 +993,14 @@ export default function Attendance() {
               <tbody>{paginatedBalances.map((b,i)=>(
                 <tr key={b.id} className="hover:bg-gray-50/50" style={{ borderBottom:'1px solid rgba(22,38,96,0.04)' }}>
                   <td className="p-3"><div className="font-medium text-sm" style={{ color:'#162660' }}>{b.emp_name}</div></td>
-                  <td className="p-3 font-semibold text-emerald-600">{b.sl_entitled}</td>
-                  <td className="p-3 font-semibold text-purple-600">{b.ml_entitled}</td>
-                  <td className="p-3 font-semibold text-blue-600">{b.el_entitled}</td>
-                  <td className="p-3 font-semibold text-amber-600">{b.dl_entitled}</td>
-                  <td className="p-3 text-red-500 font-medium">{b.sl_used}</td>
-                  <td className="p-3 text-red-500 font-medium">{b.ml_used}</td>
-                  <td className="p-3 text-red-500 font-medium">{b.el_used}</td>
-                  <td className="p-3 text-red-500 font-medium">{b.dl_used}</td>
-                  <td className="p-3 font-bold" style={{ color:(b.sl_entitled-b.sl_used)>0?'#065f46':'#991b1b' }}>{b.sl_entitled-b.sl_used}</td>
-                  <td className="p-3 font-bold" style={{ color:(b.ml_entitled-b.ml_used)>0?'#065f46':'#991b1b' }}>{b.ml_entitled-b.ml_used}</td>
-                  <td className="p-3 font-bold" style={{ color:(b.el_entitled-b.el_used)>0?'#065f46':'#991b1b' }}>{b.el_entitled-b.el_used}</td>
-                  <td className="p-3 font-bold" style={{ color:(b.dl_entitled-b.dl_used)>0?'#065f46':'#991b1b' }}>{b.dl_entitled-b.dl_used}</td>
+                  <td className="p-3 font-semibold text-emerald-600">{(b.sl_entitled||0)-(b.sl_used||0)}</td>
+                  <td className="p-3 font-semibold text-purple-600">{(b.ml_entitled||0)-(b.ml_used||0)}</td>
+                  <td className="p-3 font-semibold text-blue-600">{(b.el_entitled||0)-(b.el_used||0)}</td>
+                  <td className="p-3 font-semibold text-amber-600">{(b.dl_entitled||0)-(b.dl_used||0)}</td>
+                  <td className="p-3 text-red-500 font-medium">{b.sl_used||0}</td>
+                  <td className="p-3 text-red-500 font-medium">{b.ml_used||0}</td>
+                  <td className="p-3 text-red-500 font-medium">{b.el_used||0}</td>
+                  <td className="p-3 text-red-500 font-medium">{b.dl_used||0}</td>
                   {isMin('hr_staff') && <td className="p-3">
                     <button className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
                       style={{ background:'rgba(22,38,96,0.06)', color:'#162660' }}
@@ -1554,13 +1550,23 @@ export default function Attendance() {
       {showBalanceEdit && (
         <Modal title={`Edit Leave Balance — ${editBalance.emp_name}`} onClose={()=>setShowBalanceEdit(false)} theme="light" wide>
           <div className="grid grid-cols-4 gap-4">
-            {['sl_entitled','sl_used','ml_entitled','ml_used','el_entitled','el_used','dl_entitled','dl_used'].map(f => (
-              <div key={f}>
-                <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>{f.replace('_',' ').toUpperCase()}</label>
-                <input type="number" min="0" step="0.5" className="input w-full" placeholder="0" value={editBalance[f] || ''}
-                  onChange={e=>setEditBalance({...editBalance,[f]:Math.max(0, parseFloat(e.target.value)) || ''})}
-                  style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }} />
-              </div>
+            {['sl','ml','el','dl'].map(type => (
+              <React.Fragment key={type}>
+                <div>
+                  <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>{type.toUpperCase()} (REMAINING)</label>
+                  <input type="number" min="0" step="0.5" className="input w-full" placeholder="0" 
+                    value={(editBalance[`${type}_entitled`] || 0) - (editBalance[`${type}_used`] || 0)}
+                    onChange={e => setEditBalance({...editBalance, [`${type}_entitled`]: (Math.max(0, parseFloat(e.target.value)) || 0) + (editBalance[`${type}_used`] || 0)})}
+                    style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>{type.toUpperCase()} USED</label>
+                  <input type="number" min="0" step="0.5" className="input w-full" placeholder="0" 
+                    value={editBalance[`${type}_used`] || ''}
+                    onChange={e => setEditBalance({...editBalance, [`${type}_used`]: Math.max(0, parseFloat(e.target.value)) || 0})}
+                    style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }} />
+                </div>
+              </React.Fragment>
             ))}
           </div>
           <div className="flex gap-3 mt-5">
