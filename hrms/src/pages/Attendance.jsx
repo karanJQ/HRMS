@@ -1550,24 +1550,29 @@ export default function Attendance() {
       {showBalanceEdit && (
         <Modal title={`Edit Leave Balance — ${editBalance.emp_name}`} onClose={()=>setShowBalanceEdit(false)} theme="light" wide>
           <div className="grid grid-cols-4 gap-4">
-            {['sl','ml','el','dl'].map(type => (
-              <React.Fragment key={type}>
-                <div>
-                  <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>{type.toUpperCase()} (REMAINING)</label>
-                  <input type="number" min="0" step="0.5" className="input w-full" placeholder="0" 
-                    value={(editBalance[`${type}_entitled`] || 0) - (editBalance[`${type}_used`] || 0)}
-                    onChange={e => setEditBalance({...editBalance, [`${type}_entitled`]: (Math.max(0, parseFloat(e.target.value)) || 0) + (editBalance[`${type}_used`] || 0)})}
-                    style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }} />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>{type.toUpperCase()} USED</label>
-                  <input type="number" min="0" step="0.5" className="input w-full" placeholder="0" 
-                    value={editBalance[`${type}_used`] || ''}
-                    onChange={e => setEditBalance({...editBalance, [`${type}_used`]: Math.max(0, parseFloat(e.target.value)) || 0})}
-                    style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }} />
-                </div>
-              </React.Fragment>
-            ))}
+            {['sl','ml','el','dl'].map(type => {
+              const remaining = parseFloat(editBalance[`${type}_entitled`] || 0) - parseFloat(editBalance[`${type}_used`] || 0);
+              const used = parseFloat(editBalance[`${type}_used`] || 0);
+              
+              return (
+                <React.Fragment key={type}>
+                  <div>
+                    <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>{type.toUpperCase()} (REMAINING)</label>
+                    <input type="number" min="-100" step="0.5" className="input w-full" placeholder="0" 
+                      value={remaining === 0 ? '' : remaining}
+                      onChange={e => setEditBalance({...editBalance, [`${type}_entitled`]: (e.target.value === '' ? 0 : parseFloat(e.target.value)) + used})}
+                      style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>{type.toUpperCase()} USED</label>
+                    <input type="number" min="0" step="0.5" className="input w-full" placeholder="0" 
+                      value={used === 0 ? '' : used}
+                      onChange={e => setEditBalance({...editBalance, [`${type}_used`]: e.target.value === '' ? 0 : Math.max(0, parseFloat(e.target.value))})}
+                      style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }} />
+                  </div>
+                </React.Fragment>
+              );
+            })}
           </div>
           <div className="flex gap-3 mt-5">
             <button className="flex-1 font-semibold py-3.5 rounded-xl transition-all"
