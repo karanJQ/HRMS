@@ -167,6 +167,7 @@ exports.getProbationAlerts = async (req, res) => {
        LEFT JOIN designations des ON des.id=e.designation_id
        WHERE e.probation_status = 'Pending' 
          AND e.status = 'Active'
+         AND e.probation_end_date IS NOT NULL
          ${dateFilter}
        ORDER BY e.probation_end_date ASC`
     );

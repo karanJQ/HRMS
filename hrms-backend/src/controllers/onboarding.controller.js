@@ -86,8 +86,8 @@ exports.update = async (req, res) => {
 
       // d. Create employee master record
       await query(
-        `INSERT INTO employees(emp_id, first_name, last_name, gender, dob, dor, mobile, dept_id, designation_id, doj, status, category, created_by)
-         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Active', 'General', $11)`,
+        `INSERT INTO employees(emp_id, first_name, last_name, gender, dob, dor, mobile, dept_id, designation_id, doj, status, category, created_by, probation_days, probation_status, probation_end_date)
+         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Active', 'General', $11, 0, 'N/A', null)`,
         [empId, firstName, lastName, gender, dob, dor, mobile, candidate.dept_id || null, designationId, doj, req.user.id]
       );
 
