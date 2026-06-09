@@ -1,6 +1,215 @@
 const { query } = require('../config/database');
 const { success, error } = require('../utils/response');
 
+const timeToMinutes = (timeStr) => {
+  if (!timeStr) return null;
+  const parts = String(timeStr).split(':');
+  if (parts.length < 2) return null;
+  return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+};
+
+const determineDailySessionStatuses = (row, shift, todayStr) => {
+  const dateStr = row.date;
+  const isWeekend = new Date(dateStr + 'T00:00:00').getDay() === 0 || new Date(dateStr + 'T00:00:00').getDay() === 6;
+  const isFuture = dateStr > todayStr;
+  const leaveHalfDayType = row.half_day_type || row.leave_half_day_type;
+  const wfhHalfDay = row.wfh_half_day_type;
+
+  let firstHalf = 'Absent';
+  if (row.is_holiday) {
+    firstHalf = 'Holiday';
+  } else if (isFuture) {
+    if (row.leave_status === 'Approved' && (leaveHalfDayType === 'FIRST_HALF' || !leaveHalfDayType)) {
+      firstHalf = row.leave_type === 'WFH' ? 'WFH' : 'Leave';
+    } else if (row.wfh_status === 'Approved' && (wfhHalfDay === 'FIRST_HALF' || !wfhHalfDay)) {
+      firstHalf = 'WFH';
+    } else {
+      firstHalf = 'Upcoming';
+    }
+  } else {
+    if (row.leave_status === 'Approved' && (leaveHalfDayType === 'FIRST_HALF' || !leaveHalfDayType)) {
+      firstHalf = row.leave_type === 'WFH' ? 'WFH' : 'Leave';
+    } else if (row.wfh_status === 'Approved' && (wfhHalfDay === 'FIRST_HALF' || !wfhHalfDay)) {
+      firstHalf = 'WFH';
+    } else if (row.punch_in) {
+      const inMin = timeToMinutes(row.punch_in);
+      const outMin = timeToMinutes(row.punch_out);
+      const cutoffMin = timeToMinutes(shift.half_day_cutoff || '14:00:00');
+      const startMin = timeToMinutes(shift.shift_start || '09:00:00');
+      const graceMins = parseInt(shift.grace_period_mins || 30, 10);
+
+      if (inMin !== null && inMin < cutoffMin) {
+        if (outMin !== null) {
+          if (outMin >= cutoffMin) {
+            firstHalf = (inMin > startMin + graceMins) ? 'Late' : 'Present';
+          } else {
+            firstHalf = 'Absent';
+          }
+        } else {
+          if (dateStr === todayStr) {
+            firstHalf = (inMin > startMin + graceMins) ? 'Late' : 'Present';
+          } else {
+            firstHalf = 'Miss Punch';
+          }
+        }
+      } else {
+        firstHalf = 'Absent';
+      }
+    } else if (isWeekend) {
+      firstHalf = 'Weekend';
+    }
+  }
+
+  let secondHalf = 'Absent';
+  if (row.is_holiday) {
+    secondHalf = 'Holiday';
+  } else if (isFuture) {
+    if (row.leave_status === 'Approved' && (leaveHalfDayType === 'SECOND_HALF' || !leaveHalfDayType)) {
+      secondHalf = row.leave_type === 'WFH' ? 'WFH' : 'Leave';
+    } else if (row.wfh_status === 'Approved' && (wfhHalfDay === 'SECOND_HALF' || !wfhHalfDay)) {
+      secondHalf = 'WFH';
+    } else {
+      secondHalf = 'Upcoming';
+    }
+  } else {
+    if (row.leave_status === 'Approved' && (leaveHalfDayType === 'SECOND_HALF' || !leaveHalfDayType)) {
+      secondHalf = row.leave_type === 'WFH' ? 'WFH' : 'Leave';
+    } else if (row.wfh_status === 'Approved' && (wfhHalfDay === 'SECOND_HALF' || !wfhHalfDay)) {
+      secondHalf = 'WFH';
+    } else if (row.punch_in) {
+      const inMin = timeToMinutes(row.punch_in);
+      const outMin = timeToMinutes(row.punch_out);
+      const cutoffMin = timeToMinutes(shift.half_day_cutoff || '14:00:00');
+      const endMin = timeToMinutes(shift.shift_end || '18:00:00');
+
+      const presentDuringCutoff = (inMin !== null && inMin < cutoffMin && (outMin === null || outMin >= cutoffMin));
+      const punchedInSecondHalf = (inMin !== null && inMin >= cutoffMin);
+
+      if (presentDuringCutoff || punchedInSecondHalf) {
+        if (outMin !== null) {
+          if (outMin >= endMin) {
+            secondHalf = 'Present';
+          } else {
+            secondHalf = 'Absent';
+          }
+        } else {
+          if (dateStr === todayStr) {
+            secondHalf = 'Present';
+          } else {
+            secondHalf = 'Miss Punch';
+          }
+        }
+      } else {
+        secondHalf = 'Absent';
+      }
+    } else if (isWeekend) {
+      secondHalf = 'Weekend';
+    }
+  }
+
+  let overall = 'No Record';
+
+  if (row.is_holiday) {
+    overall = 'Holiday';
+  } else if (isFuture) {
+    if (firstHalf === 'Upcoming' && secondHalf === 'Upcoming') {
+      overall = 'Upcoming';
+    } else if (firstHalf === 'Leave' || secondHalf === 'Leave') {
+      overall = 'Leave';
+    } else if (firstHalf === 'WFH' || secondHalf === 'WFH') {
+      overall = 'WFH';
+    } else {
+      overall = 'Upcoming';
+    }
+  } else {
+    const hasOfficePresence = ['Present', 'Late'].includes(firstHalf) || ['Present', 'Late'].includes(secondHalf);
+    const hasLeave = firstHalf === 'Leave' || secondHalf === 'Leave';
+    const hasWFH = firstHalf === 'WFH' || secondHalf === 'WFH';
+    const hasMissPunch = firstHalf === 'Miss Punch' || secondHalf === 'Miss Punch';
+    
+    if (isWeekend && !hasOfficePresence && !hasLeave && !hasWFH && !hasMissPunch) {
+      overall = 'Weekend';
+    } else {
+      const fPres = ['Present', 'Late'].includes(firstHalf);
+      const sPres = ['Present', 'Late'].includes(secondHalf);
+      const fWfh = firstHalf === 'WFH';
+      const sWfh = secondHalf === 'WFH';
+      const fLeave = firstHalf === 'Leave';
+      const sLeave = secondHalf === 'Leave';
+
+      if ((fPres || fWfh || fLeave) && (sPres || sWfh || sLeave)) {
+        if (fLeave && sLeave) overall = 'Leave';
+        else if (fWfh && sWfh) overall = 'WFH';
+        else if (firstHalf === 'Late' || secondHalf === 'Late') overall = 'Late';
+        else if (fPres && sPres) overall = 'Present';
+        else {
+          if (fWfh || sWfh) overall = 'WFH';
+          else if (fLeave || sLeave) overall = 'Leave';
+          else overall = 'Present';
+        }
+      } else if (hasMissPunch) {
+        overall = 'Miss Punch';
+      } else if ((fPres || fWfh || fLeave) || (sPres || sWfh || sLeave)) {
+        overall = 'Half Day';
+      } else {
+        overall = 'Absent';
+      }
+    }
+  }
+
+  return { firstHalf, secondHalf, overall };
+};
+
+const getAttendanceLwpDays = async (emp_id, month, year) => {
+  const m = parseInt(month);
+  const y = parseInt(year);
+  
+  const DAYS_IN_MONTH = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const getDaysInMonth = (yearVal, monthVal) => {
+    if (monthVal === 2 && ((yearVal % 4 === 0 && yearVal % 100 !== 0) || yearVal % 400 === 0)) return 29;
+    return DAYS_IN_MONTH[monthVal];
+  };
+  const daysInMonth = getDaysInMonth(y, m);
+  const startDate = `${y}-${String(m).padStart(2,'0')}-01`;
+  const endDate = `${y}-${String(m).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`;
+
+  const settingsRes = await query(`SELECT shift_start, shift_end, half_day_cutoff, grace_period_mins FROM attendance_settings LIMIT 1`);
+  const shift = settingsRes.rows[0] || { shift_start: '09:00:00', shift_end: '18:00:00', half_day_cutoff: '14:00:00', grace_period_mins: 30 };
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const recordsRes = await query(
+    `SELECT to_char(d.date, 'YYYY-MM-DD') as date,
+            a.status, a.punch_in, a.punch_out, a.actual_punch_in, a.actual_punch_out, a.is_regularized, a.working_hours,
+            l.leave_type, l.half_day_type, l.status as leave_status,
+            w.status as wfh_status, w.half_day_type as wfh_half_day_type, w.wfh_type,
+            CASE WHEN h.id IS NOT NULL THEN true ELSE false END as is_holiday
+     FROM generate_series($1::DATE, $2::DATE, '1 day'::INTERVAL) AS d(date)
+     LEFT JOIN attendance_records a ON a.emp_id = $3 AND a.date = d.date
+     LEFT JOIN leave_applications l ON l.emp_id = $3 AND d.date BETWEEN l.from_date AND l.to_date AND l.status = 'Approved'
+     LEFT JOIN wfh_requests w ON w.emp_id = $3 AND w.date = d.date AND w.status = 'Approved'
+     LEFT JOIN holidays h ON h.date = d.date`,
+    [startDate, endDate, emp_id]
+  );
+
+  let uncoveredSessions = 0;
+
+  recordsRes.rows.forEach(row => {
+    if (row.is_holiday) return;
+    
+    const sessionInfo = determineDailySessionStatuses(row, shift, todayStr);
+    
+    if (row.date > todayStr) return;
+
+    const isFirstUncovered = !['Present', 'Late', 'Leave', 'WFH', 'Weekend', 'Holiday', 'Upcoming'].includes(sessionInfo.firstHalf);
+    const isSecondUncovered = !['Present', 'Late', 'Leave', 'WFH', 'Weekend', 'Holiday', 'Upcoming'].includes(sessionInfo.secondHalf);
+
+    if (isFirstUncovered) uncoveredSessions++;
+    if (isSecondUncovered) uncoveredSessions++;
+  });
+
+  return uncoveredSessions * 0.5;
+};
+
 exports.list = async (req, res) => {
   const { month, year, dept, status } = req.query;
   const y = parseInt(year) || new Date().getFullYear();
@@ -118,7 +327,8 @@ exports.process = async (req, res) => {
        }
     }
     
-    const final_lwp_days = parseFloat(lwp_days || 0) + auto_lwp_days;
+    const attendanceLwp = await getAttendanceLwpDays(emp_id, month, year);
+    const final_lwp_days = parseFloat(lwp_days || 0) + auto_lwp_days + attendanceLwp;
     
     // LWP Calculation
     const daysInMonth = new Date(year, month, 0).getDate();
@@ -215,7 +425,8 @@ exports.processAll = async (req, res) => {
       }
 
       // Calculate LWP for processAll
-      const final_lwp_days = auto_lwp_days;
+      const attendanceLwp = await getAttendanceLwpDays(e.emp_id, month, year);
+      const final_lwp_days = auto_lwp_days + attendanceLwp;
       const daysInMonth = new Date(year, month, 0).getDate();
       let lwp_amount = Math.round((net / daysInMonth) * final_lwp_days);
       if (lwp_amount > net) lwp_amount = net; // Cap LWP

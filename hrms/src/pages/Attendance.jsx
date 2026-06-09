@@ -59,7 +59,7 @@ export default function Attendance() {
   const [editBalance, setEditBalance] = useState({ emp_id: '', emp_name: '', year: new Date().getFullYear(), sl_entitled: 0, sl_used: 0, ml_entitled: 0, ml_used: 0, el_entitled: 0, el_used: 0, dl_entitled: 0, dl_used: 0 });
   const [msg, setMsg] = useState('');
   const [form, setForm] = useState({ emp_id:'', leave_type:'SL', from_date:'', to_date:'', reason:'', half_day_type:'', contact_number:'', leave_address:'' });
-  const [regForm, setRegForm] = useState({ date: '', requested_in: '', requested_out: '', reason: '', half_day_type: '', regularization_type: 'full_day' });
+  const [regForm, setRegForm] = useState({ date: '', reason: '', half_day_type: '', regularization_type: 'full_day' });
   const [wfhForm, setWfhForm] = useState({ date: '', reason: '', half_day_type: '', wfh_type: 'full_day' });
   const [employees, setEmployees] = useState([]);
   const [selectedEmpId, setSelectedEmpId] = useState('');
@@ -220,7 +220,7 @@ export default function Attendance() {
       const payload = user?.role === 'employee' ? regForm : { ...regForm, emp_id: selectedEmpId };
       await attendanceAPI.applyRegularization(payload);
       showMsg('Regularization request submitted'); setShowRegForm(false);
-      setRegForm({ date: '', requested_in: '', requested_out: '', reason: '', half_day_type: '', regularization_type: 'full_day' });
+      setRegForm({ date: '', reason: '', half_day_type: '', regularization_type: 'full_day' });
       load();
     } catch(e) { showMsg('Error: '+e.response?.data?.message); }
   };
@@ -1438,22 +1438,18 @@ export default function Attendance() {
                 </select>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Punch In</label>
-                <input type="time" className="input w-full" value={regForm.requested_in} onChange={e=>setRegForm({...regForm,requested_in:e.target.value})}
-                  style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
-              </div>
-              <div>
-                <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Punch Out</label>
-                <input type="time" className="input w-full" value={regForm.requested_out} onChange={e=>setRegForm({...regForm,requested_out:e.target.value})}
-                  style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
-              </div>
-            </div>
             <div>
               <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Reason</label>
               <textarea className="input w-full min-h-[70px]" rows={3} value={regForm.reason} onChange={e=>setRegForm({...regForm,reason:e.target.value})} placeholder="e.g. Forgot to punch, short leave, system down..."
                 style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
+            </div>
+            <div className="p-3 rounded-lg" style={{ background:'rgba(22,38,96,0.04)', border:'1px solid rgba(22,38,96,0.08)' }}>
+              <p className="text-xs" style={{ color:'rgba(22,38,96,0.5)' }}>
+                <strong>Note:</strong> Punch times will be auto-filled based on your selected session type and the office shift timings.
+                {regForm.regularization_type === 'full_day' && ' (Full shift: Shift Start → Shift End)'}
+                {regForm.regularization_type === 'half_day' && regForm.half_day_type === 'FIRST_HALF' && ' (1st Half: Shift Start → Half Day Cutoff)'}
+                {regForm.regularization_type === 'half_day' && regForm.half_day_type === 'SECOND_HALF' && ' (2nd Half: Half Day Cutoff → Shift End)'}
+              </p>
             </div>
           </div>
           <button className="w-full mt-5 font-semibold py-3.5 rounded-xl transition-all"
