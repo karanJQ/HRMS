@@ -30,9 +30,8 @@ exports.list = async (req, res) => {
     const summary = result.rows.reduce((acc, r) => ({
       gross: acc.gross + parseFloat(r.gross_pay||0),
       net: acc.net + parseFloat(r.net_pay||0),
-      pf: acc.pf + parseFloat(r.pf_employee||0),
-      tds: acc.tds + parseFloat(r.tds||0),
-    }), { gross:0, net:0, pf:0, tds:0 });
+      pf: acc.pf + parseFloat(r.pf_employee||0)
+    }), { gross:0, net:0, pf:0 });
     return success(res, { records: result.rows, summary, month: m, year: y });
   } catch (err) { return error(res, err.message); }
 };
@@ -65,7 +64,7 @@ exports.process = async (req, res) => {
   if (!emp_id||!month||!year||!ctc) return error(res,'emp_id, month, year, and ctc required.',400);
 
   try {
-    const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [emp_id]);
+    const empCheck = await query('SELECT doj FROM employees WHERE emp_id = $1', [emp_id]);
     if (!empCheck.rows.length) {
       return error(res, `Employee with ID '${emp_id}' does not exist.`, 404);
     }
@@ -83,14 +82,20 @@ exports.process = async (req, res) => {
     const esic_er = basic > 21000 ? 0 : Math.round(basic * 0.0325);
 
     const pt = gross > 0 ? 200 : 0;
-    const initial_total_ded = pf_emp + esic_emp + pt + (parseFloat(tds) || 0) + (parseFloat(other_deductions) || 0);
+    const initial_total_ded = pf_emp + esic_emp + pt + (parseFloat(other_deductions) || 0);
     
     // Calculate initial Net, capped so it never goes negative
     let total_ded = Math.min(gross, initial_total_ded);
     let net = gross - total_ded;
     
-    // Auto-LWP from Leave Balances
+    // Auto-LWP from Leave Balances and DOJ (Prorated Salary)
     let auto_lwp_days = 0;
+    
+    // Prorate salary for mid-month joiners
+    const doj = empCheck.rows[0].doj ? new Date(empCheck.rows[0].doj) : null;
+    if (doj && doj.getFullYear() === parseInt(year) && (doj.getMonth() + 1) === parseInt(month)) {
+      auto_lwp_days += Math.max(0, doj.getDate() - 1);
+    }
     const lbRes = await query('SELECT lb.*, e.probation_status FROM leave_balances lb JOIN employees e ON e.emp_id=lb.emp_id WHERE lb.emp_id=$1 AND lb.year=$2', [emp_id, year]);
     if (lbRes.rows.length > 0) {
        const lb = lbRes.rows[0];
@@ -162,7 +167,7 @@ exports.processAll = async (req, res) => {
   const { month, year } = req.body;
   if (!month||!year) return error(res,'month and year required.',400);
   try {
-    const emps = await query(`SELECT emp_id, ctc, basic_pay FROM employees WHERE status='Active' AND (ctc > 0 OR basic_pay > 0)`);
+    const emps = await query(`SELECT emp_id, ctc, basic_pay, doj FROM employees WHERE status='Active' AND (ctc > 0 OR basic_pay > 0)`);
     let processed = 0;
     for (const e of emps.rows) {
       const ctc = parseFloat(e.ctc || e.basic_pay || 0);
@@ -180,13 +185,20 @@ exports.processAll = async (req, res) => {
       const esic_er = basic > 21000 ? 0 : Math.round(basic * 0.0325);
       
       const pt = gross > 0 ? 200 : 0;
-      const tds_val = gross > 50000 ? Math.round((gross - 50000) * 0.1) : 0;
+      const tds_val = 0; // TDS removed as per requirement
       
       const initial_total_ded = pf_emp + esic_emp + pt + tds_val;
       let total_ded = Math.min(gross, initial_total_ded);
       let net = gross - total_ded;
 
+      // Auto-LWP from Leave Balances and DOJ (Prorated Salary)
       let auto_lwp_days = 0;
+
+      // Prorate salary for mid-month joiners
+      const doj = e.doj ? new Date(e.doj) : null;
+      if (doj && doj.getFullYear() === parseInt(year) && (doj.getMonth() + 1) === parseInt(month)) {
+        auto_lwp_days += Math.max(0, doj.getDate() - 1);
+      }
       const lbRes = await query('SELECT lb.*, e.probation_status FROM leave_balances lb JOIN employees e ON e.emp_id=lb.emp_id WHERE lb.emp_id=$1 AND lb.year=$2', [e.emp_id, year]);
       if (lbRes.rows.length > 0) {
          const lb = lbRes.rows[0];
