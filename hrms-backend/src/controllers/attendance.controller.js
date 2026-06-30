@@ -35,7 +35,7 @@ const determineAttendanceStatus = (punch_in, punch_out, shift, isToday) => {
   if (outMin === null) {
     if (isToday) {
       const isLate = (inMin > startMin + graceMins);
-      return isLate ? 'Late' : 'Present';
+      return isLate ? 'Half Day' : 'Present';
     } else {
       return 'Miss Punch';
     }
@@ -46,7 +46,7 @@ const determineAttendanceStatus = (punch_in, punch_out, shift, isToday) => {
 
   if (firstHalfPresent && secondHalfPresent) {
     const isLate = (inMin > startMin + graceMins);
-    return isLate ? 'Late' : 'Present';
+    return isLate ? 'Half Day' : 'Present';
   } else if (firstHalfPresent || secondHalfPresent) {
     return 'Half Day';
   } else {
@@ -87,13 +87,13 @@ const determineDailySessionStatuses = (row, shift, todayStr) => {
       if (inMin !== null && inMin < cutoffMin) {
         if (outMin !== null) {
           if (outMin >= cutoffMin) {
-            firstHalf = (inMin > startMin + graceMins) ? 'Late' : 'Present';
+            firstHalf = (inMin > startMin + graceMins) ? 'Absent' : 'Present';
           } else {
             firstHalf = 'Absent';
           }
         } else {
           if (dateStr === todayStr) {
-            firstHalf = (inMin > startMin + graceMins) ? 'Late' : 'Present';
+            firstHalf = (inMin > startMin + graceMins) ? 'Absent' : 'Present';
           } else {
             firstHalf = 'Miss Punch';
           }
@@ -563,6 +563,18 @@ exports.applyRegularization = async (req, res) => {
   try {
     const existing = await query(`SELECT * FROM regularization_requests WHERE emp_id = $1 AND date = $2 AND status IN ('Pending', 'Approved')`, [emp_id, date]);
     if (existing.rows.length > 0) return error(res, 'A pending or approved regularization request already exists for this date', 400);
+
+    // 7 days buffer check
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const todayDate = new Date(todayStr + 'T00:00:00');
+    const reqDate = new Date(date + 'T00:00:00');
+    const timeDiff = todayDate.getTime() - reqDate.getTime();
+    const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+    
+    if (daysDiff > 7) {
+      return error(res, 'Regularization can only be applied within 7 days of the attendance date', 400);
+    }
 
     // Auto-calculate times from attendance settings
     const settingsRes = await query(`SELECT shift_start, shift_end, half_day_cutoff FROM attendance_settings LIMIT 1`);

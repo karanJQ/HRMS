@@ -910,11 +910,11 @@ export default function Payroll() {
             </div>
           ) : (
             <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
-              <table style={{ width: '100%', minWidth: '800px' }}>
+              <table style={{ width: '100%', minWidth: '950px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
                     {['Emp ID', 'Employee Name', 'Designation', 'Department', 'Status', 'Actions'].map(h => (
-                      <th key={h} className={`whitespace-nowrap px-4 py-3 ${h === 'Actions' ? 'text-right' : 'text-left'}`} style={{ color: '#162660', fontWeight: 600, fontSize: '12px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
+                      <th key={h} className="whitespace-nowrap px-4 py-3 text-left" style={{ color: '#162660', fontWeight: 600, fontSize: '12px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -945,7 +945,7 @@ export default function Payroll() {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap"><Badge text={p.status} /></td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex gap-1.5 justify-end">
+                      <div className="flex gap-1.5 justify-start">
                         <button
                           className="btn font-semibold transition-all duration-300"
                           style={{
@@ -1040,14 +1040,6 @@ export default function Payroll() {
                     </td>
                   </tr>
                 ))}</tbody>
-                <tfoot>
-                  <tr style={{ background: 'rgba(22, 38, 96, 0.04)', borderTop: '2px solid rgba(22, 38, 96, 0.15)' }}>
-                    <td colSpan={2} className="font-bold px-4 py-3 text-sm pr-6 text-right" style={{ color: '#162660' }}>TOTALS</td>
-                    <td className="font-bold px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{Math.round(summary.gross || 0).toLocaleString()}</td>
-                    <td className="font-bold text-emerald-600 px-4 py-3 whitespace-nowrap">₹{Math.round(summary.net || 0).toLocaleString()}</td>
-                    <td colSpan={2}></td>
-                  </tr>
-                </tfoot>
               </table>
             </div>
           )}

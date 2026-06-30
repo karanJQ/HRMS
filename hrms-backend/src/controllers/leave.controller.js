@@ -7,18 +7,50 @@ const getWorkingDays = async (from_date, to_date) => {
   const holidaysRes = await query(`SELECT date, type FROM holidays WHERE date >= $1 AND date <= $2`, [from_date, to_date]);
   const holidayStrings = holidaysRes.rows.map(r => toLocalDateStr(new Date(r.date)));
 
-  let days = 0;
   let curr = new Date(from_date);
   const end = new Date(to_date);
+  
+  const allDays = [];
   while (curr <= end) {
     const dayOfWeek = curr.getDay();
     const dateStr = toLocalDateStr(curr);
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const isHoliday = holidayStrings.includes(dateStr);
-    if (!isWeekend && !isHoliday) days++;
+    
+    allDays.push({
+      dateStr,
+      isNonWorking: isWeekend || isHoliday
+    });
+    
     curr.setDate(curr.getDate() + 1);
   }
-  return days;
+
+  // Sandwich Rule Implementation
+  let leaveDates = [];
+  
+  for (let i = 0; i < allDays.length; i++) {
+    const day = allDays[i];
+    if (!day.isNonWorking) {
+      leaveDates.push(day.dateStr);
+    } else {
+      let hasWorkingBefore = false;
+      let hasWorkingAfter = false;
+      
+      for (let j = 0; j < i; j++) {
+        if (!allDays[j].isNonWorking) { hasWorkingBefore = true; break; }
+      }
+      for (let j = i + 1; j < allDays.length; j++) {
+        if (!allDays[j].isNonWorking) { hasWorkingAfter = true; break; }
+      }
+      
+      if (hasWorkingBefore && hasWorkingAfter) {
+        // Sandwiched! Count it as leave.
+        leaveDates.push(day.dateStr);
+      }
+    }
+  }
+
+  return { days: leaveDates.length, leaveDates };
 };
 
 exports.listApplications = async (req, res) => {
@@ -30,12 +62,20 @@ exports.listApplications = async (req, res) => {
   if (dept)   { conditions.push(`e.dept_id=$${idx++}`); params.push(dept); }
   if (year)   { conditions.push(`EXTRACT(YEAR FROM la.from_date)=$${idx++}`); params.push(year); }
   if (month)  { conditions.push(`EXTRACT(MONTH FROM la.from_date)=$${idx++}`); params.push(month); }
-  if (req.user.role === 'employee') { conditions.push(`la.emp_id=$${idx++}`); params.push(req.user.emp_id); }
-  if (req.user.role === 'dept_head') { conditions.push(`e.dept_id=$${idx++}`); params.push(req.user.dept_id); }
+  if (req.user.role === 'employee') { 
+    conditions.push(`(la.emp_id=$${idx} OR e.reporting_manager_id=$${idx})`); 
+    params.push(req.user.emp_id); 
+    idx++; 
+  }
+  if (req.user.role === 'dept_head') { 
+    conditions.push(`(e.dept_id=$${idx} OR e.reporting_manager_id=$${idx+1})`); 
+    params.push(req.user.dept_id, req.user.emp_id); 
+    idx += 2; 
+  }
   const where = conditions.length ? 'WHERE '+conditions.join(' AND ') : '';
   try {
     const result = await query(
-      `SELECT la.*, e.first_name||' '||e.last_name as emp_name, d.name as dept_name
+      `SELECT la.*, e.first_name||' '||e.last_name as emp_name, d.name as dept_name, e.reporting_manager_id
        FROM leave_applications la
        JOIN employees e ON e.emp_id=la.emp_id
        JOIN departments d ON d.id=e.dept_id
@@ -54,7 +94,7 @@ exports.apply = async (req, res) => {
 
   if (new Date(from_date) > new Date(to_date)) return error(res,'Invalid date range.',400);
   try {
-    const days = await getWorkingDays(from_date, to_date);
+    const { days, leaveDates } = await getWorkingDays(from_date, to_date);
     if (days<=0) return error(res,'0 working days in selected range (weekends/holidays).',400);
 
     const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [eid]);
@@ -81,20 +121,14 @@ exports.apply = async (req, res) => {
     );
 
     // Record attendance as 'Leave' or 'Half Day' for the date range
-    const startDate = new Date(from_date);
-    const endDate = new Date(to_date);
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const dateStr = toLocalDateStr(d);
-      const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        const attStatus = half_day_type ? 'Half Day' : 'Leave';
-        await query(
-          `INSERT INTO attendance_records (emp_id, date, status, biometric_sync)
-           VALUES ($1, $2, $3, false)
-           ON CONFLICT (emp_id, date) DO UPDATE SET status = $3`,
-          [eid, dateStr, attStatus]
-        );
-      }
+    for (const dateStr of leaveDates) {
+      const attStatus = half_day_type ? 'Half Day' : 'Leave';
+      await query(
+        `INSERT INTO attendance_records (emp_id, date, status, biometric_sync)
+         VALUES ($1, $2, $3, false)
+         ON CONFLICT (emp_id, date) DO UPDATE SET status = $3`,
+        [eid, dateStr, attStatus]
+      );
     }
 
     return success(res, result.rows[0], 'Leave application submitted', 201);
@@ -106,9 +140,22 @@ exports.review = async (req, res) => {
   const { status, remarks } = req.body;
   if (!['Approved','Rejected'].includes(status)) return error(res,'status must be Approved or Rejected.',400);
   try {
-    const appRes = await query('SELECT * FROM leave_applications WHERE id=$1',[id]);
+    const appRes = await query(`
+      SELECT la.*, e.dept_id, e.reporting_manager_id 
+      FROM leave_applications la 
+      JOIN employees e ON e.emp_id = la.emp_id 
+      WHERE la.id=$1`, [id]);
     if (!appRes.rows.length) return error(res,'Application not found.',404);
     const app = appRes.rows[0];
+
+    // Access control
+    const u = req.user;
+    let allowed = false;
+    if (['super_admin', 'hr_manager', 'hr_staff'].includes(u.role)) allowed = true;
+    else if (u.role === 'dept_head' && u.dept_id === app.dept_id) allowed = true;
+    else if (app.reporting_manager_id === u.emp_id) allowed = true;
+
+    if (!allowed) return error(res, 'Not authorized to review this application.', 403);
     await query(
       `UPDATE leave_applications SET status=$1, reviewed_by=$2, reviewed_date=NOW(), remarks=$3 WHERE id=$4`,
       [status, req.user.id, remarks||null, id]
@@ -270,4 +317,14 @@ exports.cancelLeave = async (req, res) => {
 
     return success(res, null, 'Leave application cancelled');
   } catch (err) { return error(res, err.message); }
+};
+
+exports.triggerAccrual = async (req, res) => {
+  try {
+    const { runLeaveAccrual } = require('../jobs/leaveAccrual');
+    await runLeaveAccrual();
+    return success(res, null, 'Leave accrual triggered successfully');
+  } catch (err) {
+    return error(res, err.message);
+  }
 };

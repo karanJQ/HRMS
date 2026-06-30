@@ -9,7 +9,7 @@ import { empAPI, deptAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import Pagination from '../components/common/Pagination';
 
-const blank = { first_name: '', last_name: '', father_name: '', gender: 'Male', dob: '', doj: '', mobile: '', alternate_mobile: '', official_email: '', personal_email: '', aadhaar_number: '', pan_number: '', dept_id: '', pay_level: '', basic_pay: '', ctc: '', posting_station: '', blood_group: '', qualification: '', subject_specialization: '', experience_years: 0, account_number: '', bank_name: '', ifsc_code: '', pf_number: '', uan_number: '', esic_number: '', nominee_name: '', nominee_relation: '', emergency_contact_name: '', emergency_contact_mobile: '', status: 'Active', probation_days: 90 };
+const blank = { first_name: '', last_name: '', father_name: '', gender: 'Male', dob: '', doj: '', mobile: '', alternate_mobile: '', official_email: '', personal_email: '', aadhaar_number: '', pan_number: '', dept_id: '', pay_level: '', basic_pay: '', ctc: '', posting_station: '', blood_group: '', qualification: '', subject_specialization: '', experience_years: 0, account_number: '', bank_name: '', ifsc_code: '', pf_number: '', uan_number: '', esic_number: '', nominee_name: '', nominee_relation: '', emergency_contact_name: '', emergency_contact_mobile: '', status: 'Active', probation_days: 90, reporting_manager_id: '' };
 
 function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -173,6 +173,7 @@ const F = ({ k, l, type = 'text', opts, full, req, pattern, title, maxLength, re
 export default function EmployeeMaster() {
   const { can, isMin, user } = useAuth();
   const [emps, setEmps] = useState([]);
+  const [allEmps, setAllEmps] = useState([]);
   const [depts, setDepts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -203,6 +204,7 @@ export default function EmployeeMaster() {
 
   useEffect(() => {
     deptAPI.list().then(r => setDepts(r.data.data || []));
+    empAPI.list({ limit: 1000 }).then(r => setAllEmps(r.data.data.employees || []));
   }, []);
 
   useEffect(() => { load(); }, [search, filter]);
@@ -265,7 +267,7 @@ export default function EmployeeMaster() {
 
   return (
     <Layout title="Employee Master" theme="light" bg="#F8F8FF">
-        {msg && <div className={`px-4 py-3 rounded-lg text-sm mb-4 ${msg.startsWith('Error') ? 'bg-red-900/50 text-red-200 border border-red-500/30' : 'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
+        {msg && !showForm && !view && <div className={`px-4 py-3 rounded-lg text-sm mb-4 ${msg.startsWith('Error') ? 'bg-red-900/50 text-red-200 border border-red-500/30' : 'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
 
         <div className="flex flex-col lg:flex-row gap-4 mb-6 items-start lg:items-center justify-between w-full">
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full lg:w-auto">
@@ -536,7 +538,7 @@ export default function EmployeeMaster() {
               </div>
             </div>
             <div className="grid grid-cols-3 gap-x-6 gap-y-3">
-              {[['DOB', view.dob?.split('T')[0]], ['DOJ', view.doj?.split('T')[0]], ['Probation', view.probation_days > 0 ? `${view.probation_days} days (${view.probation_status || 'Pending'})` : 'None'], ['Mobile', view.mobile], ['Email', view.official_email], ['Blood Group', view.blood_group], ['Qualification', view.qualification], ['PF No.', view.pf_number], ['UAN No.', view.uan_number], ['ESIC No.', view.esic_number], ['PAN', view.pan_number], ['Bank', `${view.bank_name || ''} / ${view.ifsc_code || ''}`], ['Account No.', view.account_number], ['Nominee', view.nominee_name], ['Experience', `${view.experience_years} years`], ['Father Name', view.father_name], ['Monthly CTC', view.ctc || view.basic_pay ? `₹${parseFloat(view.ctc || view.basic_pay).toLocaleString()}` : '—']].map(([k, v]) => (
+              {[['DOB', view.dob?.split('T')[0]], ['DOJ', view.doj?.split('T')[0]], ['Probation', view.probation_days > 0 ? `${view.probation_days} days (${view.probation_status || 'Pending'})` : 'None'], ['Reporting Manager', view.reporting_manager_name || '—'], ['Mobile', view.mobile], ['Email', view.official_email], ['Blood Group', view.blood_group], ['Qualification', view.qualification], ['PF No.', view.pf_number], ['UAN No.', view.uan_number], ['ESIC No.', view.esic_number], ['PAN', view.pan_number], ['Bank', `${view.bank_name || ''} / ${view.ifsc_code || ''}`], ['Account No.', view.account_number], ['Nominee', view.nominee_name], ['Experience', `${view.experience_years} years`], ['Father Name', view.father_name], ['Monthly CTC', view.ctc || view.basic_pay ? `₹${parseFloat(view.ctc || view.basic_pay).toLocaleString()}` : '—']].map(([k, v]) => (
                 <div key={k}><p className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{k}</p><p className="text-sm font-medium" style={{ color: '#162660' }}>{v || '—'}</p></div>
               ))}
             </div>
@@ -544,7 +546,8 @@ export default function EmployeeMaster() {
         )}
 
         {showForm && (
-          <Modal title={editMode ? 'Edit Employee' : 'Add New Employee'} onClose={() => { setShowForm(false); setEditMode(false); setForm(blank); }} theme="light" wide>
+          <Modal title={editMode ? 'Edit Employee' : 'Add New Employee'} onClose={() => { setShowForm(false); setEditMode(false); setForm(blank); setMsg(''); }} theme="light" wide>
+            {msg && <div className={`px-4 py-3 rounded-lg text-sm mb-4 ${msg.startsWith('Error') ? 'bg-red-900/50 text-red-200 border border-red-500/30' : 'bg-emerald-900/50 text-emerald-200 border border-emerald-500/30'}`}>{msg}</div>}
             <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3 mt-4">
               <div className="col-span-1 md:col-span-3 font-bold text-sm text-[#162660] mt-2 border-b pb-1">Personal Information</div>
@@ -562,6 +565,12 @@ export default function EmployeeMaster() {
               <div><label className="text-xs text-slate-400 block mb-1">Department<span className="text-red-400">*</span></label>
                 <select className="input" value={form.dept_id || ''} onChange={e => setForm({ ...form, dept_id: e.target.value })} required>
                   <option value="">Select</option>{depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
+              <div><label className="text-xs text-slate-400 block mb-1">Reporting Manager</label>
+                <select className="input" value={form.reporting_manager_id || ''} onChange={e => setForm({ ...form, reporting_manager_id: e.target.value })}>
+                  <option value="">None</option>
+                  {allEmps.map(e => <option key={e.emp_id} value={e.emp_id}>{e.first_name} {e.last_name} ({e.emp_id})</option>)}
                 </select>
               </div>
               <F form={form} setForm={setForm} k="pay_level" l="Pay Level" type="number" />

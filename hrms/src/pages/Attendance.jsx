@@ -190,8 +190,9 @@ export default function Attendance() {
     try {
       const empId = user.role==='employee' ? user.emp_id : (form.emp_id || user.emp_id);
       const slot = form.half_day_type ? form.half_day_type : 'FULL_DAY';
+      const actualToDate = form.half_day_type ? form.from_date : form.to_date;
       const start = new Date(form.from_date);
-      const end = new Date(form.to_date);
+      const end = new Date(actualToDate);
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toLocaleDateString('en-CA');
         const activeReqs = getActiveRequestsForDate(dateStr, empId, leaves, wfhRequests, regularizations);
@@ -199,7 +200,7 @@ export default function Attendance() {
         if (!allowed) return showMsg(`Validation Error on ${dateStr}: ` + reason);
       }
 
-      const payload = user.role==='employee' ? { ...form, emp_id: user.emp_id } : form;
+      const payload = user.role==='employee' ? { ...form, emp_id: user.emp_id, to_date: actualToDate } : { ...form, to_date: actualToDate };
       await leaveAPI.apply(payload);
       showMsg('Leave application submitted'); setShowForm(false);
       setForm({ emp_id:'', leave_type:'SL', from_date:'', to_date:'', reason:'', half_day_type:'', contact_number:'', leave_address:'' });
@@ -376,7 +377,7 @@ export default function Attendance() {
   return (
     <Layout title="Attendance & Leave Management" theme="light" bg="#F8F8FF">
       {msg && (
-        <div className={`px-4 py-3 rounded-xl text-sm mb-4 border transition-all duration-300 ${
+        <div className={`fixed top-6 right-6 z-[9999] px-5 py-4 rounded-xl text-sm shadow-2xl border transition-all duration-300 ${
           msg.startsWith('Error') ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'
         }`}>{msg}</div>
       )}
@@ -493,6 +494,50 @@ export default function Attendance() {
                 const hasData = day.date && !isPrevNext;
                 const isWeekend = day.date && new Date(day.date + 'T00:00:00').getDay() % 6 === 0;
 
+                const empId = user?.role === 'employee' ? user.emp_id : selectedEmpId;
+                const activeReqs = (hasData && empId && empId !== 'all') 
+                  ? getActiveRequestsForDate(day.date, empId, leaves, wfhRequests, regularizations)
+                  : [];
+
+                let bgStyle = isPrevNext ? '#f8f9fc' : (hasData ? style.bg : (isWeekend ? '#fafbfc' : '#fff'));
+                
+                const hasHalfDayReq = activeReqs.some(r => r.slot === 'FIRST_HALF' || r.slot === 'SECOND_HALF');
+                
+                if (hasData && (st === 'Half Day' || hasHalfDayReq)) {
+                  let h1Status = day.data?.first_half_status;
+                  let h2Status = day.data?.second_half_status;
+                  
+                  const todayStr = new Date().toISOString().split('T')[0];
+                  const isFuture = day.date > todayStr;
+                  const baseDef = isFuture ? 'Upcoming' : 'Absent';
+                  
+                  if (!h1Status) h1Status = isWeekend ? 'Weekend' : baseDef;
+                  if (!h2Status) h2Status = isWeekend ? 'Weekend' : baseDef;
+
+                  activeReqs.forEach(req => {
+                    if (req.status === 'Approved' || req.status === 'Pending') {
+                      const reqTypeStr = req.type === 'leave' ? 'Leave' : req.type === 'wfh' ? 'WFH' : null;
+                      if (reqTypeStr) {
+                        if (req.slot === 'FIRST_HALF') h1Status = reqTypeStr;
+                        if (req.slot === 'SECOND_HALF') h2Status = reqTypeStr;
+                        if (req.slot === 'FULL_DAY') { h1Status = reqTypeStr; h2Status = reqTypeStr; }
+                      }
+                    }
+                  });
+
+                  const getHalfBg = (hStatus) => {
+                    if (hStatus === 'Leave') return STATUS_STYLES['Half Day'].bg;
+                    if (hStatus === 'WFH') return STATUS_STYLES['WFH'].bg;
+                    if (hStatus === 'Absent') return STATUS_STYLES['Absent'].bg;
+                    if (hStatus === 'Present') return STATUS_STYLES['Present'].bg;
+                    return STATUS_STYLES[hStatus]?.bg || style.bg;
+                  };
+
+                  const h1Bg = getHalfBg(h1Status);
+                  const h2Bg = getHalfBg(h2Status);
+                  bgStyle = `linear-gradient(to bottom, ${h1Bg} 50%, ${h2Bg} 50%)`;
+                }
+
                 return (
                   <div
                     key={idx}
@@ -502,7 +547,7 @@ export default function Attendance() {
                       minHeight: '108px',
                       borderRight: '1px solid rgba(22,38,96,0.05)',
                       borderBottom: '1px solid rgba(22,38,96,0.05)',
-                      background: isPrevNext ? '#f8f9fc' : (hasData ? style.bg : (isWeekend ? '#fafbfc' : '#fff')),
+                      background: bgStyle,
                       opacity: isPrevNext ? 0.45 : 1,
                     }}
                   >
@@ -521,11 +566,6 @@ export default function Attendance() {
 
                     {/* Status content */}
                     {hasData && st !== 'Aggregate' && (() => {
-                      const empId = user?.role === 'employee' ? user.emp_id : selectedEmpId;
-                      const activeReqs = (day.date && empId && empId !== 'all') 
-                        ? getActiveRequestsForDate(day.date, empId, leaves, wfhRequests, regularizations)
-                        : [];
-
                       // If no active reqs, just show the base status from backend
                       // Base statuses we want to show even if no requests: Present, Absent, Miss Punch, Holiday, Weekend
                       const showBaseStatus = activeReqs.length === 0 || ['Present', 'Absent', 'Miss Punch', 'Holiday'].includes(st);
@@ -565,26 +605,7 @@ export default function Attendance() {
                             </div>
                           )}
 
-                          {/* Render Active Requests as Badges */}
-                          {activeReqs.map((req, i) => {
-                            const isAppr = req.status === 'Approved';
-                            const colors = {
-                              leave: isAppr ? { bg:'#e0e7ff', text:'#4338ca', border:'#c7d2fe' } : { bg:'#fef3c7', text:'#d97706', border:'#fde68a' },
-                              wfh: isAppr ? { bg:'#dcfce7', text:'#15803d', border:'#bbf7d0' } : { bg:'#fef3c7', text:'#d97706', border:'#fde68a' },
-                              regularize: isAppr ? { bg:'#ffedd5', text:'#c2410c', border:'#fed7aa' } : { bg:'#fef3c7', text:'#d97706', border:'#fde68a' }
-                            };
-                            const c = colors[req.type];
-                            const label = req.type === 'leave' ? 'Lv' : req.type === 'wfh' ? 'WFH' : 'Reg';
-                            const slotLabel = req.slot === 'FIRST_HALF' ? 'H1' : req.slot === 'SECOND_HALF' ? 'H2' : 'Full';
-                            
-                            return (
-                              <div key={i} className="text-[9px] px-1.5 py-0.5 rounded shadow-sm border flex justify-between items-center whitespace-nowrap"
-                                style={{ background:c.bg, color:c.text, borderColor:c.border }}>
-                                <span className="font-bold">{label} {slotLabel}</span>
-                                {!isAppr && <span className="text-[8px] opacity-75 ml-1">Pend</span>}
-                              </div>
-                            );
-                          })}
+
                         </div>
                       );
                     })()}
@@ -947,7 +968,7 @@ export default function Attendance() {
                     <td className="p-3"><Badge text={l.status}/></td>
                     <td className="p-3">
                       <div className="flex gap-1.5">
-                        {l.status==='Pending' && isMin('hr_staff') && (
+                        {l.status==='Pending' && (isMin('hr_staff') || user?.emp_id === l.reporting_manager_id) && (
                           <>
                             <button className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all" onClick={()=>review(l.id,'Approved')}><Check size={14}/></button>
                             <button className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all" onClick={()=>review(l.id,'Rejected')}><X size={14}/></button>
@@ -1372,16 +1393,7 @@ export default function Attendance() {
               <input type="date" className="input w-full" value={form.to_date} disabled={!!form.half_day_type} onChange={e=>setForm({...form,to_date:e.target.value})}
                 style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
             </div>
-            <div>
-              <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Contact</label>
-              <input className="input w-full" value={form.contact_number} onChange={e => { let v = e.target.value.replace(/\D/g, ''); if (v.length > 10) v = v.slice(0, 10); setForm({...form,contact_number:v}) }} placeholder="Mobile" required pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9"
-                style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
-            </div>
-            <div>
-              <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Address</label>
-              <input className="input w-full" value={form.leave_address} onChange={e=>setForm({...form,leave_address:e.target.value})} placeholder="Leave address"
-                style={{ background:'#fff', border:'1px solid rgba(22,38,96,0.12)', color:'#162660', borderRadius:'10px', padding:'10px 12px' }}/>
-            </div>
+
             <div className="col-span-2">
               <label className="text-xs font-semibold block mb-1" style={{ color:'rgba(22,38,96,0.5)' }}>Reason</label>
               <textarea className="input w-full min-h-[80px]" rows={3} value={form.reason} onChange={e=>setForm({...form,reason:e.target.value})}

@@ -213,13 +213,21 @@ export const checkDateRules = (dateStr, requestType, holidays, isAdmin = false) 
   // 2. Weekend check
   const dayOfWeek = date.getDay();
   if (dayOfWeek === 0 || dayOfWeek === 6) {
-    if (requestType === 'regularize') return null; // allowed on weekends
-    return 'Leave and WFH are not allowed on weekends.';
+    // Allow weekends to be included in ranges. The backend will calculate 
+    // actual working days and skip weekends automatically.
+    return null;
   }
 
   // 3. Date direction check
   if (requestType === 'regularize') {
     if (dateStr >= todayStr) return 'Regularization can only be applied for past dates.';
+    
+    const todayDate = new Date(todayStr + 'T00:00:00');
+    const reqDate = new Date(dateStr + 'T00:00:00');
+    const timeDiff = todayDate.getTime() - reqDate.getTime();
+    const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+    
+    if (daysDiff > 7) return 'Regularization can only be applied within 7 days.';
   }
 
   return null;

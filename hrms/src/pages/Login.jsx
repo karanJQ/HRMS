@@ -85,7 +85,8 @@ export default function Login() {
               {[
                 ['Super Admin', 'admin@company.com', 'Admin@123456', '#3b82f6'],
                 ['HR Manager', 'hr@company.com', 'Hr@123456', '#22c55e'],
-                ['Employee', 'rajesh.kumar@company.com', 'Emp@123456', '#f59e0b'],
+                ['Employee (Rajesh)', 'rajesh.kumar@company.com', 'Emp@123456', '#f59e0b'],
+                ['Employee (Amit Desai)', 'amit.desai@company.com', 'Emp@123456', '#8b5cf6'],
               ].map(([role, email, pw, color]) => (
                 <button key={role} onClick={() => demoLogin(email, pw)}
                   style={{ padding: '6px 12px', background: `${color}15`, border: `1px solid ${color}30`, borderRadius: 8, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
