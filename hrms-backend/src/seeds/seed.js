@@ -3,32 +3,38 @@ const bcrypt = require('bcryptjs');
 const { pool, query } = require('../config/database');
 
 const DEPTS = [
-  { name: 'development', code: 'DEV' },
+  { name: 'Development', code: 'DEV' },
   { name: 'BA/BDE', code: 'BABDE' },
-  { name: 'management', code: 'MGT' },
+  { name: 'Management', code: 'MGT' },
   { name: 'IT', code: 'IT' },
   { name: 'QA', code: 'QA' },
   { name: 'UI/UX', code: 'UIUX' },
-  { name: 'marketing', code: 'MKT' },
-  { name: 'sales', code: 'SALES' },
+  { name: 'Marketing', code: 'MKT' },
+  { name: 'Sales', code: 'SALES' },
   { name: 'HR', code: 'HR' },
 ];
 
 const DESIGS = [
-  { name: 'Junior Clerk', grade: 'Grade-D', pay_level_min: 2, pay_level_max: 3 },
-  { name: 'Senior Clerk', grade: 'Grade-D', pay_level_min: 3, pay_level_max: 4 },
-  { name: 'Talati', grade: 'Grade-D', pay_level_min: 4, pay_level_max: 5 },
-  { name: 'Junior Assistant', grade: 'Grade-C', pay_level_min: 5, pay_level_max: 6 },
-  { name: 'Senior Assistant', grade: 'Grade-C', pay_level_min: 6, pay_level_max: 7 },
-  { name: 'Junior Teacher', grade: 'Grade-C', pay_level_min: 6, pay_level_max: 7 },
-  { name: 'Teacher', grade: 'Grade-C', pay_level_min: 6, pay_level_max: 8 },
-  { name: 'Senior Teacher', grade: 'Grade-B', pay_level_min: 8, pay_level_max: 9 },
-  { name: 'Headmaster', grade: 'Grade-A', pay_level_min: 10, pay_level_max: 12 },
-  { name: 'Staff Nurse', grade: 'Grade-C', pay_level_min: 6, pay_level_max: 7 },
-  { name: 'Sub-Inspector', grade: 'Grade-B', pay_level_min: 7, pay_level_max: 9 },
-  { name: 'Inspector', grade: 'Grade-B', pay_level_min: 9, pay_level_max: 11 },
-  { name: 'Deputy Collector', grade: 'Grade-A', pay_level_min: 11, pay_level_max: 13 },
-  { name: 'District Officer', grade: 'Grade-A', pay_level_min: 12, pay_level_max: 14 },
+  { name: 'Intern', pay_level_min: 1, pay_level_max: 2 },
+  { name: 'Junior Developer', pay_level_min: 2, pay_level_max: 3 },
+  { name: 'Developer', pay_level_min: 3, pay_level_max: 5 },
+  { name: 'Senior Developer', pay_level_min: 5, pay_level_max: 7 },
+  { name: 'Lead Developer', pay_level_min: 7, pay_level_max: 9 },
+  { name: 'Junior QA Engineer', pay_level_min: 2, pay_level_max: 3 },
+  { name: 'QA Engineer', pay_level_min: 3, pay_level_max: 5 },
+  { name: 'Senior QA Engineer', pay_level_min: 5, pay_level_max: 7 },
+  { name: 'UI/UX Designer', pay_level_min: 4, pay_level_max: 6 },
+  { name: 'Senior UI/UX Designer', pay_level_min: 6, pay_level_max: 8 },
+  { name: 'Business Analyst', pay_level_min: 4, pay_level_max: 6 },
+  { name: 'Senior Business Analyst', pay_level_min: 6, pay_level_max: 8 },
+  { name: 'Project Manager', pay_level_min: 8, pay_level_max: 10 },
+  { name: 'HR Executive', pay_level_min: 3, pay_level_max: 5 },
+  { name: 'HR Manager', pay_level_min: 7, pay_level_max: 9 },
+  { name: 'Sales Executive', pay_level_min: 3, pay_level_max: 5 },
+  { name: 'Sales Manager', pay_level_min: 7, pay_level_max: 9 },
+  { name: 'Team Lead', pay_level_min: 7, pay_level_max: 9 },
+  { name: 'Engineering Manager', pay_level_min: 10, pay_level_max: 12 },
+  { name: 'Chief Technology Officer', pay_level_min: 12, pay_level_max: 14 },
 ];
 
 async function seed() {
@@ -39,7 +45,7 @@ async function seed() {
     const deptMap = {};
     for (const d of DEPTS) {
       const r = await client.query(
-        'INSERT INTO departments(name,code) VALUES($1,$2) ON CONFLICT(name) DO UPDATE SET code=EXCLUDED.code RETURNING id',
+        'INSERT INTO departments(name,code) VALUES($1,$2) ON CONFLICT(code) DO UPDATE SET name=EXCLUDED.name RETURNING id',
         [d.name, d.code]
       );
       deptMap[d.name] = r.rows[0].id;
@@ -48,8 +54,8 @@ async function seed() {
     console.log('🌱 Seeding designations...');
     for (const d of DESIGS) {
       await client.query(
-        'INSERT INTO designations(name,grade,pay_level_min,pay_level_max) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING',
-        [d.name, d.grade, d.pay_level_min, d.pay_level_max]
+        'INSERT INTO designations(name,pay_level_min,pay_level_max) VALUES($1,$2,$3) ON CONFLICT DO NOTHING',
+        [d.name, d.pay_level_min, d.pay_level_max]
       );
     }
 
@@ -60,7 +66,7 @@ async function seed() {
        VALUES('superadmin', $1, $2, 'super_admin', true)
        ON CONFLICT(email) DO UPDATE SET password_hash = EXCLUDED.password_hash
        RETURNING id`,
-      [process.env.SEED_ADMIN_EMAIL || 'admin@hrms.gov.in', hash]
+      [process.env.SEED_ADMIN_EMAIL || 'admin@company.com', hash]
     );
     const adminId = adminRes.rows[0].id;
 
@@ -68,18 +74,18 @@ async function seed() {
     const hrHash = await bcrypt.hash('Hr@123456', 12);
     await client.query(
       `INSERT INTO users(username, email, password_hash, role, dept_id, is_active)
-       VALUES('hr_manager', 'hr@hrms.gov.in', $1, 'hr_manager', $2, true)
+       VALUES('hr_manager', 'hr@company.com', $1, 'hr_manager', $2, true)
        ON CONFLICT(email) DO NOTHING`,
       [hrHash, deptMap['HR']]
     );
 
     console.log('🌱 Seeding sample employees...');
     const sampleEmployees = [
-      { emp_id:'EMP00001', first_name:'Rajesh', last_name:'Kumar Patel', gender:'Male', dob:'1990-05-12', mobile:'9876543210', official_email:'rajesh@gov.in', dept:'development', desig:'Senior Teacher', grade:'Grade-B', pay_level:8, basic_pay:45000, category:'General', district:'Ahmedabad', posting_station:'Govt High School, Naranpura', doj:'2023-03-15', pan_number:'ABCDE1234F', pf_number:'GJ/AHM/12345', bank_name:'SBI', account_number:'3721849300', ifsc_code:'SBIN0001234', blood_group:'B+', qualification:'M.Ed', nominee_name:'Priya Patel' },
-      { emp_id:'EMP00002', first_name:'Meena', last_name:'Sharma', gender:'Female', dob:'1992-11-22', mobile:'9765432109', official_email:'meena@gov.in', dept:'IT', desig:'Staff Nurse', grade:'Grade-C', pay_level:6, basic_pay:35000, category:'OBC', district:'Surat', posting_station:'Civil Hospital, Surat', doj:'2022-08-01', pan_number:'FGHIJ5678K', pf_number:'GJ/SRT/54321', bank_name:'BOB', account_number:'9876543210', ifsc_code:'BARB0SURATX', blood_group:'A+', qualification:'B.Sc Nursing', nominee_name:'Suresh Sharma' },
-      { emp_id:'EMP00003', first_name:'Amit', last_name:'Desai', gender:'Male', dob:'1988-07-30', mobile:'9654321098', official_email:'amit@gov.in', dept:'sales', desig:'Talati', grade:'Grade-D', pay_level:4, basic_pay:28000, category:'SC', district:'Vadodara', posting_station:'Vadodara Collectorate', doj:'2021-01-10', pan_number:'KLMNO9012P', pf_number:'GJ/VDR/98765', bank_name:'PNB', account_number:'1234567890', ifsc_code:'PUNB0VDRXXX', blood_group:'O+', qualification:'BA', nominee_name:'Rita Desai' },
-      { emp_id:'EMP00004', first_name:'Sunita', last_name:'Joshi', gender:'Female', dob:'1978-03-18', mobile:'9543210987', official_email:'sunita@gov.in', dept:'QA', desig:'Headmaster', grade:'Grade-A', pay_level:10, basic_pay:55000, category:'General', district:'Rajkot', posting_station:'Govt Primary School, Rajkot', doj:'2015-06-01', pan_number:'QRSTU3456V', pf_number:'GJ/RJK/11111', bank_name:'SBI', account_number:'5432198760', ifsc_code:'SBIN0002345', blood_group:'AB+', qualification:'M.Ed, M.Phil', nominee_name:'Mahesh Joshi' },
-      { emp_id:'EMP00005', first_name:'Vikram', last_name:'Singh', gender:'Male', dob:'1995-12-05', mobile:'9432109876', official_email:'vikram@gov.in', dept:'management', desig:'Sub-Inspector', grade:'Grade-B', pay_level:7, basic_pay:40000, category:'OBC', district:'Bhavnagar', posting_station:'Bhavnagar Police Station', doj:'2020-09-15', pan_number:'VWXYZ7890A', pf_number:'GJ/BVN/22222', bank_name:'BOI', account_number:'6543219870', ifsc_code:'BKID0BHVNGR', blood_group:'B-', qualification:'BA, Police Training', nominee_name:'Kamla Singh' },
+      { emp_id:'EMP00001', first_name:'Rajesh', last_name:'Kumar', gender:'Male', dob:'1990-05-12', mobile:'9876543210', official_email:'rajesh.kumar@company.com', dept:'Development', desig:'Senior Developer', pay_level:6, basic_pay:75000, category:'General', doj:'2021-03-15', pan_number:'ABCDE1234F', pf_number:'GJ/AHM/12345', bank_name:'HDFC Bank', account_number:'3721849300', ifsc_code:'HDFC0001234', blood_group:'B+', qualification:'B.Tech (CS)', nominee_name:'Priya Kumar' },
+      { emp_id:'EMP00002', first_name:'Meena', last_name:'Shah', gender:'Female', dob:'1992-11-22', mobile:'9765432109', official_email:'meena.shah@company.com', dept:'QA', desig:'QA Engineer', pay_level:4, basic_pay:55000, category:'OBC', doj:'2022-08-01', pan_number:'FGHIJ5678K', pf_number:'GJ/SRT/54321', bank_name:'ICICI Bank', account_number:'9876543210', ifsc_code:'ICIC0SURATX', blood_group:'A+', qualification:'B.E (IT)', nominee_name:'Suresh Shah' },
+      { emp_id:'EMP00003', first_name:'Amit', last_name:'Desai', gender:'Male', dob:'1988-07-30', mobile:'9654321098', official_email:'amit.desai@company.com', dept:'Sales', desig:'Sales Executive', pay_level:3, basic_pay:45000, category:'General', doj:'2021-01-10', pan_number:'KLMNO9012P', pf_number:'GJ/VDR/98765', bank_name:'Axis Bank', account_number:'1234567890', ifsc_code:'UTIB0VDRXXX', blood_group:'O+', qualification:'BBA', nominee_name:'Rita Desai' },
+      { emp_id:'EMP00004', first_name:'Sunita', last_name:'Joshi', gender:'Female', dob:'1978-03-18', mobile:'9543210987', official_email:'sunita.joshi@company.com', dept:'Management', desig:'Project Manager', pay_level:9, basic_pay:95000, category:'General', doj:'2015-06-01', pan_number:'QRSTU3456V', pf_number:'GJ/RJK/11111', bank_name:'SBI', account_number:'5432198760', ifsc_code:'SBIN0002345', blood_group:'AB+', qualification:'MBA, B.Tech', nominee_name:'Mahesh Joshi' },
+      { emp_id:'EMP00005', first_name:'Vikram', last_name:'Singh', gender:'Male', dob:'1995-12-05', mobile:'9432109876', official_email:'vikram.singh@company.com', dept:'UI/UX', desig:'UI/UX Designer', pay_level:5, basic_pay:60000, category:'OBC', doj:'2020-09-15', pan_number:'VWXYZ7890A', pf_number:'GJ/GNR/22222', bank_name:'Kotak Bank', account_number:'6543219870', ifsc_code:'KKBK0GNDNGR', blood_group:'B-', qualification:'B.Des', nominee_name:'Kamla Singh' },
     ];
 
     const desigRes = await client.query('SELECT id, name FROM designations');
@@ -93,12 +99,12 @@ async function seed() {
       dor.setFullYear(dor.getFullYear() + 60);
       await client.query(
         `INSERT INTO employees(emp_id,first_name,last_name,gender,dob,mobile,official_email,dept_id,designation_id,
-          grade,pay_level,basic_pay,category,district,posting_station,doj,dor,pan_number,pf_number,
+          pay_level,basic_pay,category,doj,dor,pan_number,pf_number,
           bank_name,account_number,ifsc_code,blood_group,qualification,nominee_name,status,created_by)
-         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,'Active',$26)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,'Active',$23)
          ON CONFLICT(emp_id) DO NOTHING`,
         [e.emp_id, e.first_name, e.last_name, e.gender, e.dob, e.mobile, e.official_email, deptId, desigId,
-         e.grade, e.pay_level, e.basic_pay, e.category, e.district, e.posting_station, e.doj, dor.toISOString().split('T')[0],
+         e.pay_level, e.basic_pay, e.category, e.doj, dor.toISOString().split('T')[0],
          e.pan_number, e.pf_number, e.bank_name, e.account_number, e.ifsc_code, e.blood_group, e.qualification, e.nominee_name, adminId]
       );
 
@@ -125,21 +131,21 @@ async function seed() {
         [e.emp_id, e.doj, `Joined as ${e.desig} at ${e.posting_station}`, adminId]
       );
 
-   // Retirement tracking
-await client.query(
-  `INSERT INTO retirement_tracking(emp_id, retirement_date) VALUES($1,$2) ON CONFLICT DO NOTHING`,
-  [e.emp_id, dor.toISOString().split('T')[0]]
-);
+      // Retirement tracking
+      await client.query(
+        `INSERT INTO retirement_tracking(emp_id, retirement_date) VALUES($1,$2) ON CONFLICT DO NOTHING`,
+        [e.emp_id, dor.toISOString().split('T')[0]]
+      );
     }
 
     // Sample payroll for March 2025
     console.log('🌱 Seeding sample payroll...');
     const payrollSamples = [
-      { emp_id:'EMP00001', basic:45000, da_pct:42, hra_pct:20, ta:1500 },
-      { emp_id:'EMP00002', basic:35000, da_pct:42, hra_pct:20, ta:1500 },
-      { emp_id:'EMP00003', basic:28000, da_pct:42, hra_pct:20, ta:1200 },
-      { emp_id:'EMP00004', basic:55000, da_pct:42, hra_pct:20, ta:2000 },
-      { emp_id:'EMP00005', basic:40000, da_pct:42, hra_pct:20, ta:1800 },
+      { emp_id:'EMP00001', basic:75000, da_pct:0, hra_pct:20, ta:2000 },
+      { emp_id:'EMP00002', basic:55000, da_pct:0, hra_pct:20, ta:1500 },
+      { emp_id:'EMP00003', basic:45000, da_pct:0, hra_pct:20, ta:1200 },
+      { emp_id:'EMP00004', basic:95000, da_pct:0, hra_pct:20, ta:3000 },
+      { emp_id:'EMP00005', basic:60000, da_pct:0, hra_pct:20, ta:2000 },
     ];
     for (const p of payrollSamples) {
       const da = Math.round(p.basic * p.da_pct / 100);
@@ -163,27 +169,27 @@ await client.query(
     await client.query(
       `INSERT INTO training_programs(title, dept_id, start_date, end_date, venue, capacity, is_mandatory, status, created_by)
        VALUES
-       ('DIKSHA Digital Teaching', $1, '2025-03-10', '2025-03-15', 'GCERT Gandhinagar', 50, true, 'Upcoming', $2),
-       ('First Aid & Emergency Response', $3, '2025-04-01', '2025-04-03', 'Civil Hospital Ahmedabad', 30, true, 'Upcoming', $2),
-       ('Revenue Record Management', $4, '2025-02-10', '2025-02-14', 'Mantralaya Gandhinagar', 40, false, 'Completed', $2)
+       ('Advanced React & Next.js Workshop', $1, '2025-03-10', '2025-03-12', 'Head Office, Ahmedabad', 30, true, 'Upcoming', $2),
+       ('Agile & Scrum Certification Prep', $3, '2025-04-01', '2025-04-03', 'Online (Zoom)', 50, true, 'Upcoming', $2),
+       ('Effective Communication & Presentation Skills', $4, '2025-02-10', '2025-02-11', 'Conference Room A, Ahmedabad', 40, false, 'Completed', $2)
        ON CONFLICT DO NOTHING`,
-       [deptMap['development'], adminId, deptMap['IT'], deptMap['sales']]
+       [deptMap['development'], adminId, deptMap['management'], deptMap['sales']]
     );
 
     // Sample grievance
     await client.query(
       `INSERT INTO grievances(emp_id, grievance_type, subject, description, priority, status)
-       VALUES('EMP00003', 'Service Matter', 'Increment not given for FY 2023-24', 
-              'Annual increment due on April 2023 has not been credited to salary.', 'High', 'Under Review')
+       VALUES('EMP00003', 'Compensation', 'Performance bonus not credited for Q3 2024',
+              'The performance bonus for Q3 2024 was approved by the manager but has not been credited to the salary account yet.', 'High', 'Under Review')
        ON CONFLICT DO NOTHING`
     );
 
     await client.query('COMMIT');
     console.log('✅ Seeding completed successfully!');
     console.log('\n📋 Default Login Credentials:');
-    console.log('   Super Admin : admin@hrms.gov.in / Admin@123456');
-    console.log('   HR Manager  : hr@hrms.gov.in / Hr@123456');
-    console.log('   Employee    : rajesh@gov.in / Emp@123456');
+    console.log('   Super Admin : admin@company.com / Admin@123456');
+    console.log('   HR Manager  : hr@company.com / Hr@123456');
+    console.log('   Employee    : rajesh.kumar@company.com / Emp@123456');
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('❌ Seeding failed:', err.message);

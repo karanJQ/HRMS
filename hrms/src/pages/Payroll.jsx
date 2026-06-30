@@ -285,6 +285,7 @@ export default function Payroll() {
     const headers = [
       "Emp ID", "Employee Name", "Department", "Payment Mode",
       "Status", "Gross Salary", "Basic Pay", "HRA", "Conveyance",
+      "Employee PF", "Employer PF", "Employee ESIC", "Employer ESIC", "Professional Tax",
       "LWP Days", "Unpaid/Prorated Days", "Total Deductions", "Net Payable"
     ];
 
@@ -298,6 +299,11 @@ export default function Payroll() {
       p.basic_pay || 0,
       p.hra_amount || 0,
       p.ta_amount || 0,
+      p.pf_employee || 0,
+      p.pf_employer || 0,
+      p.esic_employee || 0,
+      p.esic_employer || 0,
+      p.professional_tax || 0,
       p.lwp_days || 0,
       p.lwp_amount || 0,
       p.total_deductions || 0,
@@ -904,11 +910,11 @@ export default function Payroll() {
             </div>
           ) : (
             <div className="table-wrap" style={{ border: '1px solid rgba(22, 38, 96, 0.1)', borderRadius: '12px', overflowX: 'auto' }}>
-              <table style={{ width: '100%', minWidth: '1150px' }}>
+              <table style={{ width: '100%', minWidth: '800px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
-                    {['Emp ID', 'Employee', 'Basic', 'HRA', 'TA', 'Gross', 'PF', 'ESIC', 'Prof. Tax', 'LWP', 'Net Pay', 'Status', 'Actions'].map(h => (
-                      <th key={h} className="whitespace-nowrap px-4 py-3" style={{ color: '#162660', fontWeight: 600, fontSize: '12px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
+                    {['Emp ID', 'Employee Name', 'Designation', 'Department', 'Status', 'Actions'].map(h => (
+                      <th key={h} className={`whitespace-nowrap px-4 py-3 ${h === 'Actions' ? 'text-right' : 'text-left'}`} style={{ color: '#162660', fontWeight: 600, fontSize: '12px', borderBottom: '1px solid rgba(22, 38, 96, 0.1)' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -930,20 +936,16 @@ export default function Payroll() {
                     <td className="font-mono text-xs font-semibold px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>{p.emp_id}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="font-semibold text-sm" style={{ color: '#162660' }}>{p.emp_name}</div>
-                      <div className="text-xs font-medium mt-0.5" style={{ color: 'rgba(22, 38, 96, 0.5)' }}>{p.dept_name || '—'}</div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{parseFloat(p.basic_pay).toLocaleString()}</td>
-                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{parseFloat(p.hra_amount).toLocaleString()}</td>
-                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{parseFloat(p.ta_amount).toLocaleString()}</td>
-                    <td className="font-bold px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{parseFloat(p.gross_pay).toLocaleString()}</td>
-                    <td className="text-red-600 font-semibold px-4 py-3 whitespace-nowrap">-₹{parseFloat(p.pf_employee).toLocaleString()}</td>
-                    <td className="text-red-600 font-semibold px-4 py-3 whitespace-nowrap">-₹{parseFloat(p.esic_employee || 0).toLocaleString()}</td>
-                    <td className="text-red-600 font-semibold px-4 py-3 whitespace-nowrap">-₹{parseFloat(p.professional_tax || 0).toLocaleString()}</td>
-                    <td className="text-red-600 font-semibold px-4 py-3 whitespace-nowrap">-₹{parseFloat(p.lwp_amount || 0).toLocaleString()}</td>
-                    <td className="font-bold text-emerald-600 px-4 py-3 whitespace-nowrap">₹{parseFloat(p.net_pay).toLocaleString()}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="font-medium text-sm text-slate-600">{p.designation_name || '—'}</div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="font-medium text-sm text-slate-600">{p.dept_name || '—'}</div>
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap"><Badge text={p.status} /></td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex gap-1.5 justify-center">
+                      <div className="flex gap-1.5 justify-end">
                         <button
                           className="btn font-semibold transition-all duration-300"
                           style={{
@@ -1040,10 +1042,8 @@ export default function Payroll() {
                 ))}</tbody>
                 <tfoot>
                   <tr style={{ background: 'rgba(22, 38, 96, 0.04)', borderTop: '2px solid rgba(22, 38, 96, 0.15)' }}>
-                    <td colSpan={5} className="font-bold px-4 py-3 text-sm pr-6 text-right" style={{ color: '#162660' }}>TOTALS</td>
+                    <td colSpan={2} className="font-bold px-4 py-3 text-sm pr-6 text-right" style={{ color: '#162660' }}>TOTALS</td>
                     <td className="font-bold px-4 py-3 whitespace-nowrap" style={{ color: '#162660' }}>₹{Math.round(summary.gross || 0).toLocaleString()}</td>
-                    <td className="font-bold text-red-600 px-4 py-3 whitespace-nowrap">-₹{Math.round(summary.pf || 0).toLocaleString()}</td>
-                    <td colSpan={3}></td>
                     <td className="font-bold text-emerald-600 px-4 py-3 whitespace-nowrap">₹{Math.round(summary.net || 0).toLocaleString()}</td>
                     <td colSpan={2}></td>
                   </tr>
@@ -1091,11 +1091,10 @@ export default function Payroll() {
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-sm mb-2 text-rose-600">Employee Contribution</p>
-                  {[['Employee PF', slip.pf_employee], ['Employee ESIC', slip.esic_employee], ['Professional Tax', slip.professional_tax], ['Unpaid/Prorated Days', slip.lwp_amount]].map(([k, v]) => {
-                    if (k === 'Unpaid/Prorated Days' && !v) return null;
+                  {[['Employee PF', slip.pf_employee], ['Employee ESIC', slip.esic_employee], ['Professional Tax', slip.professional_tax]].map(([k, v]) => {
                     return (
                       <div key={k} className="flex justify-between text-sm py-1 border-b" style={{ borderColor: 'rgba(22, 38, 96, 0.08)', color: '#162660' }}>
-                        <span>{k} {k === 'Unpaid/Prorated Days' && slip.lwp_days > 0 ? `(${slip.lwp_days} days)` : ''}</span>
+                        <span>{k}</span>
                         <span className="font-medium text-rose-600">₹{parseFloat(v || 0).toLocaleString()}</span>
                       </div>
                     );

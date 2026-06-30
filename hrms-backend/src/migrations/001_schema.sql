@@ -152,6 +152,8 @@ CREATE TABLE IF NOT EXISTS employees (
   ifsc_code             VARCHAR(20),
   bank_branch           VARCHAR(150),
   pf_number             VARCHAR(30),
+  uan_number            VARCHAR(20),
+  esic_number           VARCHAR(20),
   nps_id                VARCHAR(30),
   nominee_name          VARCHAR(150),
   nominee_relation      VARCHAR(50),

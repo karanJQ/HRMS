@@ -229,10 +229,11 @@ exports.list = async (req, res) => {
   if (req.user.role === 'employee') { conditions.push(`pr.emp_id=$${idx++}`); params.push(req.user.emp_id); }
   try {
     const result = await query(
-      `SELECT pr.*, e.first_name||' '||e.last_name as emp_name, d.name as dept_name
+      `SELECT pr.*, e.first_name||' '||e.last_name as emp_name, d.name as dept_name, des.name as designation_name
        FROM payroll_records pr
        JOIN employees e ON e.emp_id=pr.emp_id
        JOIN departments d ON d.id=e.dept_id
+       LEFT JOIN designations des ON des.id=e.designation_id
        WHERE ${conditions.join(' AND ')}
        ORDER BY e.first_name`, params
     );
@@ -269,7 +270,7 @@ exports.process = async (req, res) => {
   const { emp_id, month, year, ctc: rawCtc, basic_pay: fallbackCtc,
           professional_tax=200, tds=0, other_deductions=0, lwp_days=0, compensation=0, payment_mode='Bank Transfer', status='Processed' } = req.body;
   
-  const ctc = parseFloat(rawCtc || fallbackCtc || 0);
+  const ctc = parseFloat(rawCtc) || parseFloat(fallbackCtc) || 0;
   if (!emp_id||!month||!year||!ctc) return error(res,'emp_id, month, year, and ctc required.',400);
 
   try {
@@ -380,7 +381,7 @@ exports.processAll = async (req, res) => {
     const emps = await query(`SELECT emp_id, ctc, basic_pay, doj FROM employees WHERE status='Active' AND (ctc > 0 OR basic_pay > 0)`);
     let processed = 0;
     for (const e of emps.rows) {
-      const ctc = parseFloat(e.ctc || e.basic_pay || 0);
+      const ctc = parseFloat(e.ctc) || parseFloat(e.basic_pay) || 0;
       if (!ctc) continue;
 
       const gross = Math.max(0, ctc); // Input is treated as Gross Salary

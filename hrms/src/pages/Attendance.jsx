@@ -438,17 +438,19 @@ export default function Attendance() {
               onClick={()=>{ setCurrentMonth(new Date().getMonth()); setCurrentYear(new Date().getFullYear()); }}>
               Today
             </button>
-            <button className="text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:shadow-md ml-2 flex items-center gap-1.5"
-              style={{ background:'#162660', color:'#fff' }}
-              onClick={downloadCSV}>
-              <FileText size={14}/> Export CSV
-            </button>
             {user?.role !== 'employee' && (
-              <button className="text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:shadow-md ml-2 flex items-center gap-1.5"
-                style={{ background:'linear-gradient(135deg, #10b981, #059669)', color:'#fff' }}
-                onClick={downloadAllCSV}>
-                <FileText size={14}/> Export All
-              </button>
+              <>
+                <button className="text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:shadow-md ml-2 flex items-center gap-1.5"
+                  style={{ background:'#162660', color:'#fff' }}
+                  onClick={downloadCSV}>
+                  <FileText size={14}/> Export CSV
+                </button>
+                <button className="text-xs font-semibold px-4 py-2 rounded-lg transition-all hover:shadow-md ml-2 flex items-center gap-1.5"
+                  style={{ background:'linear-gradient(135deg, #10b981, #059669)', color:'#fff' }}
+                  onClick={downloadAllCSV}>
+                  <FileText size={14}/> Export All
+                </button>
+              </>
             )}
           </div>
 

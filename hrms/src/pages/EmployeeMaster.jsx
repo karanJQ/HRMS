@@ -9,7 +9,7 @@ import { empAPI, deptAPI } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import Pagination from '../components/common/Pagination';
 
-const blank = { first_name: '', last_name: '', father_name: '', gender: 'Male', dob: '', doj: '', mobile: '', alternate_mobile: '', official_email: '', personal_email: '', aadhaar_number: '', pan_number: '', dept_id: '', pay_level: '', basic_pay: '', ctc: '', posting_station: '', blood_group: '', qualification: '', subject_specialization: '', experience_years: 0, account_number: '', bank_name: '', ifsc_code: '', pf_number: '', nominee_name: '', nominee_relation: '', emergency_contact_name: '', emergency_contact_mobile: '', status: 'Active', probation_days: 90 };
+const blank = { first_name: '', last_name: '', father_name: '', gender: 'Male', dob: '', doj: '', mobile: '', alternate_mobile: '', official_email: '', personal_email: '', aadhaar_number: '', pan_number: '', dept_id: '', pay_level: '', basic_pay: '', ctc: '', posting_station: '', blood_group: '', qualification: '', subject_specialization: '', experience_years: 0, account_number: '', bank_name: '', ifsc_code: '', pf_number: '', uan_number: '', esic_number: '', nominee_name: '', nominee_relation: '', emergency_contact_name: '', emergency_contact_mobile: '', status: 'Active', probation_days: 90 };
 
 function CustomDropdown({ value, onChange, options, placeholder, width = 160 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -536,7 +536,7 @@ export default function EmployeeMaster() {
               </div>
             </div>
             <div className="grid grid-cols-3 gap-x-6 gap-y-3">
-              {[['DOB', view.dob?.split('T')[0]], ['DOJ', view.doj?.split('T')[0]], ['Probation', view.probation_days > 0 ? `${view.probation_days} days (${view.probation_status || 'Pending'})` : 'None'], ['Mobile', view.mobile], ['Email', view.official_email], ['Posting Station', view.posting_station], ['Blood Group', view.blood_group], ['Qualification', view.qualification], ['PF No.', view.pf_number], ['PAN', view.pan_number], ['Bank', `${view.bank_name || ''} / ${view.ifsc_code || ''}`], ['Account No.', view.account_number], ['Nominee', view.nominee_name], ['Experience', `${view.experience_years} years`], ['Father Name', view.father_name], ['Monthly CTC', view.ctc || view.basic_pay ? `₹${parseFloat(view.ctc || view.basic_pay).toLocaleString()}` : '—']].map(([k, v]) => (
+              {[['DOB', view.dob?.split('T')[0]], ['DOJ', view.doj?.split('T')[0]], ['Probation', view.probation_days > 0 ? `${view.probation_days} days (${view.probation_status || 'Pending'})` : 'None'], ['Mobile', view.mobile], ['Email', view.official_email], ['Blood Group', view.blood_group], ['Qualification', view.qualification], ['PF No.', view.pf_number], ['UAN No.', view.uan_number], ['ESIC No.', view.esic_number], ['PAN', view.pan_number], ['Bank', `${view.bank_name || ''} / ${view.ifsc_code || ''}`], ['Account No.', view.account_number], ['Nominee', view.nominee_name], ['Experience', `${view.experience_years} years`], ['Father Name', view.father_name], ['Monthly CTC', view.ctc || view.basic_pay ? `₹${parseFloat(view.ctc || view.basic_pay).toLocaleString()}` : '—']].map(([k, v]) => (
                 <div key={k}><p className="text-xs" style={{ color: 'rgba(22, 38, 96, 0.6)' }}>{k}</p><p className="text-sm font-medium" style={{ color: '#162660' }}>{v || '—'}</p></div>
               ))}
             </div>
@@ -547,10 +547,18 @@ export default function EmployeeMaster() {
           <Modal title={editMode ? 'Edit Employee' : 'Add New Employee'} onClose={() => { setShowForm(false); setEditMode(false); setForm(blank); }} theme="light" wide>
             <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3 mt-4">
+              <div className="col-span-1 md:col-span-3 font-bold text-sm text-[#162660] mt-2 border-b pb-1">Personal Information</div>
               <F form={form} setForm={setForm} k="first_name" l="First Name" req />
-              <F form={form} setForm={setForm} k="last_name" l="Last Name" req /><F form={form} setForm={setForm} k="father_name" l="Father's Name" />
+              <F form={form} setForm={setForm} k="last_name" l="Last Name" req />
+              <F form={form} setForm={setForm} k="father_name" l="Father's Name" />
               <F form={form} setForm={setForm} k="gender" l="Gender" opts={['Male', 'Female', 'Other']} req />
-              <F form={form} setForm={setForm} k="dob" l="Date of Birth" type="date" req /><F form={form} setForm={setForm} k="doj" l="Date of Joining" type="date" req />
+              <F form={form} setForm={setForm} k="dob" l="Date of Birth" type="date" req />
+              <F form={form} setForm={setForm} k="blood_group" l="Blood Group" opts={['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']} />
+              <F form={form} setForm={setForm} k="qualification" l="Qualification" />
+              <F form={form} setForm={setForm} k="experience_years" l="Experience (Years)" type="number" />
+              
+              <div className="col-span-1 md:col-span-3 font-bold text-sm text-[#162660] mt-4 border-b pb-1">Employment Details</div>
+              <F form={form} setForm={setForm} k="doj" l="Date of Joining" type="date" req />
               <div><label className="text-xs text-slate-400 block mb-1">Department<span className="text-red-400">*</span></label>
                 <select className="input" value={form.dept_id || ''} onChange={e => setForm({ ...form, dept_id: e.target.value })} required>
                   <option value="">Select</option>{depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -559,22 +567,27 @@ export default function EmployeeMaster() {
               <F form={form} setForm={setForm} k="pay_level" l="Pay Level" type="number" />
               <F form={form} setForm={setForm} k="ctc" l="Monthly Gross Salary (₹)" type="number" />
               <F form={form} setForm={setForm} k="probation_days" l="Probation (Days)" type="number" />
-              <F form={form} setForm={setForm} k="posting_station" l="Posting Station" full />
+              
+              <div className="col-span-1 md:col-span-3 font-bold text-sm text-[#162660] mt-4 border-b pb-1">Contact Information</div>
               <F form={form} setForm={setForm} k="mobile" l="Mobile" req pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9" restrict="number" maxLength={10} />
               <F form={form} setForm={setForm} k="alternate_mobile" l="Alternate Mobile" pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9" restrict="number" maxLength={10} />
               <F form={form} setForm={setForm} k="official_email" l="Official Email" type="email" pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" title="Valid email address" />
-              <F form={form} setForm={setForm} k="blood_group" l="Blood Group" opts={['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']} />
-              <F form={form} setForm={setForm} k="qualification" l="Qualification" /><F form={form} setForm={setForm} k="experience_years" l="Experience (Years)" type="number" />
+              <F form={form} setForm={setForm} k="emergency_contact_name" l="Emergency Contact Name" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
+              <F form={form} setForm={setForm} k="emergency_contact_mobile" l="Emergency Mobile" pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9" restrict="number" maxLength={10} />
+              
+              <div className="col-span-1 md:col-span-3 font-bold text-sm text-[#162660] mt-4 border-b pb-1">KYC Info</div>
               <F form={form} setForm={setForm} k="pan_number" l="PAN No." pattern="^[A-Z]{5}\d{4}[A-Z]{1}$" title="Valid PAN format (e.g., ABCDE1234F)" restrict="pan" maxLength={10} />
               <F form={form} setForm={setForm} k="aadhaar_number" l="Aadhaar No." pattern="^\d{12}$" title="12-digit Aadhaar number" restrict="number" maxLength={12} />
               <F form={form} setForm={setForm} k="pf_number" l="PF No." pattern="^[A-Z0-9]{10,22}$" title="10 to 22 alphanumeric characters" restrict="pf" maxLength={22} />
+              <F form={form} setForm={setForm} k="uan_number" l="UAN No." pattern="^\d{12}$" title="12-digit UAN number" restrict="number" maxLength={12} />
+              <F form={form} setForm={setForm} k="esic_number" l="ESIC No." pattern="^\d{10,17}$" title="10 to 17 digit ESIC number" restrict="number" maxLength={17} />
+              
+              <div className="col-span-1 md:col-span-3 font-bold text-sm text-[#162660] mt-4 border-b pb-1">Bank Details</div>
               <F form={form} setForm={setForm} k="bank_name" l="Bank Name" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
               <F form={form} setForm={setForm} k="account_number" l="Account No." pattern="^\d{9,18}$" title="9 to 18 digits" restrict="number" maxLength={18} />
               <F form={form} setForm={setForm} k="ifsc_code" l="IFSC Code" pattern="^[A-Z]{4}0[A-Z0-9]{6}$" title="Valid IFSC code" restrict="ifsc" maxLength={11} />
               <F form={form} setForm={setForm} k="nominee_name" l="Nominee Name" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
               <F form={form} setForm={setForm} k="nominee_relation" l="Relation" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
-              <F form={form} setForm={setForm} k="emergency_contact_name" l="Emergency Contact Name" pattern="^[a-zA-Z\s]+$" title="Only letters and spaces allowed" restrict="text" />
-              <F form={form} setForm={setForm} k="emergency_contact_mobile" l="Emergency Mobile" pattern="^[6-9]\d{9}$" title="10-digit mobile number starting with 6-9" restrict="number" maxLength={10} />
             </div>
             <button 
               type="submit"
@@ -594,7 +607,3 @@ export default function EmployeeMaster() {
     </Layout>
   );
 }
-
-
-
-

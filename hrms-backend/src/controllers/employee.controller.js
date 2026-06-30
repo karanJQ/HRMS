@@ -83,10 +83,10 @@ exports.create = async (req, res) => {
         present_address,permanent_address,blood_group,qualification,subject_specialization,experience_years,doj,
         account_number,bank_name,ifsc_code,bank_branch,pf_number,nps_id,nominee_name,nominee_relation,nominee_dob,
         emergency_contact_name,emergency_contact_mobile,status,created_by,
-        probation_days,probation_end_date,probation_status)
+        probation_days,probation_end_date,probation_status,uan_number,esic_number)
        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$50,$22,$23,$24,$25,$26,$27,
               $28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49,
-              $51,$52,$53)
+              $51,$52,$53,$54,$55)
        RETURNING *`,
       [emp_id, b.first_name, b.last_name || '', b.father_name||null, b.mother_name||null, b.gender, b.dob, dor.toISOString().split('T')[0],
        b.mobile, b.alternate_mobile||null, b.official_email||null, b.personal_email||null, b.aadhaar_number||null,
@@ -97,7 +97,7 @@ exports.create = async (req, res) => {
        b.subject_specialization||null, b.experience_years||0, b.doj, b.account_number||null, b.bank_name||null,
        b.ifsc_code||null, b.bank_branch||null, b.pf_number||null, b.nps_id||null, b.nominee_name||null,
        b.nominee_relation||null, b.nominee_dob||null, b.emergency_contact_name||null, b.emergency_contact_mobile||null,
-       b.status||'Active', req.user.id, b.ctc||null, probDays, probEndDate, probStatus]
+       b.status||'Active', req.user.id, b.ctc||null, probDays, probEndDate, probStatus, b.uan_number||null, b.esic_number||null]
     );
     // Create leave balance for current year
     const yr = new Date().getFullYear();
@@ -170,6 +170,8 @@ exports.update = async (req, res) => {
         probation_days=$47,
         probation_end_date=NULLIF($48,'')::date,
         probation_status=$49,
+        uan_number=COALESCE($50,uan_number),
+        esic_number=COALESCE($51,esic_number),
         updated_by=$44, updated_at=NOW()
        WHERE emp_id=$45 RETURNING *`,
       [b.first_name, b.last_name, b.father_name, b.mother_name, b.gender, b.dob,

@@ -358,7 +358,7 @@ export default function Onboarding() {
             <table>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(22, 38, 96, 0.1)', background: 'rgba(22, 38, 96, 0.03)' }}>
-                  {['Candidate', 'Post', 'Dept', 'Selected', 'Joining', 'Police', 'Status', 'Actions'].map(h => (
+                  {['Candidate', 'Post', 'Dept', 'Selected', 'Joining', 'Background', 'Status', 'Actions'].map(h => (
                     <th key={h} style={{ color: '#162660', fontWeight: 600, fontSize: '13px' }}>{h}</th>
                   ))}
                 </tr>
@@ -582,7 +582,3 @@ export default function Onboarding() {
     </Layout>
   );
 }
-
-
-
-

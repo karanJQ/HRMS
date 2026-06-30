@@ -10,7 +10,7 @@ exports.getByEmp = async (req, res) => {
     const result = await query(
       `SELECT s.*, u.username as recorder_username
        FROM service_book_entries s LEFT JOIN users u ON u.id=s.recorded_by
-       WHERE s.emp_id=$1 ORDER BY s.event_date ASC, s.created_at ASC`, [empId]
+       WHERE s.emp_id=$1 ORDER BY s.event_date DESC, s.created_at DESC`, [empId]
     );
     return success(res, result.rows);
   } catch (err) { return error(res, err.message); }
