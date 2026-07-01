@@ -6,7 +6,7 @@ import Loader from '../components/common/Loader';
 import Modal from '../components/common/Modal';
 import {
   Users, IndianRupee, Calendar, AlertTriangle, UserPlus, TrendingUp,
-  Star, Fingerprint, Gift, Briefcase, Sun, Cake, Bell, Trash2, Edit2
+  Star, Fingerprint, Gift, Briefcase, Sun, Cake, Bell, Trash2, Edit2, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { PieChart, Pie, Cell, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { reportsAPI, leaveAPI, onboardingAPI, attendanceAPI, empAPI, announcementAPI } from '../api/endpoints';
@@ -153,6 +153,14 @@ export default function Dashboard() {
     } finally {
       setAnnSubmitting(false);
       setTimeout(() => setMsg(''), 5000);
+    }
+  };
+
+  const scrollContainer = (e, dir) => {
+    e.stopPropagation();
+    const container = e.currentTarget.parentElement.querySelector('.gallery-container');
+    if (container) {
+      container.scrollBy({ left: dir === 'left' ? -250 : 250, behavior: 'smooth' });
     }
   };
 
@@ -440,10 +448,18 @@ export default function Dashboard() {
               <div key={a.id} onClick={() => setSelectedAnnouncement(a)} className="p-4 rounded-xl border border-slate-100 flex flex-col justify-between cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all duration-300 bg-white group" style={{ border: '1px solid rgba(22, 38, 96, 0.08)' }}>
                 <div>
                   {a.image_urls && a.image_urls.length > 0 && (
-                    <div className="w-full h-32 mb-3 rounded-lg flex gap-2 overflow-x-auto snap-x custom-scrollbar shrink-0">
-                      {a.image_urls.map((url, idx) => (
-                        <img key={idx} src={`http://localhost:5000/uploads/${url}`} alt="Celebration" className="h-full w-[80%] object-cover shrink-0 snap-center rounded-lg hover:opacity-90 transition-opacity" />
-                      ))}
+                    <div className="relative group/gallery w-full h-32 mb-3">
+                      {a.image_urls.length > 1 && (
+                        <>
+                          <button onClick={(e) => scrollContainer(e, 'left')} className="absolute left-1 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full shadow opacity-0 group-hover/gallery:opacity-100 z-10 hover:bg-white text-slate-600 transition-opacity"><ChevronLeft size={16}/></button>
+                          <button onClick={(e) => scrollContainer(e, 'right')} className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/80 p-1 rounded-full shadow opacity-0 group-hover/gallery:opacity-100 z-10 hover:bg-white text-slate-600 transition-opacity"><ChevronRight size={16}/></button>
+                        </>
+                      )}
+                      <div className="gallery-container w-full h-full rounded-lg flex gap-2 overflow-x-auto snap-x no-scrollbar shrink-0 scroll-smooth">
+                        {a.image_urls.map((url, idx) => (
+                          <img key={idx} src={`http://localhost:5000/uploads/${url}`} alt="Celebration" className="h-full w-[80%] object-cover shrink-0 snap-center rounded-lg hover:opacity-90 transition-opacity" />
+                        ))}
+                      </div>
                     </div>
                   )}
                   <div className="flex justify-between items-start mb-3">
@@ -720,10 +736,18 @@ export default function Dashboard() {
               <span className="text-xs text-slate-400 font-medium">{new Date(selectedAnnouncement.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
             </div>
             {selectedAnnouncement.image_urls && selectedAnnouncement.image_urls.length > 0 && (
-              <div className="w-full max-h-64 rounded-xl overflow-x-auto flex gap-3 snap-x mb-4 custom-scrollbar">
-                {selectedAnnouncement.image_urls.map((url, idx) => (
-                  <img key={idx} src={`http://localhost:5000/uploads/${url}`} alt="Celebration" className="h-full max-h-64 object-contain snap-center shrink-0 rounded-lg bg-slate-50" />
-                ))}
+              <div className="relative group/gallery w-full max-h-64 mb-4">
+                {selectedAnnouncement.image_urls.length > 1 && (
+                  <>
+                    <button onClick={(e) => scrollContainer(e, 'left')} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-1.5 rounded-full shadow opacity-0 group-hover/gallery:opacity-100 z-10 hover:bg-white text-slate-700 transition-opacity"><ChevronLeft size={20}/></button>
+                    <button onClick={(e) => scrollContainer(e, 'right')} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-1.5 rounded-full shadow opacity-0 group-hover/gallery:opacity-100 z-10 hover:bg-white text-slate-700 transition-opacity"><ChevronRight size={20}/></button>
+                  </>
+                )}
+                <div className="gallery-container w-full h-full max-h-64 rounded-xl overflow-x-auto flex gap-3 snap-x no-scrollbar scroll-smooth">
+                  {selectedAnnouncement.image_urls.map((url, idx) => (
+                    <img key={idx} src={`http://localhost:5000/uploads/${url}`} alt="Celebration" className="h-full max-h-64 object-contain snap-center shrink-0 rounded-lg bg-slate-50" />
+                  ))}
+                </div>
               </div>
             )}
             <h2 className="text-xl font-bold text-slate-800 leading-tight">{selectedAnnouncement.title}</h2>
