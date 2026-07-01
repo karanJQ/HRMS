@@ -65,12 +65,23 @@ export default function Attendance() {
   const [selectedEmpId, setSelectedEmpId] = useState('');
   const [holidayForm, setHolidayForm] = useState({ date: '', name: '', type: 'Festival' });
   const [showHolidayForm, setShowHolidayForm] = useState(false);
+  const [requestView, setRequestView] = useState('my'); // 'my' | 'team'
+
+  const [filterEmp, setFilterEmp] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+
+  let finalLeaves = user?.role === 'employee' ? leaves.filter(l => requestView === 'my' ? l.emp_id === user.emp_id : l.emp_id !== user.emp_id) : leaves;
+  if (filterEmp !== 'all') finalLeaves = finalLeaves.filter(l => l.emp_id === filterEmp);
+  if (filterType !== 'all') finalLeaves = finalLeaves.filter(l => l.leave_type === filterType);
+
+  const filteredWfh = user?.role === 'employee' ? wfhRequests.filter(w => requestView === 'my' ? w.emp_id === user.emp_id : w.emp_id !== user.emp_id) : wfhRequests;
+  const filteredRegs = user?.role === 'employee' ? regularizations.filter(r => requestView === 'my' ? r.emp_id === user.emp_id : r.emp_id !== user.emp_id) : regularizations;
 
   const {
     searchQuery: leaveSearch, setSearchQuery: setLeaveSearch,
     currentPage: leavePage, setCurrentPage: setLeavePage,
     paginatedData: paginatedLeaves, totalPages: leaveTotalPages
-  } = usePaginationAndSearch(leaves, ['emp_name', 'emp_id', 'leave_type', 'dept_name', 'status'], 10);
+  } = usePaginationAndSearch(finalLeaves, ['emp_name', 'emp_id', 'leave_type', 'dept_name', 'status'], 10);
 
   const {
     searchQuery: balSearch, setSearchQuery: setBalSearch,
@@ -82,13 +93,13 @@ export default function Attendance() {
     searchQuery: wfhSearch, setSearchQuery: setWfhSearch,
     currentPage: wfhPage, setCurrentPage: setWfhPage,
     paginatedData: paginatedWfh, totalPages: wfhTotalPages
-  } = usePaginationAndSearch(wfhRequests, ['first_name', 'last_name', 'reason', 'status'], 10);
+  } = usePaginationAndSearch(filteredWfh, ['first_name', 'last_name', 'reason', 'status'], 10);
 
   const {
     searchQuery: regSearch, setSearchQuery: setRegSearch,
     currentPage: regPage, setCurrentPage: setRegPage,
     paginatedData: paginatedRegs, totalPages: regTotalPages
-  } = usePaginationAndSearch(regularizations, ['first_name', 'last_name', 'reason', 'status'], 10);
+  } = usePaginationAndSearch(filteredRegs, ['first_name', 'last_name', 'reason', 'status'], 10);
 
   const {
     searchQuery: attSearch, setSearchQuery: setAttSearch,
@@ -127,11 +138,11 @@ export default function Attendance() {
     const activeEmpId = empId !== undefined ? empId : (user?.role === 'employee' ? user.emp_id : selectedEmpId);
     try {
       const [l, b, a, rReg, wRes, hRes, rSet] = await Promise.all([
-        leaveAPI.listApplications().catch(() => ({ data: { data: [] } })),
-        leaveAPI.listBalances().catch(() => ({ data: { data: [] } })),
+        leaveAPI.listApplications({}).catch(() => ({ data: { data: [] } })),
+        leaveAPI.listBalances({}).catch(() => ({ data: { data: [] } })),
         activeEmpId ? attendanceAPI.get({ emp_id: activeEmpId }).catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
-        attendanceAPI.getRegularizations().catch(() => ({ data: { data: [] } })),
-        attendanceAPI.getWFH().catch(() => ({ data: { data: [] } })),
+        attendanceAPI.getRegularizations({}).catch(() => ({ data: { data: [] } })),
+        attendanceAPI.getWFH({}).catch(() => ({ data: { data: [] } })),
         attendanceAPI.getHolidays({ year: currentYear }).catch(() => ({ data: { data: [] } })),
         isMin('hr_staff') ? attendanceAPI.getSettings().catch(() => ({ data: { data: null } })) : Promise.resolve({ data: { data: null } }),
       ]);
@@ -932,16 +943,48 @@ export default function Attendance() {
             )}
           </div>
           
-          <div className="flex items-center justify-end mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input 
-                type="text" 
-                placeholder="Search applications..." 
-                value={leaveSearch}
-                onChange={e => setLeaveSearch(e.target.value)}
-                className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
-              />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+            {user?.role === 'employee' ? (
+              <div className="flex bg-slate-100 p-1 rounded-lg w-max">
+                <button className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${requestView === 'my' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setRequestView('my')}>My Leaves</button>
+                <button className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${requestView === 'team' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setRequestView('team')}>Team Leaves</button>
+              </div>
+            ) : <div/>}
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+              {['super_admin', 'hr_manager', 'hr_staff', 'dept_head'].includes(user?.role) && (
+                <>
+                  <select 
+                    value={filterEmp} 
+                    onChange={e => setFilterEmp(e.target.value)}
+                    className="pl-3 pr-8 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800 bg-white"
+                  >
+                    <option value="all">All Employees</option>
+                    {employees.map(emp => (
+                      <option key={emp.emp_id} value={emp.emp_id}>{emp.first_name} {emp.last_name}</option>
+                    ))}
+                  </select>
+                  <select 
+                    value={filterType} 
+                    onChange={e => setFilterType(e.target.value)}
+                    className="pl-3 pr-8 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800 bg-white"
+                  >
+                    <option value="all">All Leave Types</option>
+                    {[...new Set(['SL', 'ML', 'EL', 'DL', ...leaves.map(l => l.leave_type)])].sort().map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </>
+              )}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Search applications..." 
+                  value={leaveSearch}
+                  onChange={e => setLeaveSearch(e.target.value)}
+                  className="pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 w-64 text-slate-800 bg-white"
+                />
+              </div>
             </div>
           </div>
 
@@ -1038,9 +1081,16 @@ export default function Attendance() {
         </div>
       ) : tab === 'wfh' ? (
         <div className="animate-fadeIn rounded-xl bg-white p-6 border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-5 gap-4">
             <h3 className="text-lg font-bold" style={{ color:'#162660' }}>Work From Home</h3>
-            <div className="flex gap-4 items-center">
+            
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              {user?.role === 'employee' && (
+                <div className="flex bg-slate-100 p-1 rounded-lg w-max">
+                  <button className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${requestView === 'my' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setRequestView('my')}>My WFH</button>
+                  <button className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${requestView === 'team' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setRequestView('team')}>Team WFH</button>
+                </div>
+              )}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input 
@@ -1101,9 +1151,16 @@ export default function Attendance() {
         </div>
       ) : tab === 'regularize' ? (
         <div className="animate-fadeIn rounded-xl bg-white p-6 border" style={{ borderColor:'rgba(22,38,96,0.1)' }}>
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-5 gap-4">
             <h3 className="text-lg font-bold" style={{ color:'#162660' }}>Regularizations</h3>
-            <div className="flex gap-4 items-center">
+            
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              {user?.role === 'employee' && (
+                <div className="flex bg-slate-100 p-1 rounded-lg w-max">
+                  <button className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${requestView === 'my' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setRequestView('my')}>My Reqs</button>
+                  <button className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${requestView === 'team' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setRequestView('team')}>Team Reqs</button>
+                </div>
+              )}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input 

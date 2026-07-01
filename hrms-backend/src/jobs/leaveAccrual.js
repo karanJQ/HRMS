@@ -10,6 +10,24 @@ const runLeaveAccrual = async () => {
         const targetYear = prevMonthDate.getFullYear();
         const targetMonth = prevMonthDate.getMonth() + 1; // 1-12
 
+        // Ensure logs table exists
+        await query(`
+            CREATE TABLE IF NOT EXISTS leave_accrual_logs (
+                id SERIAL PRIMARY KEY,
+                year INT,
+                month INT,
+                ran_at TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE(year, month)
+            )
+        `);
+
+        // Check if already run for targetYear and targetMonth
+        const check = await query(`SELECT id FROM leave_accrual_logs WHERE year = $1 AND month = $2`, [targetYear, targetMonth]);
+        if (check.rows.length > 0) {
+            console.log(`Accrual for ${targetYear}-${targetMonth} already processed. Skipping...`);
+            return;
+        }
+
         // Fetch all active employees
         const employees = await query("SELECT emp_id, doj FROM employees WHERE status = 'Active'");
         
@@ -45,6 +63,8 @@ const runLeaveAccrual = async () => {
             accruedCount++;
         }
         
+        // Log the successful completion
+        await query(`INSERT INTO leave_accrual_logs(year, month) VALUES($1, $2) ON CONFLICT DO NOTHING`, [targetYear, targetMonth]);
         console.log(`Monthly leave accrual completed. Accrued for ${accruedCount} employees.`);
     } catch (err) {
         console.error('Error in monthly leave accrual job:', err);
@@ -55,6 +75,9 @@ const runLeaveAccrual = async () => {
 cron.schedule('0 0 1 * *', () => {
     runLeaveAccrual();
 });
+
+// Run once on application startup to catch any missed accruals
+runLeaveAccrual();
 
 module.exports = {
     runLeaveAccrual

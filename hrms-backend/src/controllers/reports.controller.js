@@ -160,7 +160,7 @@ exports.getProbationAlerts = async (req, res) => {
     }
 
     const alerts = await query(
-      `SELECT e.emp_id, e.first_name, e.last_name, e.doj, e.probation_days, e.probation_end_date,
+      `SELECT e.emp_id, e.first_name, e.last_name, e.doj, e.probation_days, e.probation_end_date, e.employment_type,
               d.name as dept_name, des.name as designation_name
        FROM employees e
        JOIN departments d ON d.id=e.dept_id

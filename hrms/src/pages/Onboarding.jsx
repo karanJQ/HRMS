@@ -18,7 +18,7 @@ export default function Onboarding() {
   const [showAdd, setShowAdd] = useState(false);
   const [showLetter, setShowLetter] = useState(false);
   const [msg, setMsg] = useState('');
-  const [form, setForm] = useState({ candidate_ref_id:'', name:'', post:'', dept_id:'', selection_date:'', joining_date:'' });
+  const [form, setForm] = useState({ candidate_ref_id:'', name:'', post:'', dept_id:'', selection_date:'', joining_date:'', employment_type:'Full Time', internship_days:'' });
   const [showCompleted, setShowCompleted] = useState(false);
   const [documents, setDocuments] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
@@ -47,7 +47,7 @@ export default function Onboarding() {
       const dept = depts.find(d=>d.id==form.dept_id);
       await onboardingAPI.create({ ...form, dept_name: dept?.name||'' });
       setMsg('Candidate added'); setShowAdd(false);
-      setForm({ candidate_ref_id:'', name:'', post:'', dept_id:'', selection_date:'', joining_date:'' });
+      setForm({ candidate_ref_id:'', name:'', post:'', dept_id:'', selection_date:'', joining_date:'', employment_type:'Full Time', internship_days:'' });
       load();
     } catch(e) { setMsg('Error: '+e.response?.data?.message); }
   };
@@ -143,7 +143,7 @@ export default function Onboarding() {
     printWindow.document.write(`
       <html>
         <head>
-          <title>Appointment_Letter_${selected.candidate_ref_id || 'Candidate'}</title>
+          <title>${selected.employment_type === 'Internship' ? 'Internship_Letter' : 'Appointment_Letter'}_${selected.candidate_ref_id || 'Candidate'}</title>
           <style>
             body {
               font-family: Georgia, serif;
@@ -240,13 +240,13 @@ export default function Onboarding() {
             </div>
             
             <div class="content">
-              <p class="subject">Subject: Offer of Appointment for the post of ${selected.post}</p>
+              <p class="subject">Subject: Offer of ${selected.employment_type === 'Internship' ? 'Internship' : 'Appointment'} for the post of ${selected.post}</p>
               <p>Dear ${selected.name},</p>
               <p>
-                With reference to your application and the subsequent selection process, we are pleased to inform you that you have been selected for the post of <strong>${selected.post}</strong> in the <strong>${selected.dept_name_full || selected.dept_name}</strong>.
+                With reference to your application and the subsequent selection process, we are pleased to inform you that you have been selected for an ${selected.employment_type === 'Internship' ? 'Internship' : 'Appointment'} for the post of <strong>${selected.post}</strong> in the <strong>${selected.dept_name_full || selected.dept_name}</strong>${selected.employment_type === 'Internship' ? ` for a duration of ${selected.internship_days || 0} days` : ''}.
               </p>
               <p>
-                Your appointment will be subject to successful police verification, medical clearance, and verification of original documents. You are requested to report for joining formalities on or before <strong>${selected.joining_date?.split('T')[0] || 'the specified joining date'}</strong>.
+                Your ${selected.employment_type === 'Internship' ? 'internship' : 'appointment'} will be subject to successful background verification, medical clearance, and verification of original documents. You are requested to report for joining formalities on or before <strong>${selected.joining_date?.split('T')[0] || 'the specified joining date'}</strong>.
               </p>
               <p>
                 Please bring all relevant original documents, including educational certificates, identity proof, and 4 passport-size photographs at the time of joining.
@@ -441,7 +441,7 @@ export default function Onboarding() {
         <Modal title={`Onboarding: ${selected.name}`} onClose={()=>setSelected(null)} theme="light" wide>
           {msg && <div className={`px-4 py-3 rounded-xl text-sm mb-6 border ${msg.startsWith('Error') ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>{msg}</div>}
           <div className="grid grid-cols-2 gap-6 mb-6">
-            {[['Post',selected.post],['Department',selected.dept_name_full||selected.dept_name],['Candidate ID',selected.candidate_ref_id],['Joining Date',selected.joining_date?.split('T')[0]]].map(([k,v])=>(
+            {[['Post',selected.post],['Department',selected.dept_name_full||selected.dept_name],['Candidate ID',selected.candidate_ref_id],['Joining Date',selected.joining_date?.split('T')[0]],['Employment Type',selected.employment_type||'Full Time'],...(selected.employment_type === 'Internship' ? [['Internship Days',selected.internship_days]] : [])].map(([k,v])=>(
               <div key={k}><p className="text-xs text-slate-400 mb-1">{k}</p><p className="text-sm font-medium text-slate-800">{v||'—'}</p></div>
             ))}
           </div>
@@ -452,24 +452,24 @@ export default function Onboarding() {
             <CheckRow label="Appointment Letter Sent" val={selected.appointment_letter_sent} id={selected.id} field="appointment_letter_sent"/>
             <CheckRow label="Service Book Created" val={selected.service_book_created} id={selected.id} field="service_book_created"/>
             <div className="flex items-center justify-between py-3 border-b border-slate-200 px-4">
-              <span className="text-sm text-slate-700 font-medium">Police Verification</span>
+              <span className="text-sm text-slate-700 font-medium">Background Verification</span>
               <select className="text-xs border border-slate-300 bg-white text-slate-800 rounded px-3 py-1.5 outline-none" value={selected.police_verification}
                 onChange={e=>updateField(selected.id,'police_verification',e.target.value)}>
-                {['Pending','In Progress','Cleared','Failed'].map(v=><option key={v}>{v}</option>)}
+                {['Pending','In Progress','Cleared','Failed'].map(v=><option key={v}>{v}</option>)} 
               </select>
             </div>
             <div className="flex items-center justify-between py-3 px-4">
               <span className="text-sm text-slate-700 font-medium">Overall Status</span>
               <select className="text-xs border border-slate-300 bg-white text-slate-800 rounded px-3 py-1.5 outline-none" value={selected.status}
                 onChange={e=>updateField(selected.id,'status',e.target.value)} disabled={selected.status === 'Completed'}>
-                {['Pending Documents','Documents Verified','Medical Pending','Police Verification Pending','Joining Formalities','Cancelled', ...(selected.status === 'Completed' ? ['Completed'] : [])].map(v=><option key={v}>{v}</option>)}
+                {['Pending Documents','Documents Verified','Medical Pending','Background Verification Pending','Joining Formalities','Cancelled', ...(selected.status === 'Completed' ? ['Completed'] : [])].map(v=><option key={v}>{v}</option>)}
               </select>
             </div>
           </div>
           <div className="flex flex-col gap-4 mt-6">
             <div className="flex gap-4">
               {!selected.appointment_letter_sent ? (
-                <button className="btn btn-success flex-1" onClick={()=>handleAction('appointment_letter_sent', 'Appointment Letter Generated Successfully!')}>Generate Appointment Letter</button>
+                <button className="btn btn-success flex-1" onClick={()=>handleAction('appointment_letter_sent', `${selected.employment_type === 'Internship' ? 'Internship' : 'Appointment'} Letter Generated Successfully!`)}>Generate {selected.employment_type === 'Internship' ? 'Internship' : 'Appointment'} Letter</button>
               ) : (
                 <button className="btn btn-success flex-1" onClick={() => setShowLetter(true)}>
                   <svg 
@@ -491,7 +491,7 @@ export default function Onboarding() {
                       stroke="none" 
                     />
                   </svg>
-                  View Appointment Letter
+                  View {selected.employment_type === 'Internship' ? 'Internship' : 'Appointment'} Letter
                 </button>
               )}
               <button className="btn btn-primary flex-1" onClick={()=>handleAction('service_book_created', 'Service Book Created Successfully!')}>Create Service Book</button>
@@ -513,12 +513,12 @@ export default function Onboarding() {
       )}
 
       {showLetter && selected && (
-        <Modal title="Appointment Letter Preview" onClose={()=>setShowLetter(false)} theme="light" wide>
+        <Modal title={`${selected.employment_type === 'Internship' ? 'Internship' : 'Appointment'} Letter Preview`} onClose={()=>setShowLetter(false)} theme="light" wide>
           <div className="bg-white text-slate-800 p-8 rounded-lg shadow-inner font-serif h-[60vh] overflow-y-auto">
             <div className="text-center border-b-2 border-slate-300 pb-4 mb-6">
               <h2 className="text-xl font-bold uppercase">JadeQuest </h2>
               <h3 className="text-md font-semibold text-slate-600">{selected.dept_name_full || selected.dept_name}</h3>
-              <p className="text-sm mt-2">Ref No: JQ/{selected.dept_name?.substring(0,3).toUpperCase()}/2026/{(Math.random()*10000).toFixed(0)}</p>
+              <p className="text-sm mt-2">Ref No: JQ/{selected.dept_name?.substring(0,3).toUpperCase() || 'GEN'}/2026/{(Math.random()*10000).toFixed(0)}</p>
               <p className="text-sm">Date: {new Date().toLocaleDateString()}</p>
             </div>
             
@@ -529,13 +529,13 @@ export default function Onboarding() {
             </div>
             
             <div className="mb-6">
-              <p className="font-bold underline mb-4">Subject: Offer of Appointment for the post of {selected.post}</p>
+              <p className="font-bold underline mb-4">Subject: Offer of {selected.employment_type === 'Internship' ? 'Internship' : 'Appointment'} for the post of {selected.post}</p>
               <p className="mb-4">Dear {selected.name},</p>
               <p className="mb-4 text-justify">
-                With reference to your application and the subsequent selection process, we are pleased to inform you that you have been selected for the post of <strong>{selected.post}</strong> in the <strong>{selected.dept_name_full || selected.dept_name}</strong>.
+                With reference to your application and the subsequent selection process, we are pleased to inform you that you have been selected for an {selected.employment_type === 'Internship' ? 'Internship' : 'Appointment'} for the post of <strong>{selected.post}</strong> in the <strong>{selected.dept_name_full || selected.dept_name}</strong>{selected.employment_type === 'Internship' ? ` for a duration of ${selected.internship_days || 0} days` : ''}.
               </p>
               <p className="mb-4 text-justify">
-                Your appointment will be subject to successful police verification, medical clearance, and verification of original documents. You are requested to report for joining formalities on or before <strong>{selected.joining_date?.split('T')[0] || 'the specified joining date'}</strong>.
+                Your {selected.employment_type === 'Internship' ? 'internship' : 'appointment'} will be subject to successful background verification, medical clearance, and verification of original documents. You are requested to report for joining formalities on or before <strong>{selected.joining_date?.split('T')[0] || 'the specified joining date'}</strong>.
               </p>
               <p className="mb-8">
                 Please bring all relevant original documents, including educational certificates, identity proof, and 4 passport-size photographs at the time of joining.
@@ -573,8 +573,20 @@ export default function Onboarding() {
                 <option value="">Select</option>{depts.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
-            <div><label className="text-xs text-slate-400 block mb-1">Selection Date</label><input type="date" className="input" value={form.selection_date} onChange={e=>setForm({...form,selection_date:e.target.value})}/></div>
             <div><label className="text-xs text-slate-400 block mb-1">Joining Date</label><input type="date" className="input" value={form.joining_date} onChange={e=>setForm({...form,joining_date:e.target.value})}/></div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Employment Type</label>
+              <select className="input" value={form.employment_type} onChange={e=>setForm({...form,employment_type:e.target.value})}>
+                <option value="Full Time">Full Time</option>
+                <option value="Internship">Internship</option>
+              </select>
+            </div>
+            {form.employment_type === 'Internship' && (
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Internship Days</label>
+                <input type="number" min="1" className="input" placeholder="e.g. 90" value={form.internship_days} onChange={e=>setForm({...form,internship_days:e.target.value})}/>
+              </div>
+            )}
           </div>
           <button className="btn btn-primary w-full mt-6" onClick={addCandidate}>Add to Pipeline</button>
         </Modal>

@@ -186,5 +186,6 @@ export const kpiAPI = {
 export const announcementAPI = {
   list: () => API.get('/announcements'),
   create: (data) => API.post('/announcements', data),
+  update: (id, data) => API.put(`/announcements/${id}`, data),
   delete: (id) => API.delete(`/announcements/${id}`),
 };

@@ -51,7 +51,10 @@ export default function Header({ title, theme, bg, collapsed, onToggleSidebar })
       setUnreadCount(c => Math.max(0, c - 1));
       setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
     }
-    if (notif.ref_id) {
+    if (notif.type === 'LEAVE_REQUEST' || notif.type === 'WFH_REQUEST' || notif.type === 'REGULARIZATION_REQUEST') {
+      setOpen(false);
+      navigate('/attendance');
+    } else if (notif.ref_id) {
       setOpen(false);
       navigate('/tasks');
     }
@@ -180,15 +183,7 @@ export default function Header({ title, theme, bg, collapsed, onToggleSidebar })
               )}
             </div>
 
-            {/* Footer */}
-            {notifications.length > 0 && (
-              <div className="px-4 py-2 border-t border-white/10 text-center">
-                <button onClick={() => { setOpen(false); navigate('/tasks'); }}
-                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
-                  View all tasks →
-                </button>
-              </div>
-            )}
+
           </div>
         )}
       </div>

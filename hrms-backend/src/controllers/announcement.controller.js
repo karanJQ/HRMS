@@ -9,6 +9,7 @@ exports.list = async (req, res) => {
        FROM announcements a 
        LEFT JOIN users u ON a.created_by = u.id
        LEFT JOIN employees e ON u.emp_id = e.emp_id
+       WHERE a.expires_at IS NULL OR a.expires_at > NOW()
        ORDER BY a.created_at DESC
        LIMIT 50`
     );
@@ -34,18 +35,26 @@ exports.list = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  const { title, type, content, sendMail } = req.body;
+  const { title, type, content, sendMail, visibility_days } = req.body;
   
   if (!title || !type || !content) {
     return error(res, 'Title, type, and content are required.', 400);
+  }
+
+  const image_urls = req.files && req.files.length > 0 ? JSON.stringify(req.files.map(f => f.filename)) : '[]';
+  let expires_at = null;
+  if (visibility_days && parseInt(visibility_days) > 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + parseInt(visibility_days));
+    expires_at = d.toISOString();
   }
 
   try {
     const userId = req.user.id; // From requireAuth middleware
 
     const result = await query(
-      'INSERT INTO announcements(title, type, content, created_by) VALUES($1, $2, $3, $4) RETURNING *',
-      [title, type, content, userId]
+      'INSERT INTO announcements(title, type, content, created_by, image_urls, expires_at) VALUES($1, $2, $3, $4, $5, $6) RETURNING *',
+      [title, type, content, userId, image_urls, expires_at]
     );
 
     const announcement = result.rows[0];
@@ -70,6 +79,46 @@ exports.create = async (req, res) => {
     }
 
     return success(res, announcement, 'Announcement created', 201);
+  } catch (err) {
+    return error(res, err.message);
+  }
+};
+
+exports.update = async (req, res) => {
+  const { id } = req.params;
+  const { title, type, content, visibility_days } = req.body;
+
+  if (!title || !type || !content) {
+    return error(res, 'Title, type, and content are required.', 400);
+  }
+
+  let expires_at = null;
+  if (visibility_days && parseInt(visibility_days) > 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + parseInt(visibility_days));
+    expires_at = d.toISOString();
+  }
+
+  try {
+    let result;
+    if (req.files && req.files.length > 0) {
+      const image_urls = JSON.stringify(req.files.map(f => f.filename));
+      result = await query(
+        'UPDATE announcements SET title=$1, type=$2, content=$3, image_urls=$4, expires_at=$5, updated_at=NOW() WHERE id=$6 RETURNING *',
+        [title, type, content, image_urls, expires_at, id]
+      );
+    } else {
+      result = await query(
+        'UPDATE announcements SET title=$1, type=$2, content=$3, expires_at=$4, updated_at=NOW() WHERE id=$5 RETURNING *',
+        [title, type, content, expires_at, id]
+      );
+    }
+
+    if (result.rowCount === 0) {
+      return error(res, 'Announcement not found', 404);
+    }
+
+    return success(res, result.rows[0], 'Announcement updated successfully');
   } catch (err) {
     return error(res, err.message);
   }

@@ -97,8 +97,10 @@ exports.apply = async (req, res) => {
     const { days, leaveDates } = await getWorkingDays(from_date, to_date);
     if (days<=0) return error(res,'0 working days in selected range (weekends/holidays).',400);
 
-    const empCheck = await query('SELECT 1 FROM employees WHERE emp_id = $1', [eid]);
+    const empCheck = await query('SELECT first_name, last_name, reporting_manager_id FROM employees WHERE emp_id = $1', [eid]);
     if (!empCheck.rows.length) return error(res, `Employee with ID '${eid}' does not exist.`, 404);
+    const empName = `${empCheck.rows[0].first_name} ${empCheck.rows[0].last_name}`;
+    const managerId = empCheck.rows[0].reporting_manager_id;
 
     // Overlapping leave check
     const overlapCheck = await query(
@@ -128,6 +130,16 @@ exports.apply = async (req, res) => {
          VALUES ($1, $2, $3, false)
          ON CONFLICT (emp_id, date) DO UPDATE SET status = $3`,
         [eid, dateStr, attStatus]
+      );
+    }
+
+    // Notify reporting manager
+    if (managerId) {
+      await query(
+        `INSERT INTO notifications (user_id, type, title, message, is_read)
+         SELECT id, 'LEAVE_REQUEST', 'New Leave Request', $1, false
+         FROM users WHERE emp_id = $2`,
+        [`${empName} has requested a ${leave_type} leave from ${from_date} to ${to_date}.`, managerId]
       );
     }
 

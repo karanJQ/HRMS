@@ -113,7 +113,14 @@ export default function Probation() {
                   return (
                     <tr key={p.emp_id} className={`border-b border-gray-50 transition-colors ${isOverdue ? 'bg-red-50/50' : isEndingSoon ? 'bg-amber-50/50' : 'hover:bg-gray-50'}`}>
                       <td className="p-3">
-                        <div className="font-semibold text-slate-800">{p.first_name} {p.last_name}</div>
+                        <div className="font-semibold text-slate-800 flex items-center gap-2">
+                          {p.first_name} {p.last_name}
+                          {p.employment_type === 'Internship' && (
+                            <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
+                              Intern
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-slate-500">{p.emp_id}</div>
                       </td>
                       <td className="p-3 text-slate-600">{p.dept_name}</td>

@@ -561,6 +561,11 @@ exports.applyRegularization = async (req, res) => {
   const { date, reason, half_day_type, regularization_type } = req.body;
   const emp_id = req.user.role === 'employee' ? req.user.emp_id : (req.body.emp_id || req.user.emp_id);
   try {
+    const empCheck = await query('SELECT first_name, last_name, reporting_manager_id FROM employees WHERE emp_id = $1', [emp_id]);
+    if (!empCheck.rows.length) return error(res, `Employee not found`, 404);
+    const empName = `${empCheck.rows[0].first_name} ${empCheck.rows[0].last_name}`;
+    const managerId = empCheck.rows[0].reporting_manager_id;
+
     const existing = await query(`SELECT * FROM regularization_requests WHERE emp_id = $1 AND date = $2 AND status IN ('Pending', 'Approved')`, [emp_id, date]);
     if (existing.rows.length > 0) return error(res, 'A pending or approved regularization request already exists for this date', 400);
 
@@ -598,6 +603,16 @@ exports.applyRegularization = async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [emp_id, date, reason, requested_in, requested_out, half_day_type || null, regType]
     );
+
+    if (managerId) {
+      await query(
+        `INSERT INTO notifications (user_id, type, title, message, is_read)
+         SELECT id, 'REGULARIZATION_REQUEST', 'New Regularization Request', $1, false
+         FROM users WHERE emp_id = $2`,
+        [`${empName} has requested attendance regularization for ${date}.`, managerId]
+      );
+    }
+
     return success(res, result.rows[0], 'Regularization request submitted');
   } catch (err) {
     return error(res, err.message, 500);
@@ -608,13 +623,19 @@ exports.getRegularization = async (req, res) => {
   try {
     let result;
     if (req.user.role === 'employee') {
-      result = await query(`SELECT * FROM regularization_requests WHERE emp_id = $1 ORDER BY created_at DESC`, [req.user.emp_id]);
+      result = await query(`
+        SELECT r.*, e.first_name, e.last_name, d.name as dept_name
+        FROM regularization_requests r
+        JOIN employees e ON r.emp_id = e.emp_id
+        LEFT JOIN departments d ON d.id = e.dept_id
+        WHERE r.emp_id = $1 OR e.reporting_manager_id = $1
+        ORDER BY r.created_at DESC`, [req.user.emp_id]);
     } else {
       result = await query(`
         SELECT r.*, e.first_name, e.last_name, d.name as dept_name
         FROM regularization_requests r
         JOIN employees e ON r.emp_id = e.emp_id
-        JOIN departments d ON d.id = e.dept_id
+        LEFT JOIN departments d ON d.id = e.dept_id
         ORDER BY r.created_at DESC`);
     }
     return success(res, result.rows, 'Regularization requests fetched');
@@ -683,6 +704,11 @@ exports.applyWFH = async (req, res) => {
   const { date, reason, half_day_type, wfh_type } = req.body;
   const emp_id = req.user.emp_id;
   try {
+    const empCheck = await query('SELECT first_name, last_name, reporting_manager_id FROM employees WHERE emp_id = $1', [emp_id]);
+    if (!empCheck.rows.length) return error(res, `Employee not found`, 404);
+    const empName = `${empCheck.rows[0].first_name} ${empCheck.rows[0].last_name}`;
+    const managerId = empCheck.rows[0].reporting_manager_id;
+
     // Check for conflicting WFH on same slot
     const existing = await query(
       `SELECT * FROM wfh_requests WHERE emp_id = $1 AND date = $2 AND status IN ('Pending', 'Approved')`,
@@ -702,6 +728,16 @@ exports.applyWFH = async (req, res) => {
       `INSERT INTO wfh_requests (emp_id, date, reason, half_day_type, wfh_type) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [emp_id, date, reason, finalHalfDay, wfh_type || 'full_day']
     );
+
+    if (managerId) {
+      await query(
+        `INSERT INTO notifications (user_id, type, title, message, is_read)
+         SELECT id, 'WFH_REQUEST', 'New WFH Request', $1, false
+         FROM users WHERE emp_id = $2`,
+        [`${empName} has requested WFH on ${date}.`, managerId]
+      );
+    }
+
     return success(res, result.rows[0], 'Work from home request submitted');
   } catch (err) {
     return error(res, err.message, 500);
@@ -712,13 +748,19 @@ exports.getWFH = async (req, res) => {
   try {
     let result;
     if (req.user.role === 'employee') {
-      result = await query(`SELECT * FROM wfh_requests WHERE emp_id = $1 ORDER BY created_at DESC`, [req.user.emp_id]);
+      result = await query(`
+        SELECT w.*, e.first_name, e.last_name, d.name as dept_name
+        FROM wfh_requests w
+        JOIN employees e ON w.emp_id = e.emp_id
+        LEFT JOIN departments d ON d.id = e.dept_id
+        WHERE w.emp_id = $1 OR e.reporting_manager_id = $1
+        ORDER BY w.created_at DESC`, [req.user.emp_id]);
     } else {
       result = await query(`
         SELECT w.*, e.first_name, e.last_name, d.name as dept_name
         FROM wfh_requests w
         JOIN employees e ON w.emp_id = e.emp_id
-        JOIN departments d ON d.id = e.dept_id
+        LEFT JOIN departments d ON d.id = e.dept_id
         ORDER BY w.created_at DESC`);
     }
     return success(res, result.rows, 'WFH requests fetched');

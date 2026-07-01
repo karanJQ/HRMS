@@ -18,13 +18,13 @@ exports.list = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  const { candidate_ref_id, name, post, dept_id, dept_name, selection_date, joining_date } = req.body;
+  const { candidate_ref_id, name, post, dept_id, dept_name, selection_date, joining_date, employment_type, internship_days } = req.body;
   if (!name||!post) return error(res,'name and post required.',400);
   try {
     const result = await query(
-      `INSERT INTO onboarding_candidates(candidate_ref_id,name,post,dept_id,dept_name,selection_date,joining_date,created_by)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-      [candidate_ref_id||null,name,post,dept_id||null,dept_name||null,selection_date||null,joining_date||null,req.user.id]
+      `INSERT INTO onboarding_candidates(candidate_ref_id,name,post,dept_id,dept_name,selection_date,joining_date,employment_type,internship_days,created_by)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      [candidate_ref_id||null,name,post,dept_id||null,dept_name||null,selection_date||null,joining_date||null,employment_type||'Full Time',internship_days||0,req.user.id]
     );
     return success(res, result.rows[0], 'Candidate added to onboarding', 201);
   } catch (err) { return error(res, err.message); }
@@ -85,10 +85,21 @@ exports.update = async (req, res) => {
       const mobile = '0000000000'; // Placeholder (NOT NULL in DB)
 
       // d. Create employee master record
+      const isIntern = candidate.employment_type === 'Internship';
+      const probDays = isIntern ? (candidate.internship_days || 0) : 0;
+      const probStatus = isIntern ? 'Pending' : 'N/A';
+      
+      let probEndDate = null;
+      if (isIntern && probDays > 0) {
+        const d = new Date(doj);
+        d.setDate(d.getDate() + probDays);
+        probEndDate = d.toISOString().split('T')[0];
+      }
+
       await query(
-        `INSERT INTO employees(emp_id, first_name, last_name, gender, dob, dor, mobile, dept_id, designation_id, doj, status, category, created_by, probation_days, probation_status, probation_end_date)
-         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Active', 'General', $11, 0, 'N/A', null)`,
-        [empId, firstName, lastName, gender, dob, dor, mobile, candidate.dept_id || null, designationId, doj, req.user.id]
+        `INSERT INTO employees(emp_id, first_name, last_name, gender, dob, dor, mobile, dept_id, designation_id, doj, status, category, created_by, probation_days, probation_status, probation_end_date, employment_type)
+         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Active', 'General', $11, $12, $13, $14, $15)`,
+        [empId, firstName, lastName, gender, dob, dor, mobile, candidate.dept_id || null, designationId, doj, req.user.id, probDays, probStatus, probEndDate, candidate.employment_type || 'Full Time']
       );
 
       // e. Create service book joining entry

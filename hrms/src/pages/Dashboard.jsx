@@ -6,7 +6,7 @@ import Loader from '../components/common/Loader';
 import Modal from '../components/common/Modal';
 import {
   Users, IndianRupee, Calendar, AlertTriangle, UserPlus, TrendingUp,
-  Star, Fingerprint, Gift, Briefcase, Sun, Cake, Bell, Trash2
+  Star, Fingerprint, Gift, Briefcase, Sun, Cake, Bell, Trash2, Edit2
 } from 'lucide-react';
 import { PieChart, Pie, Cell, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { reportsAPI, leaveAPI, onboardingAPI, attendanceAPI, empAPI, announcementAPI } from '../api/endpoints';
@@ -34,8 +34,9 @@ export default function Dashboard() {
   const [showPunchModal, setShowPunchModal] = useState(false);
   const [announcements, setAnnouncements] = useState([]);
   const [showAnnModal, setShowAnnModal] = useState(false);
-  const [annForm, setAnnForm] = useState({ title: '', type: 'General', content: '', sendMail: false });
+  const [annForm, setAnnForm] = useState({ title: '', type: 'General', content: '', sendMail: false, visibility_days: '', files: [] });
   const [annSubmitting, setAnnSubmitting] = useState(false);
+  const [editAnnId, setEditAnnId] = useState(null);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [todayAttendance, setTodayAttendance] = useState(null);
 
@@ -48,7 +49,7 @@ export default function Dashboard() {
     Promise.all([
       reportsAPI.dashboard().catch(() => ({ data: { data: null } })),
       isAdmin ? reportsAPI.headcount().catch(() => null) : Promise.resolve({ data: { data: null } }),
-      leaveAPI.listApplications(isAdmin ? { status: 'Pending' } : {}).catch(() => ({ data: { data: [] } })),
+      leaveAPI.listApplications(isAdmin ? { status: 'Pending' } : { emp_id: user?.emp_id }).catch(() => ({ data: { data: [] } })),
       isAdmin ? onboardingAPI.list().catch(() => ({ data: { data: [] } })) : Promise.resolve({ data: { data: [] } }),
       empAPI.birthdays({ month: currentMonth }).catch(() => ({ data: { data: [] } })),
       empAPI.anniversaries({ month: currentMonth }).catch(() => ({ data: { data: [] } })),
@@ -122,12 +123,29 @@ export default function Dashboard() {
 
   const submitAnnouncement = async () => {
     if (!annForm.title || !annForm.content) return setMsg('Error: Title and content are required');
+    if (annForm.files && annForm.files.length > 5) return setMsg('Error: Maximum 5 photos allowed');
     try {
       setAnnSubmitting(true);
-      await announcementAPI.create(annForm);
-      setMsg('Announcement created successfully!');
+      const fd = new FormData();
+      fd.append('title', annForm.title);
+      fd.append('type', annForm.type);
+      fd.append('content', annForm.content);
+      fd.append('sendMail', annForm.sendMail);
+      if (annForm.visibility_days) fd.append('visibility_days', annForm.visibility_days);
+      if (annForm.files && annForm.files.length > 0) {
+        Array.from(annForm.files).forEach(f => fd.append('images', f));
+      }
+
+      if (editAnnId) {
+        await announcementAPI.update(editAnnId, fd);
+        setMsg('Announcement updated successfully!');
+      } else {
+        await announcementAPI.create(fd);
+        setMsg('Announcement created successfully!');
+      }
       setShowAnnModal(false);
-      setAnnForm({ title: '', type: 'General', content: '', sendMail: false });
+      setEditAnnId(null);
+      setAnnForm({ title: '', type: 'General', content: '', sendMail: false, visibility_days: '', files: [] });
       const res = await announcementAPI.list();
       setAnnouncements(res.data?.data || []);
     } catch (e) {
@@ -421,15 +439,32 @@ export default function Dashboard() {
             {announcements.slice(0, 3).map(a => (
               <div key={a.id} onClick={() => setSelectedAnnouncement(a)} className="p-4 rounded-xl border border-slate-100 flex flex-col justify-between cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all duration-300 bg-white group" style={{ border: '1px solid rgba(22, 38, 96, 0.08)' }}>
                 <div>
+                  {a.image_urls && a.image_urls.length > 0 && (
+                    <div className="w-full h-32 mb-3 rounded-lg flex gap-2 overflow-x-auto snap-x custom-scrollbar shrink-0">
+                      {a.image_urls.map((url, idx) => (
+                        <img key={idx} src={`http://localhost:5000/uploads/${url}`} alt="Celebration" className="h-full w-[80%] object-cover shrink-0 snap-center rounded-lg hover:opacity-90 transition-opacity" />
+                      ))}
+                    </div>
+                  )}
                   <div className="flex justify-between items-start mb-3">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                       a.type === 'Important' ? 'bg-red-50 text-red-600' :
                       a.type === 'Event' ? 'bg-pink-50 text-pink-600' : 'bg-blue-50 text-blue-600'
                     }`}>{a.type}</span>
                     {['super_admin', 'hr_manager', 'hr_staff'].includes(user?.role) && (
-                      <button onClick={(e) => { e.stopPropagation(); deleteAnnouncement(a.id); }} className="text-slate-400 hover:text-red-500 bg-slate-50 p-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100">
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setEditAnnId(a.id);
+                          setAnnForm({ title: a.title, type: a.type, content: a.content, sendMail: false, visibility_days: '', files: [] });
+                          setShowAnnModal(true);
+                        }} className="text-slate-400 hover:text-blue-500 bg-slate-50 p-1.5 rounded-md transition-colors">
+                          <Edit2 size={14} />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); deleteAnnouncement(a.id); }} className="text-slate-400 hover:text-red-500 bg-slate-50 p-1.5 rounded-md transition-colors">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     )}
                   </div>
                   <h4 className="font-bold text-[15px] mb-2 leading-snug" style={{ color: '#162660' }}>{a.title}</h4>
@@ -684,6 +719,13 @@ export default function Dashboard() {
               }`}>{selectedAnnouncement.type}</span>
               <span className="text-xs text-slate-400 font-medium">{new Date(selectedAnnouncement.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
             </div>
+            {selectedAnnouncement.image_urls && selectedAnnouncement.image_urls.length > 0 && (
+              <div className="w-full max-h-64 rounded-xl overflow-x-auto flex gap-3 snap-x mb-4 custom-scrollbar">
+                {selectedAnnouncement.image_urls.map((url, idx) => (
+                  <img key={idx} src={`http://localhost:5000/uploads/${url}`} alt="Celebration" className="h-full max-h-64 object-contain snap-center shrink-0 rounded-lg bg-slate-50" />
+                ))}
+              </div>
+            )}
             <h2 className="text-xl font-bold text-slate-800 leading-tight">{selectedAnnouncement.title}</h2>
             <div className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
               {selectedAnnouncement.content}
@@ -706,8 +748,8 @@ export default function Dashboard() {
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-slide-up">
             <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-bold text-lg text-slate-800">Create Announcement</h3>
-              <button onClick={() => setShowAnnModal(false)} className="text-slate-400 hover:text-slate-600">&times;</button>
+              <h3 className="font-bold text-lg text-slate-800">{editAnnId ? 'Edit Announcement' : 'Create Announcement'}</h3>
+              <button onClick={() => { setShowAnnModal(false); setEditAnnId(null); setAnnForm({ title: '', type: 'General', content: '', sendMail: false, visibility_days: '', files: [] }); }} className="text-slate-400 hover:text-slate-600">&times;</button>
             </div>
             <div className="p-4 space-y-4">
               <div>
@@ -726,19 +768,35 @@ export default function Dashboard() {
                 <label className="text-xs text-slate-400 block mb-1">Content</label>
                 <textarea className="input w-full h-24 resize-none" value={annForm.content} onChange={e => setAnnForm({ ...annForm, content: e.target.value })} placeholder="Write your announcement..." />
               </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="text-xs text-slate-400 block mb-1">Celebration Pictures (Max 5)</label>
+                  <input type="file" accept="image/*" multiple className="input w-full p-1.5 text-xs" onChange={e => setAnnForm({ ...annForm, files: e.target.files })} />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs text-slate-400 block mb-1">Visibility Duration</label>
+                  <select className="input w-full text-xs py-2" value={annForm.visibility_days} onChange={e => setAnnForm({ ...annForm, visibility_days: e.target.value })}>
+                    <option value="">Permanent</option>
+                    <option value="1">1 Day</option>
+                    <option value="2">2 Days</option>
+                    <option value="3">3 Days</option>
+                    <option value="7">1 Week</option>
+                  </select>
+                </div>
+              </div>
               <div className="flex items-center gap-2 pt-2">
                 <input type="checkbox" id="sendMail" className="w-4 h-4 accent-blue-600" checked={annForm.sendMail} onChange={e => setAnnForm({ ...annForm, sendMail: e.target.checked })} />
                 <label htmlFor="sendMail" className="text-sm font-medium text-slate-700 cursor-pointer">Send email to all employees</label>
               </div>
             </div>
             <div className="p-4 bg-slate-50 flex justify-end gap-3 border-t">
-              <button onClick={() => setShowAnnModal(false)} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg">Cancel</button>
+              <button onClick={() => { setShowAnnModal(false); setEditAnnId(null); setAnnForm({ title: '', type: 'General', content: '', sendMail: false, visibility_days: '', files: [] }); }} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg">Cancel</button>
               <button 
                 onClick={submitAnnouncement} 
                 disabled={annSubmitting || !annForm.title || !annForm.content}
                 className={`px-4 py-2 text-sm font-semibold text-white rounded-lg ${annSubmitting || !annForm.title || !annForm.content ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
               >
-                {annSubmitting ? 'Posting...' : 'Post Announcement'}
+                {annSubmitting ? 'Saving...' : editAnnId ? 'Save Changes' : 'Post Announcement'}
               </button>
             </div>
           </div>
