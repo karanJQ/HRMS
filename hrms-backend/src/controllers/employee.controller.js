@@ -238,7 +238,7 @@ exports.getAnniversaries = async (req, res) => {
        FROM employees e
        JOIN departments d ON d.id = e.dept_id
        LEFT JOIN designations des ON des.id = e.designation_id
-       WHERE EXTRACT(MONTH FROM e.doj) = $1 AND e.status = 'Active'
+       WHERE EXTRACT(MONTH FROM e.doj) = $1 AND e.status = 'Active' AND EXTRACT(YEAR FROM e.doj) < EXTRACT(YEAR FROM NOW())
        ORDER BY EXTRACT(DAY FROM e.doj)`,
       [m]
     );
