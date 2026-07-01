@@ -6,7 +6,7 @@ import {
   LayoutDashboard, UserPlus, Users, IndianRupee, Calendar, 
   ArrowLeftRight, TrendingUp, Star, BookOpen, GraduationCap, 
   Clock, AlertTriangle, BarChart3, Building2, LogOut, Shield, 
-  Workflow, Search, ChevronDown, FileText, FileCheck
+  Workflow, Search, ChevronDown, FileText, FileCheck, LogOut as LogOutIcon
 } from 'lucide-react';
 
 const allNav = [
@@ -24,6 +24,7 @@ const allNav = [
   { label:'Training', icon:GraduationCap, path:'/training', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
 
   { label:'Grievance & Discipline', icon:AlertTriangle, path:'/grievance', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
+  { label:'Resignations', icon:LogOutIcon, path:'/resignations', roles:['super_admin','hr_manager','hr_staff','employee'] },
 
   { label:'User Management', icon:Shield, path:'/users', roles:['super_admin'] },
 ];

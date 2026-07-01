@@ -22,6 +22,7 @@ import UserManagement from './pages/UserManagement';
 import Tasks from './pages/Tasks';
 import DocumentUpload from './pages/DocumentUpload';
 import DocumentVerification from './pages/DocumentVerification';
+import Resignation from './pages/Resignation';
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
@@ -57,6 +58,7 @@ export default function App() {
 
           <Route path="/probation" element={<Prot comp={Probation} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
           <Route path="/grievance" element={<Prot comp={Grievance} />} />
+          <Route path="/resignations" element={<Prot comp={Resignation} />} />
           <Route path="/reports" element={<Prot comp={Reports} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
           <Route path="/users" element={<Prot comp={UserManagement} roles={['super_admin']} />} />
           <Route path="/tasks" element={<Prot comp={Tasks} />} />

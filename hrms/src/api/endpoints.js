@@ -113,6 +113,13 @@ export const documentAPI = {
   delete: (id) => API.delete(`/documents/${id}`),
 };
 
+export const resignationAPI = {
+  list: () => API.get('/resignations'),
+  create: (data) => API.post('/resignations', data),
+  update: (id, data) => API.put(`/resignations/${id}`, data),
+  getLeaves: (id) => API.get(`/resignations/${id}/leaves`)
+};
+
 // Reports
 export const reportsAPI = {
   dashboard: () => API.get('/reports/dashboard'),
