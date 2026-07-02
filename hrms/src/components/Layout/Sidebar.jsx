@@ -6,7 +6,7 @@ import {
   LayoutDashboard, UserPlus, Users, IndianRupee, Calendar, 
   ArrowLeftRight, TrendingUp, Star, BookOpen, GraduationCap, 
   Clock, AlertTriangle, BarChart3, Building2, LogOut, Shield, 
-  Workflow, Search, ChevronDown, FileText, FileCheck, LogOut as LogOutIcon
+  Workflow, Search, ChevronDown, FileText, FileCheck, LogOut as LogOutIcon, Target
 } from 'lucide-react';
 
 const allNav = [
@@ -19,7 +19,8 @@ const allNav = [
   { label:'Doc Verification', icon:FileCheck, path:'/document-verification', roles:['super_admin','hr_manager','hr_staff'] },
   { label:'Payroll', icon:IndianRupee, path:'/payroll', roles:['super_admin','hr_manager','hr_staff','employee'] },
   { label:'Attendance & Leave', icon:Calendar, path:'/attendance', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
-  { label:'Performance Appraisal', icon:Star, path:'/apar', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
+
+  { label:'KPI & KRA',             icon:Target, path:'/kpi-yearly', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
   { label:'Service Book',           icon:BookOpen, path:'/servicebook', roles:['super_admin','hr_manager','hr_staff','employee'] },
   { label:'Training', icon:GraduationCap, path:'/training', roles:['super_admin','hr_manager','dept_head','hr_staff','employee'] },
 
@@ -58,12 +59,12 @@ export default function Sidebar({ collapsed, isMobile, setCollapsed }) {
 
   // Section 2: Middle items (Attendance & Leave, Payroll, Service Book, APAR / Performance)
   const group2 = nav.filter(item => 
-    ['/attendance', '/payroll', '/servicebook', '/apar'].includes(item.path)
+    ['/attendance', '/payroll', '/servicebook', '/kpi-yearly'].includes(item.path)
   );
 
-  // Section 3: Bottom items (Employee Master, Onboarding, Transfer, Promotion, Training, Retirement, Grievance, Reports, User Management)
-  const group3 = nav.filter(item => 
-    !['/dashboard', '/tasks', '/attendance', '/payroll', '/servicebook', '/apar'].includes(item.path)
+  // Section 3: Bottom items
+  const group3 = nav.filter(item =>
+    !['/dashboard', '/tasks', '/attendance', '/payroll', '/servicebook', '/kpi-yearly'].includes(item.path)
   );
 
   const roleLabel = { 

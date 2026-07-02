@@ -173,7 +173,7 @@ export const notificationAPI = {
   markAllRead: () => API.put('/notifications/read-all'),
 };
 
-// KPI
+// KPI (legacy quarterly)
 export const kpiAPI = {
   listCycles:       ()           => API.get('/kpi/cycles'),
   createCycle:      (data)       => API.post('/kpi/cycles', data),
@@ -187,6 +187,29 @@ export const kpiAPI = {
   mdAction:         (id, data)   => API.put(`/kpi/reports/${id}/md`, data),
   publishReport:    (id)         => API.put(`/kpi/reports/${id}/publish`),
   aiInsights:       (id)         => API.get(`/kpi/reports/${id}/ai-insights`),
+};
+
+// KPI Yearly
+export const kpiYearlyAPI = {
+  listCycles:            ()           => API.get('/kpi-yearly/cycles'),
+  createCycle:           (data)       => API.post('/kpi-yearly/cycles', data),
+  listReports:           (params)     => API.get('/kpi-yearly/reports', { params }),
+  createReport:          (data)       => API.post('/kpi-yearly/reports', data),
+  getReport:             (id)         => API.get(`/kpi-yearly/reports/${id}`),
+  deleteReport:          (id)         => API.delete(`/kpi-yearly/reports/${id}`),
+  saveGoals:             (id, data)   => API.put(`/kpi-yearly/reports/${id}/goals`, data),
+  finalizeGoals:         (id)         => API.put(`/kpi-yearly/reports/${id}/finalize-goals`),
+  unfreezeGoals:         (id, data)   => API.put(`/kpi-yearly/reports/${id}/unfreeze-goals`, data),
+  openSelfAssessment:    (id)         => API.put(`/kpi-yearly/reports/${id}/open-self-assessment`),
+  saveSelfAssessment:    (id, data)   => API.put(`/kpi-yearly/reports/${id}/self-assess`, data),
+  submitSelfAssessment:  (id)         => API.put(`/kpi-yearly/reports/${id}/submit-self`),
+  managerReview:         (id, data)   => API.put(`/kpi-yearly/reports/${id}/manager-review`, data),
+  cpoAction:             (id, data)   => API.put(`/kpi-yearly/reports/${id}/cpo`, data),
+  salesLeadAction:       (id, data)   => API.put(`/kpi-yearly/reports/${id}/sales-lead`, data),
+  mdAction:              (id, data)   => API.put(`/kpi-yearly/reports/${id}/md`, data),
+  publishReport:         (id)         => API.put(`/kpi-yearly/reports/${id}/publish`),
+  recordKRA:             (id, data)   => API.post(`/kpi-yearly/reports/${id}/kra`, data),
+  aiInsights:            (id)         => API.get(`/kpi-yearly/reports/${id}/ai-insights`),
 };
 
 // Announcements

@@ -12,6 +12,7 @@ import Payroll from './pages/Payroll';
 import Attendance from './pages/Attendance';
 import Transfer from './pages/Transfer';
 import APAR from './pages/APAR';
+import KPIYearly from './pages/KPIYearly';
 import ServiceBook from './pages/ServiceBook';
 import Training from './pages/Training';
 
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/attendance" element={<Prot comp={Attendance} />} />
           <Route path="/transfer" element={<Prot comp={Transfer} roles={['super_admin','hr_manager','dept_head','hr_staff']} />} />
           <Route path="/apar" element={<Prot comp={APAR} />} />
+          <Route path="/kpi-yearly" element={<Prot comp={KPIYearly} />} />
           <Route path="/servicebook" element={<Prot comp={ServiceBook} />} />
           <Route path="/training" element={<Prot comp={Training} />} />
 

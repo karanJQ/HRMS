@@ -38,7 +38,8 @@ app.use(`${prefix}/tasks`,       require('./src/routes/task.routes'));
 app.use(`${prefix}/attendance`,  require('./src/routes/attendance.routes'));
 app.use(`${prefix}/notifications`, require('./src/routes/notification.routes'));
 app.use(`${prefix}/documents`, require('./src/routes/document.routes'));
-app.use(`${prefix}/kpi`,       require('./src/routes/kpi.routes'));
+app.use(`${prefix}/kpi`,         require('./src/routes/kpi.routes'));
+app.use(`${prefix}/kpi-yearly`, require('./src/routes/kpi_yearly.routes'));
 app.use(`${prefix}/announcements`, require('./src/routes/announcement.routes'));
 app.use(`${prefix}/resignations`,  require('./src/routes/resignation.routes'));
 

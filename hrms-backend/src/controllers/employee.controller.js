@@ -29,9 +29,16 @@ exports.list = async (req, res) => {
     conditions.push(`(e.first_name ILIKE $${idx} OR e.last_name ILIKE $${idx} OR e.emp_id ILIKE $${idx} OR e.mobile ILIKE $${idx})`);
     params.push(`%${search}%`); idx++;
   }
-  // Dept head can only see own dept
-  if (req.user.role === 'dept_head' && req.user.dept_id) {
-    conditions.push(`e.dept_id = $${idx++}`); params.push(req.user.dept_id);
+  if (['super_admin', 'hr_manager', 'hr_staff'].includes(req.user.role)) {
+    // See all employees, no extra condition needed
+  } else if (req.user.role === 'dept_head') {
+    // Dept head sees own dept OR their direct reportees
+    conditions.push(`(e.dept_id = $${idx++} OR e.reporting_manager_id = $${idx++})`);
+    params.push(req.user.dept_id, req.user.emp_id);
+  } else {
+    // Regular employee sees ONLY themselves and their direct reportees
+    conditions.push(`(e.emp_id = $${idx++} OR e.reporting_manager_id = $${idx++})`);
+    params.push(req.user.emp_id, req.user.emp_id);
   }
 
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
