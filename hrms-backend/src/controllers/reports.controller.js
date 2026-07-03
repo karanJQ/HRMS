@@ -30,14 +30,16 @@ exports.headcount = async (req, res) => {
       query(`SELECT d.name as dept, COUNT(e.id) as count FROM departments d LEFT JOIN employees e ON e.dept_id=d.id AND e.status='Active' GROUP BY d.name ORDER BY count DESC`),
       query(`SELECT category, COUNT(*) as count FROM employees WHERE status='Active' GROUP BY category`),
       query(`SELECT grade, COUNT(*) as count FROM employees WHERE status='Active' AND grade IS NOT NULL GROUP BY grade ORDER BY grade`),
-      query(`SELECT 
+      query(`      SELECT 
         CASE 
           WHEN a.status = 'WFH' THEN 'WFH' 
-          WHEN a.id IS NOT NULL THEN 'Present' 
+          WHEN a.status = 'Leave' THEN 'On Leave'
+          WHEN a.status IN ('Present', 'Half Day') THEN 'Present'
           WHEN l.id IS NOT NULL THEN 'On Leave' 
+          WHEN a.id IS NOT NULL THEN 'Present' -- Fallback for any other non-null attendance record
           ELSE 'Absent' 
         END as status, 
-        COUNT(e.id) as count 
+        COUNT(DISTINCT e.id) as count 
       FROM employees e 
       LEFT JOIN attendance_records a ON a.emp_id = e.emp_id AND a.date = CURRENT_DATE 
       LEFT JOIN leave_applications l ON l.emp_id = e.emp_id AND l.status = 'Approved' AND CURRENT_DATE BETWEEN l.from_date AND l.to_date 
